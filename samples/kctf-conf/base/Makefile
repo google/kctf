@@ -5,8 +5,21 @@
 #
 #
 #
+# Copyright 2020 Google LLC
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     https://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-.PHONY: start stop docker ip status logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .cluster-config .deployment .healthcheck-exploit-key-secret .FORCE
+.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .cluster-config .deployment .healthcheck-exploit-key-secret .FORCE
 
 SHELL := bash
 .ONESHELL:
@@ -88,6 +101,9 @@ status: .cluster-config
 logs: .cluster-config
 	kubectl logs -l "app=${CHALLENGE_NAME}" -c challenge
 
+healthcheck-logs: .cluster-config
+	kubectl logs -l "app=${CHALLENGE_NAME}" -c healthcheck
+
 ssh: .cluster-config
 	kubectl exec deployment/${CHALLENGE_NAME} -c challenge -it /bin/bash
 
@@ -166,7 +182,7 @@ ifeq ($(HEALTHCHECK), true)
 	fi
 endif
 
-.gen/docker-image: challenge/Dockerfile .gen/src $(shell find challenge/files) ../kctf-conf/base/nsjail-docker/gen/docker-image
+.gen/docker-image: challenge/Dockerfile .gen/src $(shell find challenge/files) ../kctf-conf/base/nsjail-docker/.gen/docker-image
 	docker build -t "kctf-chal-${CHALLENGE_NAME}" challenge
 	echo $$(docker image ls "kctf-chal-${CHALLENGE_NAME}" -q) > $@
 
@@ -242,8 +258,8 @@ healthcheck/.gen/exploit-key.yaml: healthcheck/.gen/exploit.key | .cluster-confi
 .healthcheck-exploit-key-secret: healthcheck/.gen/exploit-key.yaml | .cluster-config
 	kubectl apply -f healthcheck/.gen/exploit-key.yaml
 
-../kctf-conf/base/nsjail-docker/gen/docker-image: .FORCE
-	$(MAKE) -C ${@D}/.. gen/docker-image
+../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
+	$(MAKE) -C ${@D}/.. .gen/docker-image
 
 ${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-tagged .FORCE
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"

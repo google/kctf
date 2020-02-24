@@ -23,7 +23,7 @@ VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
-SOLVER_URL = 'https://github.com/google/google-ctf/blob/master/infrastructure/kctf/base/nsjail-docker/proof_of_work/pow.py'
+SOLVER_URL = 'https://github.com/google/kctf/blob/master/base/nsjail-docker/files/proof_of_work/pow.py'
 
 def stdin_is_localhost_socket():
     try:

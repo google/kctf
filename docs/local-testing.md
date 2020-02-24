@@ -24,8 +24,7 @@ sudo usermod -aG docker $USER && newgrp docker
 
 ### Download kCTF
 ```
-sudo apt-get install -y subversion
-svn checkout https://github.com/google/google-ctf/trunk/infrastructure/kctf
+git clone https://github.com/google/kctf.git
 PATH=$PATH:$PWD/kctf/bin
 ```
 
