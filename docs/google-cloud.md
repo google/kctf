@@ -2,6 +2,8 @@
 
 The purpose of this walkthrough is to guide you along the way to configure the infrastructure.
 
+You can also open this walkthrough directly in [Google Cloud Shell](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/google/kctf&tutorial=docs/google-cloud.md).
+
 ## First, enable the necessary GCP features
 Before we start, you need to have billing set up, and the compute API enabled. Let's do that now.
 1. <walkthrough-project-billing-setup>Select a project and enable billing.</walkthrough-project-billing-setup>
