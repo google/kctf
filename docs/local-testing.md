@@ -44,7 +44,7 @@ sudo apt-get install -y netcat
 nc 127.0.0.1 1337
 ```
 
-If all went well, you should have a shell inside an nsjail bash, if you didn't, there might be some issues with your system (support for nsjail, docker, or else).
+If all went well, you should have a shell inside an nsjail bash, if you didn't, there might be some issues with your system (support for nsjail, docker, or else). You can find some debugging instructions [below](#errors-with-docker).
 
 ## Testing with Kubernetes
 
