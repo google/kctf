@@ -1,6 +1,6 @@
 # kCTF
 
-kCTF is a Kubernetes-based CTF infrastructure for CTF competitions.
+kCTF is a Kubernetes-based infrastructure for CTF competitions.
 
 If you want to read more about kCTF, take a look at [kCTF in 8 minutes](docs/introduction.md): A quick 8 minutes summary of what is kCTF and how it interacts with Kubernetes.
 
