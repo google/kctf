@@ -50,6 +50,19 @@ If all went well, you should have a shell inside an nsjail bash, if you didn't, 
 
 For testing challenges in the same environment as production, as well as to test challenges that require changes to the Kubernetes configuration, you can also test with a local Kubernetes cluster. This is the recommended method, although it takes a bit longer to setup, and is not available in Google Cloud Shell.
 
+### Install kubectl 1.17+
+
+Download the latest version:
+```
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+```
+
+Make it executable and move it to your PATH:
+```
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+```
+
 ### Install a local Kubernetes cluster
 
 There are several options for installing a local Kubernetes cluster.
