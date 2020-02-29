@@ -1,4 +1,5 @@
 # kCTF
+[![GKE Deployment](https://github.com/google/kctf/workflows/GKE%20Deployment/badge.svg?branch=master)](https://github.com/google/kctf/actions?query=workflow%3A%22GKE+Deployment%22)
 
 kCTF is a Kubernetes-based infrastructure for CTF competitions.
 
