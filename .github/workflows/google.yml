@@ -53,8 +53,8 @@ jobs:
         # hack until #19 is fixed
         KCTF_DIRECTORY=${GKE_PROJECT}_${GKE_ZONE}_${GKE_CLUSTER}
         mkdir -p samples/kctf-conf/$KCTF_DIRECTORY/
-        mv /tmp/kctf.conf samples/kctf-conf/$KCTF_DIRECTORY/kctf.conf
-        kctf-config-load samples/kctf-conf/$KCTF_DIRECTORY/kctf.conf
+        mv /tmp/kctf.conf samples/kctf-conf/$KCTF_DIRECTORY/cluster.conf
+        kctf-config-load samples/kctf-conf/$KCTF_DIRECTORY/cluster.conf
 
     - name: Expose tasks
       run: |
