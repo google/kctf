@@ -2,6 +2,9 @@ name: GKE Deployment
 
 on:
   push:
+    paths-ignore: 
+      - 'docs/**' 
+      - '*.md'
     branches:
     - master
 
@@ -64,3 +67,8 @@ jobs:
       run: |
         export PATH=$PATH:$PWD/bin
         kctf-batch-deploy
+
+    - name: Update DNS names
+      run: |
+        export PATH=$PATH:$PWD/bin
+        ls samples | grep -v kctf-conf | xargs -n 1 kctf-chal-dns
