@@ -8,7 +8,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
-  GKE_ZONE: us-east1-b
+  GKE_ZONE: us-east1-c
   GKE_CLUSTER: github-ci
 
 jobs:
