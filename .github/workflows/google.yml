@@ -10,7 +10,6 @@ env:
   GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
   GKE_ZONE: us-west1-a
   GKE_CLUSTER: github-ci
-  KCTF_DIRECTORY: ${GKE_PROJECT}_${GKE_ZONE}_${GKE_CLUSTER}
 
 jobs:
   deploy-to-gke:
@@ -51,6 +50,8 @@ jobs:
         echo ZONE=$GKE_ZONE >> /tmp/kctf.conf
         echo CLUSTER_NAME=$GKE_CLUSTER >> /tmp/kctf.conf
         echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> /tmp/kctf.conf
+        # hack until #19 is fixed
+        KCTF_DIRECTORY=${GKE_PROJECT}_${GKE_ZONE}_${GKE_CLUSTER}
         mkdir -p samples/kctf-conf/$KCTF_DIRECTORY/
         mv /tmp/kctf.conf samples/kctf-conf/$KCTF_DIRECTORY/kctf.conf
         kctf-config-load samples/kctf-conf/$KCTF_DIRECTORY/kctf.conf
