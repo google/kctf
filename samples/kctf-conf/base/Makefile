@@ -279,8 +279,8 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged
 	@  echo 'error: cluster config not loaded. Run kctf-config-create or kctf-config-load'
 	@  exit 1
 	@fi
-	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}"
-	mkdir -p ${CLUSTER_GEN}
+	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" > /dev/null
+	mkdir -p ${CLUSTER_GEN} > /dev/null
 
 .FORCE:
 
