@@ -45,11 +45,11 @@ jobs:
 
     - name: Configure kCTF cluster
       run: |
-        echo PROJECT=$GKE_PROJECT > ~/tmp/kctf.conf
-        echo ZONE=$GKE_ZONE >> ~/tmp/kctf.conf
-        echo CLUSTER_NAME=$GKE_CLUSTER >> ~/tmp/kctf.conf
-        echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> ~/tmp/kctf.conf
-        kctf-config-load ~/tmp/kctf.conf
+        echo PROJECT=$GKE_PROJECT > /tmp/kctf.conf
+        echo ZONE=$GKE_ZONE >> /tmp/kctf.conf
+        echo CLUSTER_NAME=$GKE_CLUSTER >> /tmp/kctf.conf
+        echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> /tmp/kctf.conf
+        kctf-config-load /tmp/kctf.conf
 
     - name: Expose tasks
       run: |
