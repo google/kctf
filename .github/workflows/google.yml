@@ -12,8 +12,8 @@ env:
   GKE_CLUSTER: github-ci
 
 jobs:
-  setup-build-publish-deploy:
-    name: Setup, Build, Publish, and Deploy
+  deploy-to-gke:
+    name: Deploy kCTF to GKE
     runs-on: ubuntu-latest
     steps:
 
@@ -45,6 +45,7 @@ jobs:
 
     - name: Configure kCTF cluster
       run: |
+        export PATH=$PATH:$PWD/bin
         echo PROJECT=$GKE_PROJECT > /tmp/kctf.conf
         echo ZONE=$GKE_ZONE >> /tmp/kctf.conf
         echo CLUSTER_NAME=$GKE_CLUSTER >> /tmp/kctf.conf
@@ -58,4 +59,5 @@ jobs:
 
     - name: Deploy all tasks
       run: |
+        export PATH=$PATH:$PWD/bin
         kctf-batch-deploy
