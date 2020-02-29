@@ -31,7 +31,7 @@ gcloud auth configure-docker
 ### Add the bin directory to your PATH
 
 ```
-PATH="$PATH:$(pwd)/infrastructure/kctf/bin"
+PATH="$PATH:$(pwd)/bin"
 ```
 
 ### And run the configuration script
