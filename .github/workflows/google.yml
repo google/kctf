@@ -1,0 +1,61 @@
+name: Deploy kCTF scary 
+
+on:
+  push:
+    branches:
+    - master
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+  GKE_ZONE: us-west1-a
+  GKE_CLUSTER: github-ci
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Download kubectl
+      run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+
+    - name: Setup gcloud CLI
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_email: ${{ secrets.GKE_EMAIL }}
+        service_account_key: ${{ secrets.GKE_KEY }}
+
+    - name: Configure docker to use the gcloud command-line tool as a credential helper
+      run: |
+        gcloud auth configure-docker
+
+    - name: Configure kCTF directory
+      run: |        
+        export PATH=$PATH:$PWD/bin
+        kctf-setup-chal-dir $PWD/samples
+        kctf-chal-create test-1
+
+    - name: Configure kCTF cluster
+      run: |
+        echo PROJECT=$GKE_PROJECT > ~/tmp/kctf.conf
+        echo ZONE=$GKE_ZONE >> ~/tmp/kctf.conf
+        echo CLUSTER_NAME=$GKE_CLUSTER >> ~/tmp/kctf.conf
+        echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> ~/tmp/kctf.conf
+        kctf-config-load ~/tmp/kctf.conf
+
+    - name: Expose tasks
+      run: |
+        echo PUBLIC=true | tee -a $(ls samples/*/chal.conf)
+        echo HEALTHCHECK=true | tee -a $(ls samples/*/chal.conf)
+
+    - name: Deploy all tasks
+      run: |
+        kctf-batch-deploy
