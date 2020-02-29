@@ -41,7 +41,7 @@ for dir in ${CHAL_DIR}/*; do
   echo "= Deploying challenge ${CHALLENGE_NAME} ="
   echo
 
-  make -j -C "${dir}" start
+  make -C "${dir}" start
 done
 
 echo
