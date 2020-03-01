@@ -13,9 +13,10 @@
 # limitations under the License.
 .PHONY: docker
 
-DOCKER_IMAGE=.gen/docker-image
+# Use `make docker NSJAIL_DOCKER=-nodeps` to use remote cache.
+NSJAIL_DOCKER=
 
-docker: ${DOCKER_IMAGE}
+docker: .gen/docker-image${DOCKER_IMAGE}
 
 .gen/docker-image: | .gen/nsjail-docker .gen/chroot-docker .gen/docker-image-nodeps
 	cat .gen/docker-image-nodeps > $@
