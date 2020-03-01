@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM docker.pkg.github.com/google/kctf/kctf-chroot:latest AS chroot
-FROM docker.pkg.github.com/google/kctf/kctf-nsjail:latest AS nsjail
+FROM kctf-nsjail-chroot:latest AS chroot
+FROM kctf-nsjail-bin:latest AS bin
 FROM ubuntu:19.10
 
 RUN apt-get update && apt-get install -y uidmap libprotobuf17 libnl-route-3-200
 RUN apt-get upgrade -y
 
-COPY --from=nsjail /usr/bin/nsjail /usr/bin/nsjail
+COPY --from=bin /usr/bin/nsjail /usr/bin/nsjail
 COPY --from=chroot /chroot /chroot
 
 RUN mkdir /chroot/config
