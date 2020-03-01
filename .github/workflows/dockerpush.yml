@@ -61,8 +61,8 @@ jobs:
 
           echo VERSION=$VERSION
 
-          docker tag nsjail $IMAGE_REPO/nsjail:$VERSION
-          docker push $IMAGE_REPO/nsjail:$VERSION
+          docker tag nsjail $IMAGE_REPO/kctf-nsjail:$VERSION
+          docker push $IMAGE_REPO/kctf-nsjail:$VERSION
 
-          docker tag chroot $IMAGE_REPO/chroot:$VERSION
-          docker push $IMAGE_REPO/chroot:$VERSION
+          docker tag chroot $IMAGE_REPO/kctf-chroot:$VERSION
+          docker push $IMAGE_REPO/kctf-chroot:$VERSION
