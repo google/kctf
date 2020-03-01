@@ -13,8 +13,16 @@
 # limitations under the License.
 .PHONY: docker
 
-docker: gen/docker-image
+docker: .gen/docker-image
 
-.gen/docker-image: Dockerfile $(shell find files)
+.gen/docker-image: Dockerfile .gen/nsjail-docker .gen/chroot-docker $(shell find files)
 	docker build -t "kctf-nsjail" .
 	echo $$(docker image ls "kctf-nsjail" -q) > $@
+
+.gen/nsjail-docker: nsjail.Dockerfile
+	docker build -t docker.pkg.github.com/google/kctf/nsjail:latest -f nsjail.Dockerfile .
+	echo $$(docker image ls "docker.pkg.github.com/google/kctf/nsjail:latest" -q) > $@
+
+.gen/chroot-docker: chroot.Dockerfile
+	docker build -t docker.pkg.github.com/google/kctf/chroot:latest -f chroot.Dockerfile .
+	echo $$(docker image ls "docker.pkg.github.com/google/kctf/chroot:latest" -q) > $@
