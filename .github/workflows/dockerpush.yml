@@ -4,14 +4,14 @@ on:
   push:
     # Only trigger for nsjail-docker changes
     paths: 
-      - 'base/nsjail-docker/**'
+      - 'config/docker/**'
       - '.github/workflows/dockerpush.yml'
 
   pull_request:
     # Only trigger for nsjail-docker changes
     # This will only run tests, it won't create a package
     paths: 
-      - 'base/nsjail-docker/**'
+      - 'config/docker/**'
       - '.github/workflows/dockerpush.yml'
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
 
       - name: Run tests
         run: |
-          cd base/nsjail-docker
+          cd config/docker
           docker build . --file nsjail.Dockerfile
           docker build . --file chroot.Dockerfile
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build images
         run: |
-          cd base/nsjail-docker
+          cd config/docker
           docker build . --file nsjail.Dockerfile --tag nsjail
           docker build . --file chroot.Dockerfile --tag chroot
 
@@ -63,8 +63,8 @@ jobs:
 
           echo VERSION=$VERSION
 
-          docker tag nsjail $IMAGE_REPO/kctf-nsjail:$VERSION
-          docker push $IMAGE_REPO/kctf-nsjail:$VERSION
+          docker tag nsjail $IMAGE_REPO/kctf-nsjail-bin:$VERSION
+          docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
 
-          docker tag chroot $IMAGE_REPO/kctf-chroot:$VERSION
-          docker push $IMAGE_REPO/kctf-chroot:$VERSION
+          docker tag chroot $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
+          docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
