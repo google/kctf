@@ -13,7 +13,7 @@
 # limitations under the License.
 FROM ubuntu:19.10
 
-RUN apt-get install -y debootstrap
+RUN apt-get update && apt-get install -y debootstrap
 RUN debootstrap --variant minbase --include python3 eoan /chroot
 RUN chroot /chroot /usr/sbin/useradd --no-create-home -u 1000 user
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
