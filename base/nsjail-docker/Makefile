@@ -20,7 +20,9 @@ docker: .gen/docker-image
 	echo $$(docker image ls "kctf-nsjail" -q) > $@
 
 .gen/nsjail-docker: nsjail.Dockerfile
-	docker build -t docker.pkg.github.com/google/kctf/nsjail:latest -f nsjail.Dockerfile . | tee $@
+	docker build -t docker.pkg.github.com/google/kctf/nsjail:latest -f nsjail.Dockerfile .
+	echo $$(docker image ls "docker.pkg.github.com/google/kctf/nsjail:latest" -q) > $@
 
 .gen/chroot-docker: chroot.Dockerfile
-	docker build -t docker.pkg.github.com/google/kctf/chroot:latest -f chroot.Dockerfile . | tee $@
+	docker build -t docker.pkg.github.com/google/kctf/chroot:latest -f chroot.Dockerfile .
+	echo $$(docker image ls "docker.pkg.github.com/google/kctf/chroot:latest" -q) > $@
