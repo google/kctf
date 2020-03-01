@@ -5,12 +5,14 @@ on:
     # Only trigger for nsjail-docker changes
     paths: 
       - 'base/nsjail-docker/**'
+      - '.github/workflows/dockerpush.yml'
 
   pull_request:
     # Only trigger for nsjail-docker changes
     # This will only run tests, it won't create a package
     paths: 
       - 'base/nsjail-docker/**'
+      - '.github/workflows/dockerpush.yml'
 
 jobs:
   # Run tests.
