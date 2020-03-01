@@ -45,7 +45,7 @@ else
         CHAL_DIR="${HOME}/${CHAL_DIR:2}"
     fi
 
-    "${DIR}/scripts/setup/challenge-directory.sh" "${CHAL_DIR}"
+    DOCKER_BACKGROUND=true "${DIR}/scripts/setup/challenge-directory.sh" "${CHAL_DIR}"
 
     load_chal_dir
 fi
@@ -123,3 +123,8 @@ if ! get_cluster_creds 2>/dev/null; then
         "${DIR}/scripts/cluster/start.sh"
     fi
 fi
+
+echo "Waiting for Docker to finish building"
+wait
+
+echo "Done!"
