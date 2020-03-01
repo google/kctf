@@ -13,7 +13,7 @@
 # limitations under the License.
 .PHONY: docker
 
-docker: gen/docker-image
+docker: .gen/docker-image
 
 .gen/docker-image: Dockerfile .gen/nsjail-docker .gen/chroot-docker $(shell find files)
 	docker build -t "kctf-nsjail" .
