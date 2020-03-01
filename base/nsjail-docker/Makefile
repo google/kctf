@@ -15,6 +15,12 @@
 
 docker: gen/docker-image
 
-.gen/docker-image: Dockerfile $(shell find files)
+.gen/docker-image: Dockerfile nsjail.Dockerfile chroot.Dockerfile $(shell find files)
 	docker build -t "kctf-nsjail" .
 	echo $$(docker image ls "kctf-nsjail" -q) > $@
+
+.gen/nsjail-docker: nsjail.Dockerfile
+	docker build -t docker.pkg.github.com/google/kctf/nsjail:latest -f nsjail.Dockerfile . > $@
+
+.gen/chroot-docker: chroot.Dockerfile
+	docker build -t docker.pkg.github.com/google/kctf/chroot:latest -f chroot.Dockerfile . > $@
