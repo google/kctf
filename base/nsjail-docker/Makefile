@@ -14,9 +14,7 @@
 .PHONY: docker
 
 # Use `make docker NSJAIL_DOCKER=-nodeps` to use remote cache.
-NSJAIL_DOCKER=
-
-docker: .gen/docker-image${DOCKER_IMAGE}
+docker: .gen/docker-image${NSJAIL_DOCKER}
 
 .gen/docker-image: | .gen/nsjail-docker .gen/chroot-docker .gen/docker-image-nodeps
 	cat .gen/docker-image-nodeps > $@
