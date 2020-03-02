@@ -388,11 +388,11 @@ else
 endif
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	CHAL_IMAGE=($${CHAL_IMAGE//:/ })
-	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: $${CHAL_IMAGE[1]}" >> "$@/deployment/kustomization.yaml"
+	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: \"$${CHAL_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
 ifeq ($(HEALTHCHECK), true)
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	HEALTHCHECK_IMAGE=($${HEALTHCHECK_IMAGE//:/ })
-	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: $${HEALTHCHECK_IMAGE[1]}" >> "$@/deployment/kustomization.yaml"
+	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: \"$${HEALTHCHECK_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
 endif
 	echo "$${DEPLOYMENT_KUSTOMIZATION}" >> "$@/deployment/kustomization.yaml"
 	echo "$${CHAL_CONTAINERS}" > "$@/deployment/containers.yaml"
