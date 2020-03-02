@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-.PHONY: docker
+FROM ubuntu:19.10
 
-docker: .gen/docker-image
+RUN apt-get update && apt-get install -y debootstrap
+RUN apt-get upgrade -y
 
-.gen/docker-image: Dockerfile $(shell find files)
-	docker build -t "kctf-nsjail" .
-	echo $$(docker image ls "kctf-nsjail" -q) > $@
+RUN debootstrap --variant minbase --include python3 eoan /chroot
+RUN chroot /chroot /usr/sbin/useradd --no-create-home -u 1000 user
+RUN /usr/sbin/useradd --no-create-home -u 1000 user

@@ -1,0 +1,70 @@
+name: Push docker base image cache
+
+on:
+  push:
+    # Only trigger for nsjail-docker changes
+    paths: 
+      - 'config/docker/**'
+      - '.github/workflows/dockerpush.yml'
+
+  pull_request:
+    # Only trigger for nsjail-docker changes
+    # This will only run tests, it won't create a package
+    paths: 
+      - 'config/docker/**'
+      - '.github/workflows/dockerpush.yml'
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          cd config/docker
+          docker build . --file nsjail.Dockerfile
+          docker build . --file chroot.Dockerfile
+
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build images
+        run: |
+          cd config/docker
+          docker build . --file nsjail.Dockerfile --tag nsjail
+          docker build . --file chroot.Dockerfile --tag chroot
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push images
+        run: |
+          IMAGE_REPO=docker.pkg.github.com/${{ github.repository }}
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo VERSION=$VERSION
+
+          docker tag nsjail $IMAGE_REPO/kctf-nsjail-bin:$VERSION
+          docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
+
+          docker tag chroot $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
+          docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION

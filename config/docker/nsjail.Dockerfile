@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-.PHONY: docker
+FROM ubuntu:19.10
 
-docker: .gen/docker-image
-
-.gen/docker-image: Dockerfile $(shell find files)
-	docker build -t "kctf-nsjail" .
-	echo $$(docker image ls "kctf-nsjail" -q) > $@
+RUN apt-get update && apt-get install -y build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev
+RUN git clone https://github.com/google/nsjail.git
+RUN cd /nsjail && make -j && cp nsjail /usr/bin/
+RUN rm -R /nsjail
