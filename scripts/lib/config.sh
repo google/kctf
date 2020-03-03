@@ -81,10 +81,10 @@ function create_gcloud_config {
   export CLOUDSDK_ACTIVE_CONFIG_NAME="${CONFIG_NAME}"
   if ! gcloud config configurations describe "${CONFIG_NAME}" >/dev/null 2>&1; then
       gcloud config configurations create --no-activate "${CONFIG_NAME}"
-      gcloud config set core/account "${ACTIVE_ACCOUNT}"
-      gcloud config set core/project "${PROJECT}"
-      gcloud config set compute/zone "${ZONE}"
-      gcloud config set container/cluster "${CLUSTER_NAME}"
+      gcloud config set core/account "${ACTIVE_ACCOUNT}" --configuration "${CONFIG_NAME}"
+      gcloud config set core/project "${PROJECT}" --configuration "${CONFIG_NAME}"
+      gcloud config set compute/zone "${ZONE}" --configuration "${CONFIG_NAME}"
+      gcloud config set container/cluster "${CLUSTER_NAME}" --configuration "${CONFIG_NAME}"
   fi
 }
 
