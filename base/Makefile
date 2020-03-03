@@ -219,7 +219,7 @@ ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
 	echo $$(docker image ls "kctf-healthcheck-${CHALLENGE_NAME}" -q) > $@
 
 healthcheck/.gen/exploit.cpio.enc: healthcheck/.gen/exploit.cpio healthcheck/.gen/exploit.key
-	openssl aes-256-cbc -e -in healthcheck/.gen/exploit.cpio -out $@ -K "$$(cat healthcheck/.gen/exploit.key)" -nosalt -iv 00000000000000000000000000000000
+	openssl aes-256-cbc -e -in healthcheck/.gen/exploit.cpio -out $@ -K "$$(cat healthcheck/.gen/exploit.key)" -nosalt -iv 13333333333333333333333333333337
 
 healthcheck/.gen/exploit.cpio: $(shell find healthcheck/exploit)
 	pushd ${@D}
