@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-healthcheck
+FROM ubuntu:19.10
 
-# Add the exploit directory as an encrypted archive.
-# This is out of caution in case that we leak the 
-COPY .gen/exploit.cpio.enc /
+RUN apt-get update && apt-get upgrade -y
 
-COPY files /home/user
+RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
-CMD decrypt_exploit.sh && setpriv --init-groups --reuid user --regid user --inh-caps=-all -- /exploit/run.sh & /home/user/healthz.py
+RUN apt-get -y install python2.7 python-pip
+RUN pip install pwntools
+RUN mkdir -p /home/user/.pwntools-cache && echo never > /home/user/.pwntools-cache/update
+
+RUN apt-get -y install cpio
+
+COPY files/decrypt_exploit.sh /usr/bin/

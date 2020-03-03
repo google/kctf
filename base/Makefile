@@ -214,7 +214,7 @@ ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
 	fi
 	touch $@
 
-.gen/healthcheck-docker-image: healthcheck/Dockerfile healthcheck/.gen/exploit.cpio.enc $(shell find healthcheck/files)
+.gen/healthcheck-docker-image: healthcheck/Dockerfile healthcheck/.gen/exploit.cpio.enc $(shell find healthcheck/files) ../kctf-conf/base/healthcheck-docker/.gen/docker-image
 	docker build -t "kctf-healthcheck-${CHALLENGE_NAME}" healthcheck
 	echo $$(docker image ls "kctf-healthcheck-${CHALLENGE_NAME}" -q) > $@
 
@@ -259,6 +259,9 @@ healthcheck/.gen/exploit-key.yaml: healthcheck/.gen/exploit.key | .cluster-confi
 	kubectl apply -f healthcheck/.gen/exploit-key.yaml
 
 ../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
+	$(MAKE) -C ${@D}/.. .gen/docker-image
+
+../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
 ${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-tagged .FORCE
