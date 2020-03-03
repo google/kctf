@@ -13,9 +13,6 @@
 # limitations under the License.
 FROM ubuntu:19.10
 
-RUN apt-get -y update
-RUN apt-get -y upgrade
-
 RUN apt-get -y install python2.7 python-pip
 RUN pip install pwntools
 
