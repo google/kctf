@@ -81,7 +81,7 @@ else
   { cd ${DOCKER_LOGS} && tail -f * & }
   trap 'kill $(jobs -p)' EXIT
   for pid in ${DOCKER_PIDS}; do
-    wait -f "$pid"
+    wait "$pid"
   done;
   rm -rf ${DOCKER_LOGS}
 fi
