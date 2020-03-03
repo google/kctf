@@ -18,6 +18,8 @@ FROM ubuntu:19.10
 RUN apt-get update && apt-get install -y uidmap libprotobuf17 libnl-route-3-200
 RUN apt-get upgrade -y
 
+RUN /usr/sbin/useradd --no-create-home -u 1000 user
+
 COPY --from=bin /usr/bin/nsjail /usr/bin/nsjail
 COPY --from=chroot /chroot /chroot
 
