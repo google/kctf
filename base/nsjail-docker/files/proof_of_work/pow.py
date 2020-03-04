@@ -25,15 +25,6 @@ CHALSIZE = 2**128
 
 SOLVER_URL = 'https://github.com/google/kctf/blob/master/base/nsjail-docker/files/proof_of_work/pow.py'
 
-def stdin_is_localhost_socket():
-    try:
-        sock = socket.socket(fileno=sys.stdin.fileno())
-        peername = sock.getpeername()
-        sock.detach()
-        return peername[0] == '::ffff:127.0.0.1'
-    except OSError:
-        return False
-
 def sloth_root(x, diff, p):
     for i in range(diff):
         x = pow(x, (p + 1) // 4, p) ^ 1
@@ -96,8 +87,6 @@ def main():
             sys.stdout.write("== proof-of-work: disabled ==\n")
             sys.exit(0)
 
-        if stdin_is_localhost_socket():
-            sys.exit(0)
 
         challenge = get_challenge(difficulty)
 
