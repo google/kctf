@@ -45,12 +45,24 @@ jobs:
           docker build . --file nsjail.Dockerfile --tag nsjail
           docker build . --file chroot.Dockerfile --tag chroot
 
-      - name: Log into registry
+      - name: Log into GitHub registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+        
+      - name: Setup gcloud CLI
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '270.0.0'
+          service_account_email: ${{ secrets.GCR_EMAIL }}
+          service_account_key: ${{ secrets.GCR_KEY }}
+              
+      - name: Configure docker to use the gcloud command-line tool as a credential helper
+        run: |
+          gcloud auth configure-docker
 
       - name: Push images
         run: |
           IMAGE_REPO=docker.pkg.github.com/${{ github.repository }}
+          IMAGE_GCR=gcr.io/${{ secrets.GCR_PROJECT }}
 
           # Strip git ref prefix from version
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
@@ -64,7 +76,9 @@ jobs:
           echo VERSION=$VERSION
 
           docker tag nsjail $IMAGE_REPO/kctf-nsjail-bin:$VERSION
+          docker tag nsjail $IMAGE_GCR/kctf-nsjail-bin:$VERSION
           docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
 
           docker tag chroot $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
+          docker tag chroot $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
           docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
