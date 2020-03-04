@@ -93,6 +93,7 @@ def main():
         difficulty = int(sys.argv[2])
 
         if difficulty == 0:
+            sys.stdout.write("== proof-of-work: disabled ==\n")
             sys.exit(0)
 
         if stdin_is_localhost_socket():
@@ -100,7 +101,7 @@ def main():
 
         challenge = get_challenge(difficulty)
 
-        sys.stdout.write("== proof-of-work ==\n")
+        sys.stdout.write("== proof-of-work: enabled ==\n")
         sys.stdout.write("please solve a pow first\n")
         sys.stdout.write("You can find the solver at:\n")
         sys.stdout.write("  {}\n".format(SOLVER_URL))
