@@ -26,12 +26,29 @@ fi
 CHALLENGE_NAME=$1
 CHALLENGE_DIR=$(readlink -f "${CHAL_DIR}/${CHALLENGE_NAME}")
 
+DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${CLUSTER_NAME}-dns-zone" --format 'get(name)')
+if [ -z "${DNS_ZONE}" ]; then
+  echo 'missing DNS zone. Run ./scripts/setup/dns.sh'
+  exit 1
+fi
+
 if [ ! -z "${DOMAIN_NAME}" ]
 then
-    LB_IP=$(make -s -C "${CHALLENGE_DIR}" ip)
-    gcloud dns record-sets transaction start --zone="${CLUSTER_NAME}-dns-zone"
-    gcloud dns record-sets transaction add --zone="${CLUSTER_NAME}-dns-zone" --ttl 30 --name "${CHALLENGE_NAME}.${DOMAIN_NAME}." --type A "${LB_IP}"
-    gcloud dns record-sets transaction execute --zone="${CLUSTER_NAME}-dns-zone"
+  TRANSACTION=$(mktemp -d)/transaction.yaml
+  gcloud dns record-sets transaction start --zone="${CLUSTER_NAME}-dns-zone" --transaction-file $TRANSACTION
+  LB_IP=$(make -s -C "${CHALLENGE_DIR}" ip)
+  DNS_RRS=$(gcloud dns record-sets list --zone="${CLUSTER_NAME}-dns-zone" --filter "name:${CHALLENGE_NAME}.${DOMAIN_NAME}." --format 'get(name)')
+  if [ ! -z "${DNS_RRS}" ]; then
+    OLD_IP=$(gcloud dns record-sets list --zone="${CLUSTER_NAME}-dns-zone" --format 'get(DATA)' --filter "name:${CHALLENGE_NAME}.${DOMAIN_NAME}.")
+    if [ "${OLD_IP}" = "${LB_IP}" ]; then
+      echo "DNS record did not change"
+      exit 0
+    fi
+    gcloud dns record-sets transaction remove --zone="${CLUSTER_NAME}-dns-zone" --ttl 30 --name "${CHALLENGE_NAME}.${DOMAIN_NAME}." --type A "${OLD_IP}" --transaction-file $TRANSACTION
+  fi
+  gcloud dns record-sets transaction add --zone="${CLUSTER_NAME}-dns-zone" --ttl 30 --name "${CHALLENGE_NAME}.${DOMAIN_NAME}." --type A "${LB_IP}" --transaction-file $TRANSACTION
+  gcloud dns record-sets transaction execute --zone="${CLUSTER_NAME}-dns-zone" --transaction-file $TRANSACTION
+  rm -rf $(dirname $TRANSACTION)
 else
-    echo "DOMAIN_NAME not defined. Run ./scripts/setup/config.sh"
+  echo "DOMAIN_NAME not defined. Run ./scripts/setup/config.sh"
 fi
