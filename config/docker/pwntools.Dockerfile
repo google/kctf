@@ -11,15 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-healthcheck
+FROM ubuntu:19.10
 
-# Add the exploit directory as an encrypted archive.
-# This is out of caution in case that we leak the 
-COPY .gen/exploit.cpio.enc /
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get -y install build-essential python-virtualenv python2-dev
 
-# Needed by the webserver healthz.py
-RUN apt-get -y install python2.7
-
-COPY files /home/user
-
-CMD decrypt_exploit.sh && setpriv --init-groups --reuid user --regid user --inh-caps=-all -- /exploit/run.sh & /home/user/healthz.py
+RUN virtualenv /venv
+RUN bash -c "source /venv/bin/activate && pip install pwntools"

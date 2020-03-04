@@ -67,10 +67,17 @@ if [ -z "$(docker images -f reference=kctf-nsjail-bin -q)" ]; then
     >${DOCKER_LOGS}/nsjail.STDOUT 2>${DOCKER_LOGS}/nsjail.STDERR &
   DOCKER_PIDS="$DOCKER_PIDS $!"
 fi
-  
+
 if [ -z "$(docker images -f reference=kctf-nsjail-chroot -q)" ]; then
   docker build -t kctf-nsjail-chroot "${DIR}/config/docker" -f "${DIR}/config/docker/chroot.Dockerfile" \
     >${DOCKER_LOGS}/chroot.STDOUT 2>${DOCKER_LOGS}/chroot.STDERR &
+  DOCKER_PIDS="$DOCKER_PIDS $!"
+fi
+
+if [ -z "$(docker images -f reference=kctf-pwntools -q)" ]; then
+  echo '==='
+  docker build -t kctf-pwntools "${DIR}/config/docker" -f "${DIR}/config/docker/pwntools.Dockerfile" \
+    >${DOCKER_LOGS}/pwntools.STDOUT 2>${DOCKER_LOGS}/pwntools.STDERR &
   DOCKER_PIDS="$DOCKER_PIDS $!"
 fi
 
