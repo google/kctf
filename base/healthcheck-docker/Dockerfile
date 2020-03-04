@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM kctf-pwntools:latest AS pwntools
 FROM ubuntu:19.10
 
 RUN apt-get update && apt-get upgrade -y
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
-RUN apt-get -y install python2.7 python-pip
-RUN pip install pwntools
+COPY --from=pwntools /venv /venv
 RUN mkdir -p /home/user/.pwntools-cache && echo never > /home/user/.pwntools-cache/update
 
-RUN apt-get -y install cpio
+# needed by decrypt_exploit.sh
+RUN apt-get -y install cpio openssl
 
 COPY files/decrypt_exploit.sh /usr/bin/
