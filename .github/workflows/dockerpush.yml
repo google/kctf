@@ -28,6 +28,7 @@ jobs:
           cd config/docker
           docker build . --file nsjail.Dockerfile
           docker build . --file chroot.Dockerfile
+          docker build . --file pwntools.Dockerfile
 
   push:
     # Ensure test job passes before pushing image.
@@ -44,17 +45,18 @@ jobs:
           cd config/docker
           docker build . --file nsjail.Dockerfile --tag nsjail
           docker build . --file chroot.Dockerfile --tag chroot
+          docker build . --file pwntools.Dockerfile --tag pwntools
 
       - name: Log into GitHub registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-        
+
       - name: Setup gcloud CLI
         uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           version: '270.0.0'
           service_account_email: ${{ secrets.GCR_EMAIL }}
           service_account_key: ${{ secrets.GCR_KEY }}
-              
+
       - name: Configure docker to use the gcloud command-line tool as a credential helper
         run: |
           gcloud auth configure-docker
@@ -84,3 +86,8 @@ jobs:
           docker tag chroot $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
           docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
           docker push $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
+
+          docker tag pwntools $IMAGE_REPO/kctf-pwntools:$VERSION
+          docker tag pwntools $IMAGE_GCR/kctf-pwntools:$VERSION
+          docker push $IMAGE_REPO/kctf-pwntools:$VERSION
+          docker push $IMAGE_GCR/kctf-pwntools:$VERSION
