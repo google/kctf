@@ -58,3 +58,10 @@ else
         rm "${CONFIG_DIR}/cluster.conf"
     fi
 fi
+
+# generate ecdsa keypair to be used for the proof-of-work bypass
+mkdir -p "${CHAL_DIR}/kctf-conf/secrets"
+pushd "${CHAL_DIR}/kctf-conf/secrets"
+openssl ecparam -name prime256v1 -genkey -noout -out pow-bypass-key.pem
+openssl ec -in pow-bypass-key.pem -pubout -out pow-bypass-key-pub.pem
+popd
