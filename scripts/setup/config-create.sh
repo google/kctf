@@ -114,8 +114,12 @@ ln -fs "${CLUSTER_CONFIG}" "${CONFIG_FILE}"
 
 create_gcloud_config
 
-# there might be an existing cluster, try to get the creds
-if ! get_cluster_creds 2>/dev/null; then
+# there might be an existing cluster
+# if it already exists, we try to update it
+# otherwise, ask if we should start it
+if get_cluster_creds 2>/dev/null; then
+    "${DIR}/scripts/cluster/start.sh"
+else
     echo
     read -p "Start the cluster now (y/N)? " SHOULD_START
     echo
