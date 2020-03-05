@@ -18,6 +18,9 @@ import base64
 import secrets
 import socket
 import sys
+from ecdsa import VerifyingKey
+from ecdsa.util import sigdecode_der
+import hashlib
 
 VERSION = 's'
 MODULUS = 2**1279-1
@@ -60,7 +63,20 @@ def solve_challenge(chal):
     y = sloth_root(x, diff, MODULUS)
     return encode_challenge([y])
 
+def can_bypass(chal, sol):
+    if not sol.startswith('b.'):
+        return False
+    sig = sol[2:]
+    try:
+        with open("/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
+            vk = VerifyingKey.from_pem(fd.read())
+        return vk.verify(signature=sig, data=chal, hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
+    except:
+        return False
+
 def verify_challenge(chal, sol):
+    if can_bypass(chal, sol):
+        return True
     [diff, x] = decode_challenge(chal)
     [y] = decode_challenge(sol)
     res = sloth_square(y, diff, MODULUS)
