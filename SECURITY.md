@@ -41,7 +41,7 @@ The compromise of the players themselves is out of scope of kCTF's threat model.
 
 #### Infrastructure -> Players solutions
 
-The environment from every players should be isolated from other players. kCTF usually does this by creating a new Linux user namespace for every TCP connection. Some challenges, however, require persistent storage. Challenges that require persistent storage in between requests has the consequence of relaxing these guarantees. This means that in those cases challenges have to be carefully designed so that there is isolation in between the sandboxed environment, and the environment managing the shared storage. This is because as players solve the challenges, they might leave some traces in the infrastructure that other players could find and reuse solve the challenges faster.
+The environment from every player should be isolated from other players. kCTF usually does this by creating a new Linux user namespace for every TCP connection. Some challenges, however, require persistent storage. Challenges that require persistent storage in between requests has the consequence of relaxing these guarantees. This means that in those cases challenges have to be carefully designed so that there is isolation in between the sandboxed environment, and the environment managing the shared storage. This is because as players solve the challenges, they might leave some traces in the infrastructure that other players could find and reuse solve the challenges faster.
 
 As such, the risks on this edge are:
  - Challenges might leave other players solutions on the server
@@ -63,7 +63,7 @@ As such, the risks on this edge are:
 Ways to limit these risks are:
  - kCTF automatically scales and limits the number of maximum nodes in a cluster.
  - kCTF could enable better isolation between tasks (by using different namespaces) to limit the impact of a single task. Work to do this is tracked on [Issue 8](https://github.com/google/kctf/issues/8).
- - kCTF could automatically enabled the proof-of-work when an attack is detected. There are no plans to do this.
+ - kCTF could automatically enable the proof-of-work when an attack is detected. There are no plans to do this.
 
 #### Infrastructure -> Kubernetes
 
@@ -103,7 +103,7 @@ Ways to limit these risks are:
 
 #### Kubernetes -> Flags
 
-The flags are stored as [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/). Any vulnerabilities in Kubernetes that allows accessing secrets or a misconfiguration by the author (such as not putting the flag in the secret directry), could result in broader access to the flags.
+The flags are stored as [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/). Any vulnerabilities in Kubernetes that allows accessing secrets or a misconfiguration by the author (such as not putting the flag in the secret directory), could result in broader access to the flags.
 
 As such, the risks on this edge are:
  - Kubernetes might have vulnerabilities
@@ -127,7 +127,7 @@ The usual type of attackers to a system of this form mainly fall into two catego
 Finding and exploiting a vulnerability in kCTF provides different benefits to the attackers, usually reputational. The barrier of entry to perform an attack usually is the cost to find the vulnerability. In order to increase the cost of these attacks, encouraging broad research by the well-intentioned security community on the same areas, could result in a lower likelihood of an attacker paying the cost of a successful attack.
 
 #### Cost of Operations
-Conducting an attack usually consists of a cycle of trial and error. Although kCTF is open-source (which reduces this to some degree), in practice the cost of being stealthy is directly correlated to the amount of preparation required. If the kCTF infrasructure provides thorough monitoring and alerting, this can increase the cost of preparation for the attackers. Work to do this is tracked in [Issue #30](https://github.com/google/kctf/issues/30).
+Conducting an attack usually consists of a cycle of trial and error. Although kCTF is open-source (which reduces this to some degree), in practice the cost of being stealthy is directly correlated to the amount of preparation required. If the kCTF infrastructure provides thorough monitoring and alerting, this can increase the cost of preparation for the attackers. Work to do this is tracked in [Issue #30](https://github.com/google/kctf/issues/30).
 
 #### Return of Investment
 Disrupting a competition done for the benefit of the security community is not immediately obvious, unless the competition itself, or the organizers, have managed to incentivise some of the members of the community to go through the effort to perform such an attack. As such, running a fair and high quality competition is an easy way for organizers to prevent alienating and making skilled players convert from users to attackers.
