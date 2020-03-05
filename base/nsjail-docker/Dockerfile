@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-nsjail-chroot:latest AS chroot
-FROM kctf-nsjail-bin:latest AS bin
+FROM gcr.io/kctf-docker/kctf-nsjail-chroot:latest AS chroot
+FROM gcr.io/kctf-docker/kctf-nsjail-bin:latest AS bin
 FROM ubuntu:19.10
 
 RUN apt-get update && apt-get install -y uidmap libprotobuf17 libnl-route-3-200
