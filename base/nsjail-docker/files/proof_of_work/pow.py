@@ -120,7 +120,7 @@ def main():
             solution = sys.stdin.readline().strip()
 
         if verify_challenge(challenge, solution):
-            sys.stdout.write("Correct")
+            sys.stdout.write("Correct\n")
             sys.stdout.flush()
             sys.exit(0)
         else:
