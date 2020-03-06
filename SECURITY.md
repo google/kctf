@@ -11,7 +11,7 @@ To report a vulnerability in a dependency, please contact the upstream maintaine
 
 ## Security Threat Model
 
-kCTF exposes infrastructure in which authors are able to expose CTF challenges with security vulnerabilities (including SQL injection vulnerabilities). Even with code execution, it should be impossible for an attacker to sabotage or gain an advantage over other players. In order to accomplish this, the challenge provides tools to sandbox and isolate every instance of a challenge from other users.
+kCTF exposes infrastructure in which authors are able to expose CTF challenges with security vulnerabilities like SQL injection or even with code execution. kCTF provides tools so that it should be impossible for an attacker to disturb the challenge, sabotage it or gain an advantage over other players. In order to accomplish this, the challenge provides tools to sandbox and isolate every instance of a challenge from other users.
 
 ### Assets
 
