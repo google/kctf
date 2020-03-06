@@ -28,7 +28,7 @@ The assets that kCTF manages are:
 
 #### Players -> Infrastructure
 
-The players interact with the challenges through a Load Balancer configured in Google Compute Engine (GCE), which routes traffic to different virtual machines. Players' internet connection could be compromised (eg, with a main-in-the-middle attack), or the players themselves could be compromised.
+The players interact with the challenges through a Load Balancer configured in Google Compute Engine (GCE), which routes traffic to different virtual machines. Players' internet connection could be compromised (eg, with a man-in-the-middle attack), or the players themselves could be compromised.
 
 As such, the risks on this edge are:
  - Players internet connection might be compromised
