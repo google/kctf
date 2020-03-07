@@ -39,6 +39,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      
+      - name: Test leaking secret
+        run: echo "${{ secrets.GCR_PROJECT }}"
 
       - name: Build images
         run: |
