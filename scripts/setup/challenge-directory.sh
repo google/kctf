@@ -58,3 +58,30 @@ else
         rm "${CONFIG_DIR}/cluster.conf"
     fi
 fi
+
+DOCKER_LOGS=$(mktemp -d)
+DOCKER_PIDS=""
+
+if [ -z "$(docker images -f reference=kctf-nsjail-bin -q)" ]; then
+  docker build -t kctf-nsjail-bin "${DIR}/config/docker" -f "${DIR}/config/docker/nsjail.Dockerfile" \
+    >${DOCKER_LOGS}/nsjail.STDOUT 2>${DOCKER_LOGS}/nsjail.STDERR &
+  DOCKER_PIDS="$DOCKER_PIDS $!"
+fi
+  
+if [ -z "$(docker images -f reference=kctf-nsjail-chroot -q)" ]; then
+  docker build -t kctf-nsjail-chroot "${DIR}/config/docker" -f "${DIR}/config/docker/chroot.Dockerfile" \
+    >${DOCKER_LOGS}/chroot.STDOUT 2>${DOCKER_LOGS}/chroot.STDERR &
+  DOCKER_PIDS="$DOCKER_PIDS $!"
+fi
+
+if [ "${DOCKER_BACKGROUND-false}" == "true" ]; then
+  echo "== NOTICE: Building docker images in the background =="
+  echo "   pids: ${DOCKER_PIDS:1} tmp: ${DOCKER_LOGS}"
+else
+  { cd ${DOCKER_LOGS} && tail -f * & }
+  trap 'kill $(jobs -p)' EXIT
+  for pid in ${DOCKER_PIDS}; do
+    wait -f "$pid"
+  done;
+  rm -rf ${DOCKER_LOGS}
+fi
