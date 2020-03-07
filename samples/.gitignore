@@ -1,2 +1,4 @@
-kctf-conf/**
+kctf-conf/*
 !kctf-conf/base/
+#!kctf-conf/base/*
+#!kctf-conf/base/**
