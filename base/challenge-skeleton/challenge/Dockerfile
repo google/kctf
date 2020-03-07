@@ -13,9 +13,6 @@
 # limitations under the License.
 FROM kctf-nsjail
 
-RUN apt-get -y update
-RUN apt-get -y upgrade
-
 RUN ln -s /secrets/flag /chroot/flag
 
 COPY files /chroot/home/user
