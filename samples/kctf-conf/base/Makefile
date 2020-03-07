@@ -214,12 +214,12 @@ ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
 	fi
 	touch $@
 
-.gen/healthcheck-docker-image: healthcheck/Dockerfile healthcheck/.gen/exploit.cpio.enc $(shell find healthcheck/files)
+.gen/healthcheck-docker-image: healthcheck/Dockerfile healthcheck/.gen/exploit.cpio.enc $(shell find healthcheck/files) ../kctf-conf/base/healthcheck-docker/.gen/docker-image
 	docker build -t "kctf-healthcheck-${CHALLENGE_NAME}" healthcheck
 	echo $$(docker image ls "kctf-healthcheck-${CHALLENGE_NAME}" -q) > $@
 
 healthcheck/.gen/exploit.cpio.enc: healthcheck/.gen/exploit.cpio healthcheck/.gen/exploit.key
-	openssl aes-256-cbc -e -in healthcheck/.gen/exploit.cpio -out $@ -K "$$(cat healthcheck/.gen/exploit.key)" -nosalt -iv 00000000000000000000000000000000
+	openssl aes-256-cbc -e -in healthcheck/.gen/exploit.cpio -out $@ -K "$$(cat healthcheck/.gen/exploit.key)" -nosalt -iv 13333333333333333333333333333337
 
 healthcheck/.gen/exploit.cpio: $(shell find healthcheck/exploit)
 	pushd ${@D}
@@ -261,6 +261,9 @@ healthcheck/.gen/exploit-key.yaml: healthcheck/.gen/exploit.key | .cluster-confi
 ../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
+../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
+	$(MAKE) -C ${@D}/.. .gen/docker-image
+
 ${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-tagged .FORCE
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	(kubectl get deployment/${CHALLENGE_NAME} -o jsonpath='{.spec.template.spec.containers[?(@.name == "challenge")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}") > $@
@@ -279,8 +282,8 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged
 	@  echo 'error: cluster config not loaded. Run kctf-config-create or kctf-config-load'
 	@  exit 1
 	@fi
-	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" > /dev/null
-	mkdir -p ${CLUSTER_GEN} > /dev/null
+	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
+	mkdir -p ${CLUSTER_GEN} >&2
 
 .FORCE:
 
@@ -388,11 +391,11 @@ else
 endif
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	CHAL_IMAGE=($${CHAL_IMAGE//:/ })
-	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: $${CHAL_IMAGE[1]}" >> "$@/deployment/kustomization.yaml"
+	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: \"$${CHAL_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
 ifeq ($(HEALTHCHECK), true)
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	HEALTHCHECK_IMAGE=($${HEALTHCHECK_IMAGE//:/ })
-	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: $${HEALTHCHECK_IMAGE[1]}" >> "$@/deployment/kustomization.yaml"
+	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: \"$${HEALTHCHECK_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
 endif
 	echo "$${DEPLOYMENT_KUSTOMIZATION}" >> "$@/deployment/kustomization.yaml"
 	echo "$${CHAL_CONTAINERS}" > "$@/deployment/containers.yaml"
