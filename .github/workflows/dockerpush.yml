@@ -79,15 +79,18 @@ jobs:
 
           docker tag nsjail $IMAGE_REPO/kctf-nsjail-bin:$VERSION
           docker tag nsjail $IMAGE_GCR/kctf-nsjail-bin:$VERSION
-          docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
-          docker push $IMAGE_GCR/kctf-nsjail-bin:$VERSION
 
           docker tag chroot $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
           docker tag chroot $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
-          docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
-          docker push $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
 
           docker tag pwntools $IMAGE_REPO/kctf-pwntools:$VERSION
           docker tag pwntools $IMAGE_GCR/kctf-pwntools:$VERSION
+          
+          docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
+          docker push $IMAGE_GCR/kctf-nsjail-bin:$VERSION
+          
+          docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
+          docker push $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
+          
           docker push $IMAGE_REPO/kctf-pwntools:$VERSION
           docker push $IMAGE_GCR/kctf-pwntools:$VERSION
