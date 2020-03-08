@@ -15,8 +15,5 @@
 # IMPORTANT
 # - ../../.gen/src is required, don't remove it
 # - Output files should go to ../files
-../../.gen/src: ../files/shell
+../../.gen/src:
 	touch $@
-
-../files/shell: shell.c
-	$(CC) -o $@ $<

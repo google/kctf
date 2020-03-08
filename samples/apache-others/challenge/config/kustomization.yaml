@@ -14,7 +14,6 @@
 configMapGenerator:
 - name: apache-others-config
   files:
-  - pow
   - nsjail.cfg
   - apache2-nsjail-others.conf
 generatorOptions:

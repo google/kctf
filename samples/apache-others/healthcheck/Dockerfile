@@ -22,4 +22,4 @@ RUN apt-get -y install python2.7
 
 COPY files /home/user
 
-CMD decrypt_exploit.sh && setpriv --init-groups --reuid user --regid user --inh-caps=-all -- /exploit/run.sh & /home/user/healthz.py
+CMD decrypt_exploit.sh && chmod -R a+rx /exploit && setpriv --init-groups --reuid user --regid user --inh-caps=-all -- /exploit/run.sh & /home/user/healthz.py
