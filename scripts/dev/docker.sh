@@ -35,4 +35,4 @@ VERSION=$(echo "$REF" | sed -e 's,.*/\(.*\),\1,')
 [ "$VERSION" == "master" ] && VERSION=latest
 
 docker tag $IMAGE $REPO:$VERSION
-[ "$PUSH" == "true"] && docker push $REPO:$VERSION
+[ "$PUSH" == "true" ] && docker push $REPO:$VERSION
