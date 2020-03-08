@@ -63,34 +63,16 @@ jobs:
 
       - name: Push images
         run: |
-          IMAGE_REPO=docker.pkg.github.com/${{ github.repository }}
-          IMAGE_GCR=gcr.io/${{ secrets.GCR_PROJECT }}
+          PUSH="true"
+          REFERENCE="${{ github.ref }}"
+          IMAGE_REPO="docker.pkg.github.com/${{ github.repository }}"
+          IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}"
 
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          scripts/dev/docker.sh nsjail $IMAGE_REPO/kctf-nsjail-bin $REFERENCE $PUSH
+          scripts/dev/docker.sh nsjail $IMAGE_GCR/kctf-nsjail-bin $REFERENCE $PUSH
 
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          scripts/dev/docker.sh chroot $IMAGE_REPO/kctf-nsjail-chroot $REFERENCE $PUSH
+          scripts/dev/docker.sh chroot $IMAGE_GCR/kctf-nsjail-chroot $REFERENCE $PUSH
 
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
-
-          echo VERSION=$VERSION
-
-          docker tag nsjail $IMAGE_REPO/kctf-nsjail-bin:$VERSION
-          docker tag nsjail $IMAGE_GCR/kctf-nsjail-bin:$VERSION
-
-          docker tag chroot $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
-          docker tag chroot $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
-
-          docker tag pwntools $IMAGE_REPO/kctf-pwntools:$VERSION
-          docker tag pwntools $IMAGE_GCR/kctf-pwntools:$VERSION
-          
-          docker push $IMAGE_REPO/kctf-nsjail-bin:$VERSION
-          docker push $IMAGE_GCR/kctf-nsjail-bin:$VERSION
-          
-          docker push $IMAGE_REPO/kctf-nsjail-chroot:$VERSION
-          docker push $IMAGE_GCR/kctf-nsjail-chroot:$VERSION
-          
-          docker push $IMAGE_REPO/kctf-pwntools:$VERSION
-          docker push $IMAGE_GCR/kctf-pwntools:$VERSION
+          scripts/dev/docker.sh pwntools $IMAGE_REPO/kctf-pwntools $REFERENCE $PUSH
+          scripts/dev/docker.sh pwntools $IMAGE_GCR/kctf-pwntools $REFERENCE $PUSH
