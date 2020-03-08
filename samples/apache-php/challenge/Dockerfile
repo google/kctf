@@ -1,16 +1,16 @@
 FROM kctf-nsjail
 
-RUN apt-get -y update
-RUN apt-get -y upgrade
-
 RUN ln -s /secrets/flag /chroot/flag
 
 VOLUME /tmp
 VOLUME /var/log/apache2
 VOLUME /var/run/apache2
 
-RUN apt-get install -y apache2
-RUN chroot /chroot apt-get install -y php-cgi
+RUN apt-get update && apt-get install -yq --no-install-recommends apache2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN chroot /chroot apt-get update \
+    && chroot /chroot apt-get install -yq --no-install-recommends php-cgi \
+    && rm -rf /chroot/var/lib/apt/lists/*
 
 RUN service apache2 start
 

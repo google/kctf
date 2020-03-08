@@ -13,8 +13,8 @@
 # limitations under the License.
 FROM ubuntu:19.10
 
-RUN apt-get update && apt-get -y upgrade
-RUN apt-get -y install build-essential python-virtualenv python2-dev
+RUN apt-get update && apt-get -y --no-install-recommends install build-essential python-virtualenv python2-dev
+RUN apt-get -y upgrade && apt-get -y clean
 
 RUN virtualenv /venv
 RUN bash -c "source /venv/bin/activate && pip install pwntools"
