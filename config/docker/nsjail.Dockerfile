@@ -13,8 +13,11 @@
 # limitations under the License.
 FROM ubuntu:19.10
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev
-RUN apt-get -y upgrade
-RUN git clone https://github.com/google/nsjail.git
-RUN cd /nsjail && make -j && cp nsjail /usr/bin/
-RUN rm -R /nsjail
+ENV BUILD_PACKAGES build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev ca-certificates
+
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends $BUILD_PACKAGES \
+    && rm -rf /var/lib/apt/lists/* \
+    && git clone https://github.com/google/nsjail.git \
+    && cd /nsjail && make -j && cp nsjail /usr/bin/ \
+    && rm -R /nsjail && apt-get remove --purge -y $BUILD_PACKAGES $(apt-mark showauto)
