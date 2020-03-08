@@ -1,12 +1,10 @@
-name: Push samples to testing GKE deployment 
+name: Test build and GKE deployment
 
 on:
   push:
     paths-ignore: 
       - 'docs/**' 
       - '*.md'
-    branches:
-    - master
 
 # Environment variables available to all jobs and steps in this workflow
 env:
@@ -15,8 +13,8 @@ env:
   GKE_CLUSTER: github-ci
 
 jobs:
-  deploy-to-gke:
-    name: Deploy kCTF to GKE
+  build-and-deploy:
+    name: Build and deploy
     runs-on: ubuntu-latest
     steps:
 
@@ -79,7 +77,17 @@ jobs:
         echo PUBLIC=true | tee -a $(ls samples/*/chal.conf)
         echo HEALTHCHECK=true | tee -a $(ls samples/*/chal.conf)
 
+    - name: Build all tasks
+      run: |
+        cd samples
+        for f in *; do
+          if [ ! "$f" == "kctf-conf" ]; then
+            (cd $f && make docker)
+          fi
+        done
+
     - name: Deploy all tasks
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: |
         export PATH=$PATH:$PWD/bin
         kctf-batch-deploy
