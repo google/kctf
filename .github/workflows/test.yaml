@@ -40,7 +40,7 @@ jobs:
 
     - name: Build base images locally if any cached files changed
       run: |
-        FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep ^config/docker/)
+        FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep ^config/docker/) || true
         if [ ! -z "$FILES" ]; then
           pushd config/docker
           docker build . --file nsjail.Dockerfile -t nsjail
