@@ -1,4 +1,4 @@
-name: Push docker base image cache
+name: Push docker base image cache to GCR cache
 
 on:
   push:

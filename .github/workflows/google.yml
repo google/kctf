@@ -1,4 +1,4 @@
-name: GKE Deployment 
+name: Push samples to testing GKE deployment 
 
 on:
   push:
@@ -40,10 +40,26 @@ jobs:
       run: |
         gcloud auth configure-docker
 
+    - name: Build base images locally if any cached files changed
+      run: |
+        FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep ^config/docker/)
+        if [ ! -z "$FILES" ]; then
+          pushd config/docker
+          docker build . --file nsjail.Dockerfile -t nsjail
+          docker build . --file chroot.Dockerfile -t chroot
+          docker build . --file pwntools.Dockerfile -t pwntools
+          popd
+          scripts/dev/docker.sh nsjail gcr.io/kctf-nsjail/kctf-nsjail-bin latest
+          scripts/dev/docker.sh chroot gcr.io/kctf-nsjail/kctf-nsjail-chroot latest
+          scripts/dev/docker.sh pwntools gcr.io/kctf-nsjail/kctf-pwntools latest
+        fi
+        
+    
     - name: Configure kCTF directory
       run: |        
         export PATH=$PATH:$PWD/bin
         kctf-setup-chal-dir $PWD/samples
+        kctf-chal-create default-task
 
     - name: Configure kCTF cluster
       run: |
@@ -52,7 +68,7 @@ jobs:
         echo ZONE=$GKE_ZONE >> /tmp/kctf.conf
         echo CLUSTER_NAME=$GKE_CLUSTER >> /tmp/kctf.conf
         echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> /tmp/kctf.conf
-        # hack until #19 is fixed
+        # hack until https://github.com/google/kctf/issues/19 is fixed
         KCTF_DIRECTORY=${GKE_PROJECT}_${GKE_ZONE}_${GKE_CLUSTER}
         mkdir -p samples/kctf-conf/$KCTF_DIRECTORY/
         mv /tmp/kctf.conf samples/kctf-conf/$KCTF_DIRECTORY/cluster.conf
