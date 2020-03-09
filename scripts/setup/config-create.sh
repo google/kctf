@@ -25,90 +25,85 @@ PROJECT=""
 ZONE="europe-west4-b"
 CLUSTER_NAME="kctf-cluster"
 DOMAIN_NAME=""
-
-config=""
-read_config() {
-    read -e -p "  $2: " -i "${!1}" "$1"
-    line="${1}=${!1}"
-    config="${config}"$'\n'"${line}"
-}
+START_CLUSTER="0"
 
 if [ -d ${CONFIG_DIR}/challenges ]; then
     load_chal_dir
-    echo
-    echo "Configuring cluster for challenge directory ${CHAL_DIR}"
-else
-    echo
-    read -e -p "In which directory will challenges be stored?: " "CHAL_DIR"
+fi
 
-    if [[ $CHAL_DIR == ~\/* ]]; then
-        CHAL_DIR="${HOME}/${CHAL_DIR:2}"
+function usage {
+    echo "$(basename $0) [args]" >&2
+    echo -e "\t--chal-dir\tdirectory in which challenges are stored (default: \"${CHAL_DIR}\")" >&2
+    echo -e "\t--project\tGoogle Cloud Platform project name" >&2
+    echo -e "\t--zone\t\tGCP Zone (default: europe-west4-b)" >&2
+    echo -e "\t\t\tFor a list of zones run: gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
+    echo -e "\t--cluster-name\tName of the kubernetes cluster (default: kctf-cluster)" >&2
+    echo -e "\t--domain-name\tOptional domain name to host challenges under" >&2
+    echo -e "\t--start-cluster\tStart the cluster if it's not runnign yet" >&2
+    exit 1
+}
+
+while :; do
+    if [[ -z "${1:-}" ]]; then
+        break
     fi
+    if [[ "$1" != "--start-cluster" ]] && [[ -z "${2:-}" ]]; then
+        echo "Missing argument after \"$1\"." >&2
+        usage
+    fi
+    case $1 in
+        --chal-dir)
+            CHAL_DIR=$2
+            if [[ $CHAL_DIR == ~\/* ]]; then
+                CHAL_DIR="${HOME}/${CHAL_DIR:2}"
+            fi
+            ;;
+        --project)
+            PROJECT=$2
+            ;;
+        --zone)
+            ZONE=$2
+            ;;
+        --cluster-name)
+            CLUSTER_NAME=$2
+            ;;
+        --domain-name)
+            DOMAIN_NAME="$2"
+            ;;
+        --start-cluster)
+            START_CLUSTER="1"
+            ;;
+        *)
+            echo "Unrecognized argument \"$1\"." >&2
+            usage
+            ;;
+    esac
+    if [[ "$1" != "--start-cluster" ]]; then
+        shift
+    fi
+    shift
+done
 
-    "${DIR}/scripts/setup/challenge-directory.sh" "${CHAL_DIR}"
-
-    load_chal_dir
+if [[ -z "$PROJECT" ]]; then
+    echo "Missing required argument \"--project\"." >&2
+    usage
 fi
 
-echo
-echo "= CLUSTER CONFIGURATION ="
-echo
-if test -f "${CONFIG_FILE}"; then
-    echo
-    echo " Reusing the last config file used ($(readlink -f "${CONFIG_FILE}"))."
-    echo
-    . "${CONFIG_FILE}"
-else
-    echo
-    echo " Creating a new config file from scratch."
-    echo
-fi
-echo
-echo "== PROJECT NAME =="
-echo
-echo " Important: Make sure to update this field to your own project, or nothing will work"
-echo
-read_config PROJECT "Google Cloud Platform project name"
-gcloud config set project "${PROJECT}"
-echo
-echo "= OPTIONAL CONFIGURATION ="
-echo
-echo " Note: You can leave everything below here as defaults."
-echo
-echo "== ZONE =="
-echo
-echo " Used for cluster configuration"
-echo "  The zone defines the geographic location of the cluster."
-echo
-echo -n "  Available zones: (Loading...)"
-gcloud compute machine-types list --filter="name=( n2-standard-4 )" --format 'value(zone)' | xargs echo -e "\r  Available zones: "
-echo
-read_config ZONE "GCP Zone"
-echo
-echo "== CLUSTER NAME =="
-echo
-echo "  If you are reusing the same project for multiple CTFs, make sure this name is unique."
-echo
-read_config CLUSTER_NAME "Name of the cluster"
-echo
-echo "== DOMAIN NAME =="
-echo
-echo "  If you want to configure a domain name for the challenge, provide it below, otherwise leave it empty."
-echo
-read_config DOMAIN_NAME "Domain name (eg, k8s.ctfcompetititon.com)"
-echo
+"${DIR}/scripts/setup/challenge-directory.sh" "${CHAL_DIR}"
+load_chal_dir
 
-CLUSTER_DIR="${CHAL_DIR}/kctf-conf/${PROJECT}_${ZONE}_${CLUSTER_NAME}"
-CLUSTER_CONFIG="${CLUSTER_DIR}/cluster.conf"
-
-echo "= SUMMARY ="
-echo " This is the configuration for your cluster, please review it to make sure it is correct. It will be written to ${CLUSTER_CONFIG}"
-echo "$config"
-echo
-echo " If you wish to change anything, just run this command again."
-
+generate_config_dir
+CLUSTER_DIR="${ret}"
 mkdir -p "${CLUSTER_DIR}"
-echo "${config}" > "${CLUSTER_CONFIG}"
+
+generate_config_path
+CLUSTER_CONFIG="${ret}"
+cat > "${CLUSTER_CONFIG}" << EOF
+PROJECT=${PROJECT}
+ZONE=${ZONE}
+CLUSTER_NAME=${CLUSTER_NAME}
+DOMAIN_NAME=${DOMAIN_NAME}
+EOF
 
 ln -fs "${CLUSTER_CONFIG}" "${CONFIG_FILE}"
 
@@ -116,14 +111,7 @@ create_gcloud_config
 
 # there might be an existing cluster
 # if it already exists, we try to update it
-# otherwise, ask if we should start it
-if get_cluster_creds 2>/dev/null; then
+# otherwise, start it if requsted
+if [[ "${START_CLUSTER}" == "1" ]] || get_cluster_creds 2>/dev/null; then
     "${DIR}/scripts/cluster/start.sh"
-else
-    echo
-    read -p "Start the cluster now (y/N)? " SHOULD_START
-    echo
-    if [[ ${SHOULD_START} =~ ^[Yy]$ ]]; then
-        "${DIR}/scripts/cluster/start.sh"
-    fi
 fi
