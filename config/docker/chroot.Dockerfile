@@ -13,9 +13,10 @@
 # limitations under the License.
 FROM ubuntu:19.10
 
-RUN apt-get update && apt-get install -y debootstrap
-RUN apt-get upgrade -y
-
-RUN debootstrap --variant minbase --include python3 eoan /chroot
-RUN chroot /chroot /usr/sbin/useradd --no-create-home -u 1000 user
-RUN /usr/sbin/useradd --no-create-home -u 1000 user
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends debootstrap \
+    && rm -rf /var/lib/apt/lists/* \
+    && debootstrap --variant minbase --include python3 eoan /chroot \
+    && echo nameserver 8.8.8.8 > /chroot/etc/resolv.conf \
+    && chroot /chroot /usr/sbin/useradd --no-create-home -u 1000 user \
+    && apt-get remove --purge -y debootstrap $(apt-mark showauto)

@@ -15,8 +15,9 @@ FROM gcr.io/kctf-docker/kctf-nsjail-chroot:latest AS chroot
 FROM gcr.io/kctf-docker/kctf-nsjail-bin:latest AS bin
 FROM ubuntu:19.10
 
-RUN apt-get update && apt-get install -y uidmap libprotobuf17 libnl-route-3-200
-RUN apt-get upgrade -y
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends uidmap libprotobuf17 libnl-route-3-200 gnupg wget netcat ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
