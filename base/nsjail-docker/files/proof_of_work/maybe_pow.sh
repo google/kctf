@@ -14,6 +14,8 @@
 # limitations under the License.
 
 if [ -f /config/pow ]; then
+  source /venv/bin/activate
+
   POW="$(cat /config/pow)"
   if ! /usr/bin/pow.py ask "${POW}"; then
     echo 'pow fail'
