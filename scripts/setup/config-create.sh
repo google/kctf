@@ -39,7 +39,7 @@ function usage {
     echo -e "\t\t\tFor a list of zones run: gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
     echo -e "\t--cluster-name\tName of the kubernetes cluster (default: kctf-cluster)" >&2
     echo -e "\t--domain-name\tOptional domain name to host challenges under" >&2
-    echo -e "\t--start-cluster\tStart the cluster if it's not runnign yet" >&2
+    echo -e "\t--start-cluster\tStart the cluster if it's not running yet" >&2
     exit 1
 }
 
