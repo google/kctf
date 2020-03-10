@@ -66,13 +66,10 @@ def solve_challenge(chal):
 def can_bypass(chal, sol):
     if not sol.startswith('b.'):
         return False
-    sig = sol[2:]
-    try:
-        with open("/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
-            vk = VerifyingKey.from_pem(fd.read())
-        return vk.verify(signature=sig, data=chal, hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
-    except:
-        return False
+    sig = bytes.fromhex(sol[2:])
+    with open("/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
+        vk = VerifyingKey.from_pem(fd.read())
+    return vk.verify(signature=sig, data=bytes(chal, 'ascii'), hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
 
 def verify_challenge(chal, sol):
     if can_bypass(chal, sol):
