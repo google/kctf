@@ -1,0 +1,5 @@
+.gen
+!.gen/exploit.cpio.enc
+config
+exploit
+secrets
