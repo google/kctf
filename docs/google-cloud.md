@@ -37,21 +37,8 @@ PATH="$PATH:$(pwd)/bin"
 ### And run the configuration script
 
 ```
-kctf-config-create
+kctf-config-create --chal-dir ~/demo-ctf-cluster --project {{project-id}} --start-cluster
 ```
-
-### Configuration properties
-Type a path for storing the challenges
-```
-~/demo-ctf-cluster
-```
-
-Type your project id:
-```
-{{project-id}}
-```
-
-You can use the default values for all other settings.
 
 ## And finally, create the cluster
 After this is done, the cluster will be created.
