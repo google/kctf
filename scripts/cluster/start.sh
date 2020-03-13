@@ -70,11 +70,14 @@ fi
 
 gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 
-kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system
+kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
 
-kubectl create -f "${DIR}/config/daemon-gcsfuse.yaml"
-kubectl create -f "${DIR}/config/apparmor.yaml"
-kubectl create -f "${DIR}/config/daemon.yaml"
-kubectl create -f "${DIR}/config/network-policy.yaml"
-kubectl create -f "${DIR}/config/allow-dns.yaml"
+kubectl apply -f "${DIR}/config/daemon-gcsfuse.yaml"
+kubectl apply -f "${DIR}/config/apparmor.yaml"
+kubectl apply -f "${DIR}/config/daemon.yaml"
+kubectl apply -f "${DIR}/config/network-policy.yaml"
+kubectl apply -f "${DIR}/config/allow-dns.yaml"
 kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
+
+kubectl create secret generic pow-bypass --from-file="${CHAL_DIR}/kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
+kubectl create secret generic pow-bypass-pub --from-file="${CHAL_DIR}/kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -

@@ -44,6 +44,9 @@ spec:
         - name: "config"
           mountPath: "/config"
           readOnly: true
+        - name: "pow-bypass-pub"
+          mountPath: "/pow-bypass"
+          readOnly: true
       volumes:
       - name: "secrets"
         secret:
@@ -52,3 +55,7 @@ spec:
       - name: "config"
         configMap:
           name: "config"
+      - name: "pow-bypass-pub"
+        secret:
+          secretName: "pow-bypass-pub"
+          defaultMode: 0444

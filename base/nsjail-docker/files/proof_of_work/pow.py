@@ -18,21 +18,15 @@ import base64
 import secrets
 import socket
 import sys
+from ecdsa import VerifyingKey
+from ecdsa.util import sigdecode_der
+import hashlib
 
 VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
 SOLVER_URL = 'https://github.com/google/kctf/blob/master/base/nsjail-docker/files/proof_of_work/pow.py'
-
-def stdin_is_localhost_socket():
-    try:
-        sock = socket.socket(fileno=sys.stdin.fileno())
-        peername = sock.getpeername()
-        sock.detach()
-        return peername[0] == '::ffff:127.0.0.1'
-    except OSError:
-        return False
 
 def sloth_root(x, diff, p):
     for i in range(diff):
@@ -69,7 +63,17 @@ def solve_challenge(chal):
     y = sloth_root(x, diff, MODULUS)
     return encode_challenge([y])
 
+def can_bypass(chal, sol):
+    if not sol.startswith('b.'):
+        return False
+    sig = bytes.fromhex(sol[2:])
+    with open("/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
+        vk = VerifyingKey.from_pem(fd.read())
+    return vk.verify(signature=sig, data=bytes(chal, 'ascii'), hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
+
 def verify_challenge(chal, sol):
+    if can_bypass(chal, sol):
+        return True
     [diff, x] = decode_challenge(chal)
     [y] = decode_challenge(sol)
     res = sloth_square(y, diff, MODULUS)
@@ -93,14 +97,13 @@ def main():
         difficulty = int(sys.argv[2])
 
         if difficulty == 0:
+            sys.stdout.write("== proof-of-work: disabled ==\n")
             sys.exit(0)
 
-        if stdin_is_localhost_socket():
-            sys.exit(0)
 
         challenge = get_challenge(difficulty)
 
-        sys.stdout.write("== proof-of-work ==\n")
+        sys.stdout.write("== proof-of-work: enabled ==\n")
         sys.stdout.write("please solve a pow first\n")
         sys.stdout.write("You can find the solver at:\n")
         sys.stdout.write("  {}\n".format(SOLVER_URL))
@@ -114,7 +117,7 @@ def main():
             solution = sys.stdin.readline().strip()
 
         if verify_challenge(challenge, solution):
-            sys.stdout.write("Correct")
+            sys.stdout.write("Correct\n")
             sys.stdout.flush()
             sys.exit(0)
         else:

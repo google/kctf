@@ -53,6 +53,9 @@ spec:
         - name: "healthcheck-config"
           mountPath: "/config"
           readOnly: true
+        - name: "pow-bypass"
+          mountPath: "/pow-bypass"
+          readOnly: true
       volumes:
       - name: "healthcheck-secrets"
         secret:
@@ -65,3 +68,7 @@ spec:
       - name: "healthcheck-config"
         configMap:
           name: "healthcheck-config"
+      - name: "pow-bypass"
+        secret:
+          secretName: "pow-bypass"
+          defaultMode: 0444
