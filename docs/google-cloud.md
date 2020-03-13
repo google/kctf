@@ -49,7 +49,7 @@ PATH="$PATH:$(pwd)/bin"
 ### Run the configuration script
 
 ```
-kctf-config-create
+kctf-config-create --chal-dir ~/demo-ctf-cluster --project {{project-id}} --start-cluster
 ```
 
 ### Set configuration properties
@@ -67,9 +67,7 @@ Enter your project id:
 For all other settings, use the default values.
 
 ## Create the cluster
-After configuring the project, the cluster is created automatically.
-
-This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
+After configuring the project, the cluster is created automatically. This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
 
 It can take around a minute for the cluster to be created, during which the following message is displayed:
 
@@ -87,7 +85,7 @@ While you wait, here's how the infrastructure works:
 
 The above steps ensure the availability of the challenges, while using computing resources in a resourceful manner.
 
-By now, your cluster should be ready and we can continue with the walkthrough.
+Your cluster should soon be ready, when it is, you can continue with this walkthrough.
 
 Note: If you are curious and have some spare time, take a look at the [kCTF introduction](https://github.com/google/kctf/blob/master/docs/introduction.md), which includes a quick 8 minute summary of what kCTF is and how it interacts with Kubernetes.
 
@@ -119,7 +117,7 @@ In the next step you'll find out how to create a docker image with the newly cre
 To deploy the challenge, run the following command, which builds and deploys the challenge, **but doesn't expose it to the internet**:
 
 ```
-cd ~/demo-ctf-cluster/demo-challenge
+cd ~/kctf-demo/demo-challenge
 make start
 ```
 
@@ -129,7 +127,7 @@ This command deploys the image to your cluster, which will soon start consuming 
 Run the following command to create a new file:
 
 ```
-emacs ~/demo-ctf-cluster/demo-challenge/chal.conf
+emacs ~/kctf-demo/demo-challenge/chal.conf
 ```
 
 Modify the file by entering `PUBLIC="true"`, then run the following command:
