@@ -49,7 +49,7 @@ PATH="$PATH:$(pwd)/bin"
 ### Run the configuration script
 
 ```
-kctf-config-create --chal-dir ~/demo-ctf-cluster --project {{project-id}} --start-cluster
+kctf-config-create --chal-dir ~/kctf-demo --project {{project-id}} --start-cluster
 ```
 
 ### Set configuration properties
