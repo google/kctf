@@ -1,10 +1,10 @@
-# CTF Infrastructure Walkthrough
+# kCTF Infrastructure Walkthrough
 
-Welcome to the CTF walkthrough!
+Welcome to the kCTF walkthrough for Google Cloud!
 
 ## Goal of this walkthrough
 
-The purpose of this walkthrough is to guide you through the configuration of the CTF infrastructure.
+The purpose of this walkthrough is to guide you through the configuration of the kCTF infrastructure using Google Cloud.
 
 Note: If not already doing so, you can also open this walkthrough directly in [Google Cloud Shell](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/google/kctf&tutorial=docs/google-cloud.md).
 
@@ -20,6 +20,8 @@ Set up billing, and enable the compute API:
 You can enable APIs from the command line with:
 ```
 gcloud services enable compute container containerregistry.googleapis.com
+gcloud services enable compute container compute.googleapis.com
+gcloud services enable compute container container.googleapis.com
 ```
 
 ## Configure the project
@@ -53,7 +55,7 @@ kctf-config-create
 ### Set configuration properties
 Enter a path for storing the challenges:
 ```
-~/demo-ctf-cluster
+~/kctf-demo
 ```
 
 Enter your project id:
@@ -100,7 +102,7 @@ In this step, you'll learn how to:
 
 Note: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding steps. Continue with the next steps if you already created a cluster.
 
-## Call create_challenge.sh to copy the skeleton
+## Call kctf-chal-create.sh to copy the skeleton
 Run the following command to create a challenge called "demo-challenge":
 ```
 kctf-chal-create demo-challenge
