@@ -34,6 +34,6 @@ RUN mkdir /chroot/config
 RUN mkdir /chroot/secrets
 RUN mkdir /chroot/pow-bypass
 
-COPY files/k8s_nsjail_setup.sh /usr/bin/
+COPY files/kctf_setup /usr/bin/
 COPY files/proof_of_work/pow.py /chroot/usr/bin/
 COPY files/proof_of_work/maybe_pow.sh /chroot/usr/bin/
