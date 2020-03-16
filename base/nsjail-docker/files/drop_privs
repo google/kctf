@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec setpriv --init-groups --reset-env --reuid user --regid user --inh-caps=-all -- $@

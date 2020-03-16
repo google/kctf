@@ -17,4 +17,4 @@ RUN ln -s /secrets/flag /chroot/flag
 
 COPY files /chroot/home/user
 
-CMD kctf_setup && exec setpriv --init-groups --reset-env --reuid user --regid user --inh-caps=-all -- nsjail --config /config/nsjail.cfg
+CMD kctf_setup && drop_privs nsjail --config /config/nsjail.cfg
