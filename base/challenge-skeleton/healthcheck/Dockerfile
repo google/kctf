@@ -19,4 +19,4 @@ COPY .gen/exploit.cpio.enc /
 
 COPY files /home/user
 
-CMD decrypt_exploit.sh && setpriv --init-groups --reuid user --regid user --inh-caps=-all -- /exploit/run.sh & /home/user/healthz.py
+CMD decrypt_exploit && drop_privs /exploit/run.sh & /home/user/healthz.py
