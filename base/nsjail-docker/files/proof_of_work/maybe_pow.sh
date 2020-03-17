@@ -16,7 +16,7 @@
 if [ -f /config/pow ]; then
   source /venv/bin/activate
 
-  POW="$(cat /config/pow)"
+  POW="$(cat /.kctf/pow)"
   if ! /usr/bin/pow.py ask "${POW}"; then
     echo 'pow fail'
     exit 1
