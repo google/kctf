@@ -167,6 +167,8 @@ endif
 
 .deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
 	kubectl apply -k k8s/deployment
+	kubectl create secret generic "${CHALLENGE_NAME}-secrets" --from-file challenge/secrets --dry-run -o yaml | kubectl apply -f -
+	kubectl create configmap "${CHALLENGE_NAME}-config" --from-file challenge/config --dry-run -o yaml | kubectl apply -f -
 	# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
@@ -174,6 +176,8 @@ endif
 	  kubectl set image "deployment/${CHALLENGE_NAME}" "challenge=$${PUSHED_IMAGE}"
 	fi
 ifeq ($(HEALTHCHECK), true)
+	kubectl create secret generic "${CHALLENGE_NAME}-healthcheck-secrets" --from-file healthcheck/secrets --dry-run -o yaml | kubectl apply -f -
+	kubectl create configmap "${CHALLENGE_NAME}-healthcheck-config" --from-file healthcheck/config --dry-run -o yaml | kubectl apply -f -
 	# update the healthcheck container if the image changed
 	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
@@ -287,16 +291,6 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged
 
 .FORCE:
 
-define DEPLOYMENT_KUSTOMIZATION_BASES
-bases:
-- ../../../challenge/config
-- ../../../challenge/secrets
-endef
-define HEALTHCHECK_KUSTOMIZATION_BASES
-- ../../../healthcheck/config
-- ../../../healthcheck/secrets
-endef
-
 define DEPLOYMENT_KUSTOMIZATION
 commonLabels:
   app: "$(CHALLENGE_NAME)"
@@ -369,8 +363,6 @@ patchesJson6902:
 endef
 
 export DEPLOYMENT_KUSTOMIZATION
-export DEPLOYMENT_KUSTOMIZATION_BASES
-export HEALTHCHECK_KUSTOMIZATION_BASES
 export REPLACE_CHAL_NAME
 export CHAL_CONTAINERS
 export NETWORK_KUSTOMIZATION
@@ -382,9 +374,8 @@ export HEALTHCHECK_CONTAINERS
 	# deployment
 	mkdir -p $@/deployment
 	echo "$${REPLACE_CHAL_NAME}" > "$@/deployment/challenge_name.yaml"
-	echo "$${DEPLOYMENT_KUSTOMIZATION_BASES}" > "$@/deployment/kustomization.yaml"
+	echo "bases:" >> "$@/deployment/kustomization.yaml"
 ifeq ($(HEALTHCHECK), true)
-	echo "$${HEALTHCHECK_KUSTOMIZATION_BASES}" >> "$@/deployment/kustomization.yaml"
 	echo "- ../../../../kctf-conf/base/k8s/deployment-with-healthcheck" >> "$@/deployment/kustomization.yaml"
 else
 	echo "- ../../../../kctf-conf/base/k8s/deployment" >> "$@/deployment/kustomization.yaml" 
