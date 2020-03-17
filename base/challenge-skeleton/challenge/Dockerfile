@@ -13,6 +13,10 @@
 # limitations under the License.
 FROM kctf-nsjail
 
+# bind mounted by nsjail
+RUN mkdir /chroot/config
+RUN mkdir /chroot/secrets
+
 RUN ln -s /secrets/flag /chroot/flag
 
 COPY files /chroot/home/user
