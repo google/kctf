@@ -33,9 +33,3 @@ fi
 
 umask a+rx
 cp -p -r "${CHAL_DIR}/kctf-conf/base/challenge-skeleton" "${CHALLENGE_DIR}"
-
-pushd "${CHALLENGE_DIR}"
-
-sed -i "s/challenge-skeleton/${CHALLENGE_NAME}/g" challenge/*/*.yaml healthcheck/*/*.yaml
-
-popd
