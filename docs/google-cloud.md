@@ -127,7 +127,7 @@ This command deploys the image to your cluster, which will soon start consuming 
 Run the following command to create a new file:
 
 ```
-emacs ~/kctf-demo/demo-challenge/chal.conf
+emacs ~/kctf-demo/demo-challenge/config/chal.conf
 ```
 
 Modify the file by entering `PUBLIC="true"`, then run the following command:

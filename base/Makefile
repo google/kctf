@@ -32,7 +32,7 @@ PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
 # sets DEPLOY, PUBLIC and HEALTHCHECK
-include chal.conf
+include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
 export KUBECONFIG
