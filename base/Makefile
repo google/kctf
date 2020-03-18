@@ -161,13 +161,13 @@ clean:
 
 .network: .gen/k8s | .cluster-config
 ifeq ($(PUBLIC), true)
-	kubectl apply -k k8s/network
+	kubectl apply -k config/advanced/network
 else
 	kubectl get "service/${CHALLENGE_NAME}" >/dev/null 2>&1 && kubectl delete "service/${CHALLENGE_NAME}" || true
 endif
 
 .deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
-	kubectl apply -k k8s/deployment
+	kubectl apply -k config/advanced/deployment
 	kubectl create secret generic "${CHALLENGE_NAME}-secrets" --from-file challenge/secrets --dry-run -o yaml | kubectl apply -f -
 	kubectl create configmap "${CHALLENGE_NAME}-config" --from-file challenge/config --dry-run -o yaml | kubectl apply -f -
 	# update the challenge container if the image changed
