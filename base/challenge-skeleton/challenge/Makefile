@@ -12,7 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SHELL := bash
+
 # IMPORTANT
 # - This will be the entrypoint when building the docker image.
-.gen/dockerid: $(shell find image)
-	docker build -q image > $@
+.gen/dockerid: .gen/newid
+	NEW_ID=$$(cat .gen/newid | cut -d ':' -f 2); if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then echo "$${NEW_ID}" > $@; fi
+
+.gen/newid: .FORCE
+	docker build image --iidfile $@
+
+.PHONY: .FORCE
+.FORCE:
