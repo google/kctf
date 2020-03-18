@@ -170,9 +170,9 @@ If there were any errors deploying the challenge, they should be visible here.
 In the next step we'll see how to edit the challenge, add a proof of work to prevent abuse, and push an update.
 
 ## Add a proof of work
-To add a proof of work, edit the configuration of the challenge in `pow.yaml`:
+To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
-1. Open <walkthrough-editor-select-regex filePath="kctf-demo/demo-challenge/pow.yaml" regex="0">pow.yaml</walkthrough-editor-select-regex> and change the 0 to 1.
+1. Open <walkthrough-editor-select-regex filePath="kctf-demo/demo-challenge/config/pow.conf" regex="0">pow.yaml</walkthrough-editor-select-regex> and change the 0 to 1.
 1. Run the following command to enable the proof of work:
     ```
     make start
