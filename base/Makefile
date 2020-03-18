@@ -48,7 +48,7 @@ MAYBE_REMOTE_HEALTHCHECK_IMAGE=
 MAYBE_HEALTHCHECK=
 endif
 
-docker: .gen/docker-image
+docker: challenge/.gen/docker-image
 
 start:
 ifeq ($(DEPLOY), true)
@@ -187,9 +187,8 @@ ifeq ($(HEALTHCHECK), true)
 	fi
 endif
 
-.gen/docker-image: challenge/Dockerfile .gen/src $(shell find challenge/files) ../kctf-conf/base/nsjail-docker/.gen/docker-image
-	docker build -t "kctf-chal-${CHALLENGE_NAME}" challenge
-	echo $$(docker image ls "kctf-chal-${CHALLENGE_NAME}" -q) > $@
+challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
+	$(MAKE) -C challenge .gen/docker-image
 
 .gen/kind-kubeconfig: .FORCE
 	@command -v kind || (echo "error: kind not installed. Visit https://kind.sigs.k8s.io/" && false)
@@ -203,8 +202,8 @@ endif
 .gen/src: .FORCE
 	$(MAKE) -C challenge/src ../../.gen/src
 
-${CLUSTER_GEN}/image-tagged: .gen/docker-image | .cluster-config
-	IMAGE_ID="$$(cat .gen/docker-image)"
+${CLUSTER_GEN}/image-tagged: challenge/.gen/docker-image | .cluster-config
+	IMAGE_ID="$$(cat challenge/.gen/docker-image)"
 	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
 	docker tag "kctf-chal-${CHALLENGE_NAME}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
