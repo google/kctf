@@ -30,9 +30,8 @@ RUN python3 -m venv /venv
 RUN bash -c "source /venv/bin/activate && pip3 install ecdsa"
 RUN mv /venv /chroot/
 
+RUN mkdir /kctf
 RUN mkdir /chroot/.kctf
-RUN touch /chroot/.kctf/pow
-RUN touch /chroot/.kctf/pow-bypass-key-pub.pem
 
 COPY files/kctf_setup /usr/bin/
 COPY files/drop_privs /usr/bin/
