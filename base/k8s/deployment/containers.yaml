@@ -38,9 +38,6 @@ spec:
           requests:
             cpu: "0.45"
         volumeMounts:
-        - name: "secrets"
-          mountPath: "/secrets"
-          readOnly: true
         - name: "config"
           mountPath: "/config"
           readOnly: true
@@ -48,10 +45,6 @@ spec:
           mountPath: "/pow-bypass"
           readOnly: true
       volumes:
-      - name: "secrets"
-        secret:
-          secretName: "secrets"
-          defaultMode: 0444
       - name: "config"
         configMap:
           name: "config"

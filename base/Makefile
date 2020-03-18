@@ -62,7 +62,6 @@ stop: .cluster-config
 	  kubectl get "$${resource_type}/${CHALLENGE_NAME}" >/dev/null 2>&1 && kubectl delete "$${resource_type}/${CHALLENGE_NAME}" || true
 	done
 	kubectl get "configMap/${CHALLENGE_NAME}-config" >/dev/null 2>&1 && kubectl delete "configMap/${CHALLENGE_NAME}-config" || true
-	kubectl get "secret/${CHALLENGE_NAME}-secrets" >/dev/null 2>&1 && kubectl delete "secret/${CHALLENGE_NAME}-secrets" || true
 	for resource in "secret/${CHALLENGE_NAME}-healthcheck-exploit-key" "secret/${CHALLENGE_NAME}-healthcheck-secrets" "configMap/${CHALLENGE_NAME}-healthcheck-config"; do
 	  kubectl get "$${resource}" >/dev/null 2>&1 && kubectl delete "$${resource}" || true
 	done
@@ -124,7 +123,6 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 	test -s .gen/healthcheck-docker-id && docker kill $$(cat .gen/healthcheck-docker-id) || true
 	docker run -d -it --network "container:$$(cat .gen/docker-name)" \
 		--mount "type=bind,source=$(CURDIR)/healthcheck/config,target=/config"\
-		--mount "type=bind,source=$(CURDIR)/healthcheck/secrets,target=/secrets"\
 		--mount "type=bind,source=$(CURDIR)/healthcheck/.gen/exploit.key,target=/keys/exploit.key"\
 		"kctf-healthcheck-${CHALLENGE_NAME}" > $@
 
@@ -136,7 +134,6 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 	test -s .gen/docker-id && docker kill $$(cat .gen/docker-id) || true
 	docker run -d -it -p 1337 \
 		--mount "type=bind,source=$(CURDIR)/challenge/config,target=/config"\
-		--mount "type=bind,source=$(CURDIR)/challenge/secrets,target=/secrets"\
 		--privileged "kctf-chal-${CHALLENGE_NAME}" > $@
 
 test-kind: LOCAL_KUBECONFIG=".gen/kind-kubeconfig"
@@ -168,7 +165,6 @@ endif
 
 .deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
 	kubectl apply -k config/advanced/deployment
-	kubectl create secret generic "${CHALLENGE_NAME}-secrets" --from-file challenge/secrets --dry-run -o yaml | kubectl apply -f -
 	kubectl create configmap "${CHALLENGE_NAME}-config" --from-file challenge/config --dry-run -o yaml | kubectl apply -f -
 	# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
@@ -328,9 +324,6 @@ spec:
   template:
     spec:
       volumes:
-      - name: "secrets"
-        secret:
-          secretName: "$(CHALLENGE_NAME)-secrets"
       - name: "config"
         configMap:
           name: "$(CHALLENGE_NAME)-config"
