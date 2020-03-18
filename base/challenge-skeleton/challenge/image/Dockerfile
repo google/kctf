@@ -13,7 +13,8 @@
 # limitations under the License.
 FROM kctf-nsjail
 
-COPY flag /chroot/flag
-COPY chal /home/user
+COPY flag /chroot/
+COPY chal /chroot/home/user/
+COPY nsjail.cfg /home/user/
 
-CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail_base.cfg --config /config/nsjail.cfg
+CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg
