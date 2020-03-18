@@ -61,7 +61,7 @@ stop: .cluster-config
 	for resource_type in deployment service hpa; do
 	  kubectl get "$${resource_type}/${CHALLENGE_NAME}" >/dev/null 2>&1 && kubectl delete "$${resource_type}/${CHALLENGE_NAME}" || true
 	done
-	kubectl get "configMap/${CHALLENGE_NAME}-config" >/dev/null 2>&1 && kubectl delete "configMap/${CHALLENGE_NAME}-config" || true
+	kubectl get "configMap/${CHALLENGE_NAME}-pow" >/dev/null 2>&1 && kubectl delete "configMap/${CHALLENGE_NAME}-pow" || true
 	for resource in "secret/${CHALLENGE_NAME}-healthcheck-exploit-key" "secret/${CHALLENGE_NAME}-healthcheck-secrets" "configMap/${CHALLENGE_NAME}-healthcheck-config"; do
 	  kubectl get "$${resource}" >/dev/null 2>&1 && kubectl delete "$${resource}" || true
 	done
@@ -133,7 +133,6 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 .gen/docker-id: docker
 	test -s .gen/docker-id && docker kill $$(cat .gen/docker-id) || true
 	docker run -d -it -p 1337 \
-		--mount "type=bind,source=$(CURDIR)/challenge/config,target=/config"\
 		--privileged "kctf-chal-${CHALLENGE_NAME}" > $@
 
 test-kind: LOCAL_KUBECONFIG=".gen/kind-kubeconfig"
@@ -165,7 +164,7 @@ endif
 
 .deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
 	kubectl apply -k config/advanced/deployment
-	kubectl create configmap "${CHALLENGE_NAME}-config" --from-file challenge/config --dry-run -o yaml | kubectl apply -f -
+	kubectl create configmap "${CHALLENGE_NAME}-pow" --from-file=pow.conf=config/pow.conf --dry-run -o yaml | kubectl apply -f -
 	# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
