@@ -14,5 +14,5 @@
 
 # IMPORTANT
 # - This will be the entrypoint when building the docker image.
-.gen/dockerid: image/Dockerfile
+.gen/dockerid: $(shell find image)
 	docker build -q image > $@
