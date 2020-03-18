@@ -323,9 +323,9 @@ spec:
   template:
     spec:
       volumes:
-      - name: "config"
+      - name: "pow"
         configMap:
-          name: "$(CHALLENGE_NAME)-config"
+          name: "$(CHALLENGE_NAME)-pow"
 endef
 define HEALTHCHECK_CONTAINERS
       - name: "healthcheck-secrets"
