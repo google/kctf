@@ -38,16 +38,16 @@ spec:
           requests:
             cpu: "0.45"
         volumeMounts:
-        - name: "config"
-          mountPath: "/config"
+        - name: "pow"
+          mountPath: "/kctf/pow"
           readOnly: true
         - name: "pow-bypass-pub"
           mountPath: "/pow-bypass"
           readOnly: true
       volumes:
-      - name: "config"
+      - name: "pow"
         configMap:
-          name: "config"
+          name: "pow"
       - name: "pow-bypass-pub"
         secret:
           secretName: "pow-bypass-pub"
