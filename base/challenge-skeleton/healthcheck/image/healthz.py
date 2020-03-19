@@ -35,5 +35,5 @@ class HealthzHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
-httpd = BaseHTTPServer.HTTPServer(('', 8080), HealthzHandler)
+httpd = BaseHTTPServer.HTTPServer(('', 45281), HealthzHandler)
 httpd.serve_forever()

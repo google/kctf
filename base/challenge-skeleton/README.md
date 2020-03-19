@@ -8,7 +8,7 @@
 
 ## healthcheck
 
-* The healthcheck needs to run a webserver on port TODO that responds to /healthz requests.
+* The healthcheck needs to run a webserver on port 45281 that responds to /healthz requests.
  * 200 if the challenge is healthy, otherwise an error (e.g. 400).
  * You can find an example webserer in healthcheck/image/healthz.py.
 * The base image comes preloaded with pwntools.
@@ -46,5 +46,5 @@ Here are the requirements what this directory must look like to work with kCTF:
   * We strongly recommend to use nsjail in all challenges.
 * Your challenge will receive connections on port 1337.
 * The healthcheck directory is optional.
-  * If it exists, the image should run a webserver on port TODO and respond to /healthz requests.
+  * If it exists, the image should run a webserver on port 45281 and respond to /healthz requests.
 * Changes to config/advanced might not be compatible with future versions of kCTF.

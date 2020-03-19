@@ -24,14 +24,14 @@ spec:
           failureThreshold: 2
           httpGet:
             path: /healthz
-            port: 8080
+            port: 45281
           initialDelaySeconds: 45
           timeoutSeconds: 3
           periodSeconds: 30
         readinessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 45281
           initialDelaySeconds: 5
           timeoutSeconds: 3
           periodSeconds: 5
