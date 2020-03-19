@@ -1,7 +1,7 @@
 # Quickstart guide to writing a challenge:
 
 * A docker image will be built from challenge/image. For the simplest challenges, replacing challenge/image/chal will be enough.
-* To change what files get included or the commandline, edit challenge/image/Dockerfile. TODO: add commandline to dockerfile
+* To change what files get included or the commandline, edit challenge/image/Dockerfile.
 * Try the challenge locally with `make test-docker`.
 * If you have a cluster ready, deploy the challenge with `make start` and create a port forward with `make port-forward`.
 * Try `make <tab>` to see more commands.
