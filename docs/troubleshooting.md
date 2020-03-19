@@ -104,19 +104,24 @@ If everything works in docker, the problem might be higher up (in Kubernetes). T
 
 Once the local cluster is running, you can follow similar steps as above for debugging.
 
+First, change to the namespace of the challenge by running:
+```
+kubectl config set-context --current --namespace=kctf-chal-troubleshooting
+```
+
 For getting the status of the challenge you can run:
 ```
-kubectl get deployment/kctf-chal-troubleshooting
+kubectl get deployment/chal
 ```
 
 For reading execution logs, you can run:
 ```
-kubectl logs deployment/kctf-chal-troubleshooting -c challenge
+kubectl logs deployment/chal -c challenge
 ```
 
 For obtaining a shell into a pod, you can run:
 ```
-kubectl exec -it deployment/kctf-chal-troubleshooting -c challenge
+kubectl exec -it deployment/chal -c challenge
 ```
 
 However, there are a few more commands for debugging Kubernetes-specific errors.
@@ -127,7 +132,7 @@ Basic understanding of Kubernetes would be useful (such as the [kCTF in 8 minute
 
 The most common way to troubleshoot will be with the `kubectl describe` command. This command will tell you everything kubernetes knows about a challenge. You should start by describing the "deployment" by running:
 ```
-kubectl describe deployment/kctf-chal-troubleshooting
+kubectl describe deployment/chal
 ```
 
 The most interesting parts of this command will be the:
@@ -199,16 +204,19 @@ To obtain remote logs, you can run:
 make logs
 ```
 
-In addition, you can run any kubectl command under the kCTF cluter by configuring kubectl to use the kubeconfig of the remote cluster. You can setup an alias to do this if you run:
+In addition, you can run any kubectl command under the kCTF cluter using kctf-kubectl.
+
+Again, make sure to use the right namespace by running:
 ```
-alias kctf-kubectl="kubectl --kubeconfig=${HOME}/.config/kctf/kube.conf"
+kctf-kubectl config set-context --current --namespace=kctf-chal-troubleshooting
 ```
+This will happen automatically if you interact with a challenge using the Makefile, e.g. via `make status`.
 
 ### Restarting or redeploying
 
 A good first step is to just restart the challenge. This can be done if you just run:
 ```
-kctf-kubectl rollout restart deployment/kctf-chal-troubleshooting
+kctf-kubectl rollout restart deployment/chal
 ```
 
 To make kubernetes automatically restart flaky challenges, you should have a healthcheck. To redeploy the challenge (for example, if the challenge works well locally in a local cluster), you can run:
@@ -218,7 +226,7 @@ make start
 
 This will deploy the local challenge to the remote cluster, and to undo a bad rollout temporarily, you can run:
 ```
-kubectl rollout undo deployment/kctf-chal-troubleshooting
+kubectl rollout undo deployment/chal
 ```
 
 ## Conclusion
