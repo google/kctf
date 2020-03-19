@@ -21,4 +21,4 @@ RUN ln -s /secrets/flag /chroot/flag
 
 COPY files /chroot/home/user
 
-CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail.cfg --config /config/nsjail.cfg
+CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail_base.cfg --config /config/nsjail.cfg
