@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +13,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -Eeuo pipefail
 
-TIMEOUT=20
-PERIOD=30
+import pwnlib
 
-export TERM=linux
-export TERMINFO=/etc/terminfo
+def handle_pow(r):
+    print(r.recvuntil('./pow.py solve '))
+    challenge = r.recvline().strip()
+    p = pwnlib.tubes.process.process(['bypass_pow', challenge])
+    solution = p.readall().strip()
+    r.sendline(solution)
+    print(r.recvuntil('Correct\n'))
 
-# Activate the pwntools venv
-PS1=""
-source /venv/bin/activate
+r = pwnlib.tubes.remote.remote('127.0.0.1', 1337)
+print(r.recvuntil('== proof-of-work: '))
+if r.recvline().startswith('enabled'):
+    handle_pow(r)
 
-while true; do
-  source /config/env
-  echo -n "[$(date)] "
-  if timeout "${TIMEOUT}" /exploit/doit.py; then
-    echo 'ok' | tee /tmp/healthz
-  else
-    echo -n "$? "
-    echo 'err' | tee /tmp/healthz
-  fi
-  sleep "${PERIOD}"
-done
+print(r.recvuntil('CTF{'))
+print(r.recvuntil('}'))
+
+exit(0)

@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-healthcheck
 
-# Add the exploit directory as an encrypted archive.
-# This is out of caution in case that we leak the 
-COPY .gen/exploit.cpio.enc /
+SHELL := bash
 
-COPY files /home/user
+# IMPORTANT
+# - This will be the entrypoint when building the docker image.
+.gen/docker-image: .gen/new-image-id
+	NEW_ID=$$(cat .gen/new-image-id | cut -d ':' -f 2); if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then echo "$${NEW_ID}" > $@; fi
 
-CMD decrypt_exploit && drop_privs /exploit/run.sh & /home/user/healthz.py
+.gen/new-image-id: .FORCE
+	docker build image --iidfile $@
+
+.PHONY: .FORCE
+.FORCE:

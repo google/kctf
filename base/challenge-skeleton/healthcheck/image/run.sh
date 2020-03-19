@@ -14,19 +14,24 @@
 # limitations under the License.
 set -Eeuo pipefail
 
-# decrypt
-KEY="$(cat /keys/exploit.key)"
-openssl aes-256-cbc \
-  -d \
-  -in exploit.cpio.enc \
-  -out exploit.cpio \
-  -K "${KEY}" \
-  -nosalt \
-  -iv 13333333333333333333333333333337
+TIMEOUT=20
+PERIOD=30
 
-# unpack
-cpio -i < exploit.cpio
+export TERM=linux
+export TERMINFO=/etc/terminfo
 
-# cleanup
-rm exploit.cpio.enc
-rm exploit.cpio
+# Activate the pwntools venv
+PS1=""
+source /venv/bin/activate
+
+while true; do
+  source /home/user/env
+  echo -n "[$(date)] "
+  if timeout "${TIMEOUT}" /home/user/doit.py; then
+    echo 'ok' | tee /tmp/healthz
+  else
+    echo -n "$? "
+    echo 'err' | tee /tmp/healthz
+  fi
+  sleep "${PERIOD}"
+done

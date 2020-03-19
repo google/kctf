@@ -42,7 +42,7 @@ spec:
           mountPath: "/kctf/pow"
           readOnly: true
         - name: "pow-bypass-pub"
-          mountPath: "/pow-bypass"
+          mountPath: "/kctf/pow-bypass"
           readOnly: true
       volumes:
       - name: "pow"
