@@ -111,15 +111,14 @@ port-forward: .cluster-config
 	kubectl port-forward deployment/${CHALLENGE_NAME} :1337 &
 
 test-docker: .gen/docker-id
-	docker ps -f ancestor=kctf-chal-${CHALLENGE_NAME}
+	docker ps -f "id=$$(cat .gen/docker-id)"
 
 healthcheck-test-docker: .gen/healthcheck-docker-id
-	IMAGE_ID="$$(cat healthcheck/.gen/docker-image)"
-	docker ps -f "ancestor=$${IMAGE_ID}"
+	docker ps -f "id=$$(Icat .gen/healthcheck-docker-id)"
 
 .gen/healthcheck-docker-id: .gen/docker-name healthcheck/.gen/docker-image
 	IMAGE_ID="$$(cat healthcheck/.gen/docker-image)"
-	test -s .gen/docker-id && docker kill $$(cat .gen/docker-id) || true
+	test -s .gen/healthcheck-docker-id && docker kill $$(cat .gen/healthcheck-docker-id) || true
 	docker run -d -it --network "container:$$(cat .gen/docker-name)" \
 		"$${IMAGE_ID}" > $@
 
@@ -127,10 +126,10 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 	docker ps --all -f id=$$(cat .gen/docker-id) --format {{.Names}} > $@
 
 .gen/docker-id: PUSH_TARGET="LOCAL_DOCKER"
-.gen/docker-id: docker
+.gen/docker-id: challenge/.gen/docker-image
 	test -s .gen/docker-id && docker kill $$(cat .gen/docker-id) || true
-	docker run -d -it -p 1337 \
-		--privileged "kctf-chal-${CHALLENGE_NAME}" > $@
+	IMAGE_ID="$$(cat challenge/.gen/docker-image)"
+	docker run -d -it -p 1337 --privileged "$${IMAGE_ID}" > $@
 
 test-kind: LOCAL_KUBECONFIG=".gen/kind-kubeconfig"
 test-kind: PUSH_TARGET="KIND"
