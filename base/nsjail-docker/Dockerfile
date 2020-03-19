@@ -32,6 +32,8 @@ RUN mv /venv /chroot/
 
 RUN mkdir /kctf
 RUN mkdir /chroot/.kctf
+RUN mkdir /chroot/.kctf/pow
+RUN mkdir /chroot/.kctf/pow-bypass
 
 COPY files/kctf_setup /usr/bin/
 COPY files/drop_privs /usr/bin/
