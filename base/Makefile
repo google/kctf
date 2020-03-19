@@ -179,6 +179,7 @@ endif
 
 challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
 	$(MAKE) -C challenge .gen/docker-image
+	docker tag "$$(cat $@)" "kctf-chal-${CHALLENGE_NAME}"
 
 .gen/kind-kubeconfig: .FORCE
 	@command -v kind || (echo "error: kind not installed. Visit https://kind.sigs.k8s.io/" && false)
@@ -207,6 +208,7 @@ ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
 
 healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image
 	$(MAKE) -C healthcheck .gen/docker-image
+	docker tag "$$(cat $@)" "kctf-healthcheck-${CHALLENGE_NAME}"
 
 ${CLUSTER_GEN}/healthcheck-image-tagged: healthcheck/.gen/docker-image | .cluster-config
 	IMAGE_ID="$$(cat healthcheck/.gen/docker-image)"
