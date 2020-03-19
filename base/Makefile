@@ -200,7 +200,7 @@ challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .
 ${CLUSTER_GEN}/image-tagged: challenge/.gen/docker-image | .cluster-config
 	IMAGE_ID="$$(cat challenge/.gen/docker-image)"
 	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
-	docker tag "kctf-chal-${CHALLENGE_NAME}" "$${IMAGE_TAG}"
+	docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
 
 ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
