@@ -27,6 +27,7 @@ SHELL := bash
 
 PUSH_TARGET="REMOTE"
 
+REGISTRY:=CONFIGMISSING
 PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
@@ -204,7 +205,7 @@ endif
 
 ${CLUSTER_GEN}/image-tagged: .gen/docker-image | .cluster-config
 	IMAGE_ID="$$(cat .gen/docker-image)"
-	IMAGE_TAG="eu.gcr.io/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
+	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
 	docker tag "kctf-chal-${CHALLENGE_NAME}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
 
@@ -242,7 +243,7 @@ healthcheck/.gen/exploit.key: healthcheck/.gen/exploit.cpio
 
 ${CLUSTER_GEN}/healthcheck-image-tagged: .gen/healthcheck-docker-image | .cluster-config
 	IMAGE_ID="$$(cat .gen/healthcheck-docker-image)"
-	IMAGE_TAG="eu.gcr.io/${PROJECT}/${CHALLENGE_NAME}-healthcheck:$${IMAGE_ID}"
+	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck:$${IMAGE_ID}"
 	docker tag "kctf-healthcheck-${CHALLENGE_NAME}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
 
