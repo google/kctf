@@ -158,7 +158,7 @@ Run the following command to connect to your challenge:
 telnet $(make ip) 1
 ```
 
-If all went well, you should see a shell. 
+If all went well, you should see the flag.
 
 Debugging failures here is easy, here are some things you could do if this didn't work:
 1. Go to [Services in GKE](https://console.cloud.google.com/kubernetes/discovery)
