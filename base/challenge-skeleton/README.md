@@ -1,7 +1,7 @@
 # Quickstart guide to writing a challenge:
 
-* A docker image will be built from challenge/image. For the simplest challenges, replacing challenge/image/chal will be enough.
-* Edit challenge/image/Dockerfile to change the commandline or which files should get included.
+* A docker image will be built from `challenge/image`. For the simplest challenges, replacing `challenge/image/chal` will be enough.
+* Edit `challenge/image/Dockerfile` to change the commandline or which files should get included.
 * Try the challenge locally with `make test-docker`.
 * If you have a cluster ready, deploy the challenge with `make start`.
   * To access it, create a port forward with `make port-forward` and connect via `nc localhost PORT` using the printed port.
@@ -11,9 +11,9 @@
 
 * The healthcheck needs to run a webserver on port 45281 that responds to /healthz requests.
  * 200 if the challenge is healthy, otherwise an error (e.g. 400).
- * You can find an example webserer in healthcheck/image/healthz.py.
+ * You can find an example webserver in `healthcheck/image/healthz.py`.
 * The base image comes preloaded with pwntools.
-* If your exploit is written in python, just drop it in healthcheck/image/doit.py.
+* If your exploit is written in python, just drop it in `healthcheck/image/doit.py`.
 
 # Directory layout:
 
@@ -44,7 +44,7 @@ The healthcheck directory is optional. If you don't want to write a healthcheck,
 Here are the requirements what this directory must look like to work with kCTF:
 
 * You can do pretty much whatever you want in the challenge dir but:
-  * You need to have a Makefile with the .gen/docker-image that builds a docker image.
+  * You need to have a Makefile with the .gen/docker-image target that builds a docker image.
   * We strongly recommend to use nsjail in all challenges.
 * Your challenge will receive connections on port 1337.
 * The healthcheck directory is optional.
