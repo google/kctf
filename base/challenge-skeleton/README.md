@@ -21,7 +21,7 @@
 
 The config directory holds a few configuration files:
 
-* chal.conf: Configure if the challenge should be deployed to the cluster (for batch commands), if it's publicly accessible and if it has a healthcheck.
+* chal.conf: Configure if the challenge should be deployed to the cluster, if it's publicly accessible and if it has a healthcheck.
 * pow.conf: Contains the difficulty of the proof-of-work, 0 means disabled.
 * advanced: The kubernetes config used to deploy the challenge. E.g. you can add a tmpfs here or change the port.
 
