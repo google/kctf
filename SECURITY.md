@@ -96,7 +96,7 @@ As such, the risks on this edge are:
  - Project might be misconfigured
 
 Ways to limit these risks are:
- - kCTF could limits the information in docker images to the minimum possible. There are no plans to do this.
+ - kCTF could limit the information in docker images to the minimum possible. There are no plans to do this.
  - kCTF could check configuration to detect accidental misconfiguration. There are no plans to do this.
 
 #### Kubernetes -> Flags
