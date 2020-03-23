@@ -21,6 +21,7 @@ mkdir -p "${CONFIG_DIR}"
 # Default Configuration
 
 CHAL_DIR=""
+REGISTRY="eu.gcr.io"
 PROJECT=""
 ZONE="europe-west4-b"
 CLUSTER_NAME="kctf-cluster"
@@ -37,6 +38,8 @@ function usage {
     echo -e "\t--project\tGoogle Cloud Platform project name" >&2
     echo -e "\t--zone\t\tGCP Zone (default: europe-west4-b)" >&2
     echo -e "\t\t\tFor a list of zones run: gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
+    echo -e "\t--registry\t\tContainer Registry (default: eu.gcr.io)" >&2
+    echo -e "\t\t\tPossible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
     echo -e "\t--cluster-name\tName of the kubernetes cluster (default: kctf-cluster)" >&2
     echo -e "\t--domain-name\tOptional domain name to host challenges under" >&2
     echo -e "\t--start-cluster\tStart the cluster if it's not running yet" >&2
@@ -63,6 +66,9 @@ while :; do
             ;;
         --zone)
             ZONE=$2
+            ;;
+        --registry)
+            REGISTRY=$2
             ;;
         --cluster-name)
             CLUSTER_NAME=$2
@@ -101,6 +107,7 @@ CLUSTER_CONFIG="${ret}"
 cat > "${CLUSTER_CONFIG}" << EOF
 PROJECT=${PROJECT}
 ZONE=${ZONE}
+REGISTRY=${REGISTRY}
 CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
 EOF
