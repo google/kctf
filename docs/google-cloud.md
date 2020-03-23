@@ -155,7 +155,7 @@ Now that you have a challenge up and running, you need to test it to make sure i
 Run the following command to connect to your challenge:
 
 ```
-nc $(make ip) 1
+telnet $(make ip) 1
 ```
 
 If all went well, you should see a shell. 
