@@ -62,7 +62,6 @@ As such, the risks on this edge are:
 
 Ways to limit these risks are:
  - kCTF automatically scales and limits the number of maximum nodes in a cluster.
- - kCTF could enable better isolation between tasks (by using different namespaces) to limit the impact of a single task. Work to do this is tracked on [Issue 8](https://github.com/google/kctf/issues/8).
  - kCTF could automatically enable the proof-of-work when an attack is detected. There are no plans to do this.
 
 #### Infrastructure -> Kubernetes
@@ -97,26 +96,16 @@ As such, the risks on this edge are:
  - Project might be misconfigured
 
 Ways to limit these risks are:
- - kCTF limits the information in docker images to the minimum possible. For example, flags and exploits are not here.
- - kCTF could limit the access to the GCR images more tightly. Work to do this is tracked on [Issue 17](https://github.com/google/kctf/issues/17).
+ - kCTF could limit the information in docker images to the minimum possible. There are no plans to do this.
  - kCTF could check configuration to detect accidental misconfiguration. There are no plans to do this.
 
 #### Kubernetes -> Flags
 
-The flags are stored as [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/). Any vulnerabilities in Kubernetes that allows accessing secrets or a misconfiguration by the author (such as not putting the flag in the secret directory), could result in broader access to the flags.
-
-As such, the risks on this edge are:
- - Kubernetes might have vulnerabilities
- - Author might not store flags as a secret
-
-Ways to limit these risks are:
- - kCTF could detect strings that look like flags in non-secret files. There are no plans to do this.
+The flags are stored in the challenge images. The same considerations from the previous section apply.
 
 #### Kubernetes -> Exploits
 
-The exploits are stored encrypted in the docker images, and the key is stored as a secret. Any vulnerabilities in Kubernetes that allows accessing secrets, or failure from the authors to store their exploits in the exploit directory, could result in broader access to the exploits.
-
-As such, the risks on this edge are the same as for the Flags.
+The exploits are stored in the challenge images. The same considerations from the previous section apply.
 
 ### Attackers
 The usual type of attackers to a system of this form mainly fall into two categories:

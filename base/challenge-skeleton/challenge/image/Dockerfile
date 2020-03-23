@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -Eeuo pipefail
+FROM kctf-nsjail
 
-# decrypt
-KEY="$(cat /keys/exploit.key)"
-openssl aes-256-cbc \
-  -d \
-  -in exploit.cpio.enc \
-  -out exploit.cpio \
-  -K "${KEY}" \
-  -nosalt \
-  -iv 13333333333333333333333333333337
+COPY flag /chroot/
+COPY chal /chroot/home/user/
+COPY nsjail.cfg /home/user/
 
-# unpack
-cpio -i < exploit.cpio
-
-# cleanup
-rm exploit.cpio.enc
-rm exploit.cpio
+CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg -- /usr/bin/stdbuf -i0 -o0 -e0 maybe_pow.sh /home/user/chal

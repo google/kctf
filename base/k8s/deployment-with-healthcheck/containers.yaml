@@ -24,14 +24,14 @@ spec:
           failureThreshold: 2
           httpGet:
             path: /healthz
-            port: 8080
+            port: 45281
           initialDelaySeconds: 45
           timeoutSeconds: 3
           periodSeconds: 30
         readinessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 45281
           initialDelaySeconds: 5
           timeoutSeconds: 3
           periodSeconds: 5
@@ -44,30 +44,10 @@ spec:
           requests:
             cpu: "0.05"
         volumeMounts:
-        - name: "healthcheck-secrets"
-          mountPath: "/secrets"
-          readOnly: true
-        - name: "healthcheck-exploit-key"
-          mountPath: "/keys"
-          readOnly: true
-        - name: "healthcheck-config"
-          mountPath: "/config"
-          readOnly: true
         - name: "pow-bypass"
           mountPath: "/pow-bypass"
           readOnly: true
       volumes:
-      - name: "healthcheck-secrets"
-        secret:
-          secretName: "healthcheck-secrets"
-          defaultMode: 0444
-      - name: "healthcheck-exploit-key"
-        secret:
-          secretName: "healthcheck-exploit-key"
-          defaultMode: 0444
-      - name: "healthcheck-config"
-        configMap:
-          name: "healthcheck-config"
       - name: "pow-bypass"
         secret:
           secretName: "pow-bypass"

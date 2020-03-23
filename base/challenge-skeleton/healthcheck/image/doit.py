@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# IMPORTANT
-# - ../../.gen/src is required, don't remove it
-# - Output files should go to ../files
-../../.gen/src: ../files/shell
-	touch $@
+import pwnlib
 
-../files/shell: shell.c
-	$(CC) -o $@ $<
+def handle_pow(r):
+    print(r.recvuntil('./pow.py solve '))
+    challenge = r.recvline().strip()
+    p = pwnlib.tubes.process.process(['bypass_pow', challenge])
+    solution = p.readall().strip()
+    r.sendline(solution)
+    print(r.recvuntil('Correct\n'))
+
+r = pwnlib.tubes.remote.remote('127.0.0.1', 1337)
+print(r.recvuntil('== proof-of-work: '))
+if r.recvline().startswith('enabled'):
+    handle_pow(r)
+
+print(r.recvuntil('CTF{'))
+print(r.recvuntil('}'))
+
+exit(0)

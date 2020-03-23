@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -f /config/pow ]; then
+POW_FILE="/.kctf/pow/pow.conf"
+
+if [ -f ${POW_FILE} ]; then
   source /venv/bin/activate
 
-  POW="$(cat /.kctf/pow)"
+  POW="$(cat ${POW_FILE})"
   if ! /usr/bin/pow.py ask "${POW}"; then
     echo 'pow fail'
     exit 1

@@ -22,10 +22,10 @@ echo 'config loaded'
 echo "CLUSTER_NAME: ${CLUSTER_NAME}"
 
 for dir in ${CHAL_DIR}/*; do
-  if [ ! -f "${dir}/chal.conf" ]; then
+  if [ ! -f "${dir}/config/chal.conf" ]; then
     continue
   fi
-  source "${dir}/chal.conf"
+  source "${dir}/config/chal.conf"
 
   CHALLENGE_NAME=$(basename "${dir}")
 
@@ -50,10 +50,10 @@ echo "ctrl+c if you don't care"
 echo
 
 for dir in ${CHAL_DIR}/*; do
-  if [ ! -f "${dir}/chal.conf" ]; then
+  if [ ! -f "${dir}/config/chal.conf" ]; then
     continue
   fi
-  source "${dir}/chal.conf"
+  source "${dir}/config/chal.conf"
 
   if [ ! "${DEPLOY}" = "true" ]; then
     continue

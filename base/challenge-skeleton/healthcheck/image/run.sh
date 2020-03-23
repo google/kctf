@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,8 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-bases:
-- ../../.gen/k8s/network
+set -Eeuo pipefail
 
-patchesStrategicMerge:
-- network.yaml
+TIMEOUT=20
+PERIOD=30
+
+export TERM=linux
+export TERMINFO=/etc/terminfo
+
+# Activate the pwntools venv
+PS1=""
+source /venv/bin/activate
+
+while true; do
+  source /home/user/env
+  echo -n "[$(date)] "
+  if timeout "${TIMEOUT}" /home/user/doit.py; then
+    echo 'ok' | tee /tmp/healthz
+  else
+    echo -n "$? "
+    echo 'err' | tee /tmp/healthz
+  fi
+  sleep "${PERIOD}"
+done

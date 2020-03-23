@@ -21,6 +21,5 @@ RUN /usr/sbin/useradd --no-create-home -u 1000 user
 COPY --from=pwntools /venv /venv
 RUN mkdir -p /home/user/.pwntools-cache && echo never > /home/user/.pwntools-cache/update
 
-COPY files/decrypt_exploit /usr/bin/
 COPY files/drop_privs /usr/bin/
 COPY files/bypass_pow /usr/bin/

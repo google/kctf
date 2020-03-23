@@ -108,7 +108,7 @@ kctf-chal-create demo-challenge
 
 This creates a directory called `demo-challenge` under the `kctf-demo` directory.
 
-If you look inside `demo-challenge` (check `files/chal` for example), you can see the challenge configuration. The file in `files/chal` is the entry-point, which means that it is executed every time a TCP connection is established. While this demo challenge just runs bash, a real challenge would instead expose a harder challenge that doesn't just give out a shell.
+If you look inside `demo-challenge`, you can see the challenge configuration. The file in `challenge/image/chal` is the entry-point, which means that it is executed every time a TCP connection is established. While this demo challenge just prints the flag, a real challenge would instead expose a an actual challenge.
 
 In the next step you'll find out how to create a docker image with the newly created challenge.
 
@@ -127,10 +127,10 @@ This command deploys the image to your cluster, which will soon start consuming 
 Run the following command to create a new file:
 
 ```
-emacs ~/kctf-demo/demo-challenge/chal.conf
+emacs ~/kctf-demo/demo-challenge/config/chal.conf
 ```
 
-Modify the file by entering `PUBLIC="true"`, then run the following command:
+Modify the file by entering `PUBLIC=true`, then run the following command:
 
 ```
 make start
@@ -140,8 +140,8 @@ This step can take a minute. It reserves an IP address for your challenge and re
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The ports exposed by the challenge are configured by nsjail (see `nsjail.cfg`) and `expose.yaml`. Make sure these files are kept in sync.
- * In `expose.yaml`, `targetPort` is the port that nsjail is listening on. `port` is the port that the external IP listens on.
+ * The ports exposed by the challenge are configured by nsjail (see `nsjail.cfg`) and `config/advanced/network/network.yaml`. Make sure these files are kept in sync.
+ * In `network.yaml`, `targetPort` is the port that nsjail is listening on. `port` is the port that the external IP listens on.
 
 # Step 3 – Test the challenge
 
@@ -158,7 +158,7 @@ Run the following command to connect to your challenge:
 telnet $(make ip) 1
 ```
 
-If all went well, you should see a shell. 
+If all went well, you should see the flag.
 
 Debugging failures here is easy, here are some things you could do if this didn't work:
 1. Go to [Services in GKE](https://console.cloud.google.com/kubernetes/discovery)
@@ -170,9 +170,9 @@ If there were any errors deploying the challenge, they should be visible here.
 In the next step we'll see how to edit the challenge, add a proof of work to prevent abuse, and push an update.
 
 ## Add a proof of work
-To add a proof of work, edit the configuration of the challenge in `pow.yaml`:
+To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
-1. Open <walkthrough-editor-select-regex filePath="kctf-demo/demo-challenge/pow.yaml" regex="0">pow.yaml</walkthrough-editor-select-regex> and change the 0 to 1.
+1. Open <walkthrough-editor-select-regex filePath="kctf-demo/demo-challenge/config/pow.conf" regex="0">pow.yaml</walkthrough-editor-select-regex> and change the 0 to 1.
 1. Run the following command to enable the proof of work:
     ```
     make start
@@ -182,7 +182,7 @@ Note: This is a very weak proof of work (strength of 1). For it to be useful in 
 
 Once the challenge is updated, run:
 ```
-telnet $(kctf-chal-ip demo-challenge) 1
+nc $(kctf-chal-ip demo-challenge) 1
 ```
 
 This connects you to the challenge with a proof of work in front. Enter **00** to pass the proof of work (as mentioned, the difficulty of 1 isn't very strict). If it doesn't work, try again (or run the script).
@@ -190,12 +190,7 @@ This connects you to the challenge with a proof of work in front. Enter **00** t
 And that's it. Now that you saw how to push a challenge and update it, let's see how you can debug the Kubernetes deployment.
 
 ## Inspect the Kubernetes deployment
-To debug the Kubernetes deployment, set up the following alias:
-```
-alias kctf-kubectl="kubectl --kubeconfig=${HOME}/.config/kctf/kube.conf"
-```
-
-Now you can use [kubectl commands](https://kubernetes.io/docs/reference/kubectl/cheatsheet/) with `kctf-kubectl`.
+To debug the Kubernetes deployment, you can use `kctf-kubectl` with [kubectl commands](https://kubernetes.io/docs/reference/kubectl/cheatsheet/).
 
 # Step 4 – Clean the challenge
 This is the last step of this walkthrough. Performing this step helps save resources after the end of the CTF.

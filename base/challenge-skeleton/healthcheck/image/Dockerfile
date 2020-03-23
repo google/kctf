@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -Eeuo pipefail
+FROM kctf-healthcheck
 
-TIMEOUT=20
-PERIOD=30
+COPY healthz.py /home/user/
+COPY doit.py /home/user/
+COPY run.sh /home/user/
+COPY env /home/user/
 
-export TERM=linux
-export TERMINFO=/etc/terminfo
-
-# Activate the pwntools venv
-PS1=""
-source /venv/bin/activate
-
-while true; do
-  source /config/env
-  echo -n "[$(date)] "
-  if timeout "${TIMEOUT}" /exploit/doit.py; then
-    echo 'ok' | tee /tmp/healthz
-  else
-    echo -n "$? "
-    echo 'err' | tee /tmp/healthz
-  fi
-  sleep "${PERIOD}"
-done
+CMD drop_privs /home/user/run.sh & /home/user/healthz.py
