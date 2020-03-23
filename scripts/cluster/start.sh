@@ -78,6 +78,3 @@ kubectl apply -f "${DIR}/config/daemon.yaml"
 kubectl apply -f "${DIR}/config/network-policy.yaml"
 kubectl apply -f "${DIR}/config/allow-dns.yaml"
 kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
-
-kubectl create secret generic pow-bypass --from-file="${CHAL_DIR}/kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
-kubectl create secret generic pow-bypass-pub --from-file="${CHAL_DIR}/kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -
