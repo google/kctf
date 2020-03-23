@@ -1,52 +1,59 @@
-# Quickstart guide to writing a challenge:
+# Quickstart guide to writing a challenge
 
-* A docker image will be built from `challenge/image`. For the simplest challenges, replacing `challenge/image/chal` will be enough.
-* Edit `challenge/image/Dockerfile` to change the commandline or which files should get included.
+The basic steps when preparing a challenge are:
+
+* A Docker image is built from `challenge/image`. For the simplest challenges, replacing `challenge/image/chal` is sufficient.
+* Edit `challenge/image/Dockerfile` to change the commandline or the files you want to include.
 * Try the challenge locally with `make test-docker`.
-* If you have a cluster ready, deploy the challenge with `make start`.
-  * To access it, create a port forward with `make port-forward` and connect via `nc localhost PORT` using the printed port.
+* If you have prepared a cluster, deploy the challenge with `make start`.
+  * To access the challenge, create a port forward with `make port-forward` and connect to it via `nc localhost PORT` using the printed port.
 * Check out `make <tab>` for more commands.
 
-## healthcheck
+## Healthcheck
 
-* The healthcheck needs to run a webserver on port 45281 that responds to /healthz requests.
- * 200 if the challenge is healthy, otherwise an error (e.g. 400).
+Important details regarding healthchecks:
+
+* Run the healthcheck on a webserver on port 45281 that responds to `/healthz` requests.
+ * The healthcheck returns 200 if the challenge is healthy, otherwise an error (e.g. 400).
  * You can find an example webserver in `healthcheck/image/healthz.py`.
 * The base image comes preloaded with pwntools.
-* If your exploit is written in python, just drop it in `healthcheck/image/doit.py`.
+* If your exploit is written in Python, drop it in `healthcheck/image/doit.py`.
 
-# Directory layout:
+## Directory layout
 
-## /config
+The following directories are available:
 
-The config directory holds a few configuration files:
+### /config
 
-* `chal.conf`: Configure if the challenge should be deployed to the cluster, if it's publicly accessible and if it has a healthcheck.
+The `config` directory holds a few configuration files:
+
+* `chal.conf`: Configure this file if you are deploying the challenge to the cluster, if it's publicly accessible, and if it has a healthcheck.
 * `pow.conf`: Contains the difficulty of the proof-of-work, 0 means disabled.
-* `advanced`: The kubernetes config used to deploy the challenge. E.g. you can add a tmpfs here or change the port.
+* `advanced`: The Kubernetes config used to deploy the challenge. E.g. you can add a tmpfs here or change the port.
 
-## /challenge
+### /challenge
 
-The challenge binary and anything else challenge related goes in here.
+The `challenge` directory contains the challenge binary and anything else related to the challenge:
 
 * `image/`: Dockerfile and files of the challenge image.
-* `Makefile`: You can edit this file if you need to run code before building the docker image, e.g. for building the challenge from source.
+* `Makefile`: Edit this file if you need to run code before building the Docker image, e.g. for building the challenge from source.
 
-## /healthcheck
+### /healthcheck
 
-The healthcheck directory is optional. If you don't want to write a healthcheck, feel free to delete it. You really should have healthchecks though :).
+The `healthcheck` directory is optional. If you don't want to write a healthcheck, feel free to delete the directory. However, we strongly recommend that you implement a healthcheck :).
 
 * `image/`: Dockerfile and files of the healthcheck.
-* `Makefile`: same as for the challenge directory.
+* `Makefile`: Edit this file if you need to run code before running your healthcheck.
 
-# API contract
+## API contract
 
-Here are the requirements what this directory must look like to work with kCTF:
+Ensure the directories described above fulfill the following requirements to ensure they work with kCTF:
 
-* You can do pretty much whatever you want in the challenge dir but:
-  * You need to have a `Makefile` with the `.gen/docker-image` target that builds a docker image.
+* You can do pretty much whatever you want in the `challenge` directory but:
+  * You need to have a `Makefile` with the `.gen/docker-image` target that builds a Docker image.
   * We strongly recommend to use nsjail in all challenges.
-* Your challenge will receive connections on port 1337.
+* Your challenge receives connections on port 1337.
 * The healthcheck directory is optional.
   * If it exists, the image should run a webserver on port 45281 and respond to `/healthz` requests.
-* Changes to `config/advanced` might not be compatible with future versions of kCTF.
+  
+Note: Changes to `config/advanced` might not be compatible with future versions of kCTF.
