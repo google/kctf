@@ -5,7 +5,7 @@ The basic steps when preparing a challenge are:
 * A Docker image is built from `challenge/image`. For the simplest challenges, replacing `challenge/image/chal` is sufficient.
 * Edit `challenge/image/Dockerfile` to change the commandline or the files you want to include.
 * Try the challenge locally with `make test-docker`.
-* If you have prepared a cluster, deploy the challenge with `make start`.
+* If you have already prepared a [cluster](https://github.com/google/kctf/blob/master/docs/google-cloud.md), deploy the challenge with `make start`.
   * To access the challenge, create a port forward with `make port-forward` and connect to it via `nc localhost PORT` using the printed port.
 * Check out `make <tab>` for more commands.
 
@@ -26,14 +26,14 @@ The `config` directory holds a few configuration files:
 The `challenge` directory contains the challenge binary and anything else related to the challenge:
 
 * `image/`: Dockerfile and files of the challenge image.
-* `Makefile`: Edit this file if you need to run code before building the Docker image, e.g. for building the challenge from source.
+* `Makefile`: Edit this file if you need to run code when building the Docker image, e.g. for building the challenge from source.
 
 ### /healthcheck
 
 The `healthcheck` directory is optional. If you don't want to write a healthcheck, feel free to delete the directory. However, we strongly recommend that you implement a healthcheck :).
 
 * `image/`: Dockerfile and files of the healthcheck.
-* `Makefile`: Edit this file if you need to build any custom files before running your healthcheck.
+* `Makefile`: Edit this file if you need to build any custom files when building your healthcheck.
 
 
 #### Healthcheck
@@ -50,10 +50,10 @@ Important details regarding healthchecks:
 
 Ensure your setup fulfills the following requirements to ensure it works with kCTF:
 
-* In your cmdline, call `kctf_setup` as the first command.
+* Verify `kctf_setup` is used as the first command in the CMD instruction of your [Dockerfile](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/image/Dockerfile).
 * You can do pretty much whatever you want in the `challenge` directory but:
-  * You need to have a `Makefile` with the `.gen/docker-image` target that builds a Docker image.
-  * We strongly recommend using nsjail in all challenges.
+  * In the [Makefile](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/Makefile), the `.gen/docker-image` target that builds a Docker image must be configured. The configuration is set by default and usually does not require changes.
+  * We strongly recommend using nsjail in all challenges. While NsJail is already installed, you need to configure it [here](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/image/nsjail.cfg). For more information on nsjail, see the [official website](https://nsjail.dev/).
 * Your challenge receives connections on port 1337.
 * The healthcheck directory is optional.
   * If it exists, the image should run a webserver on port 45281 and respond to `/healthz` requests.
