@@ -53,7 +53,7 @@ Ensure your setup fulfills the following requirements to ensure it works with kC
 * Verify `kctf_setup` is used as the first command in the CMD instruction of your [Dockerfile](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/image/Dockerfile).
 * You can do pretty much whatever you want in the `challenge` directory but:
   * In the [Makefile](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/Makefile), the `.gen/docker-image` target that builds a Docker image must be configured. The configuration is set by default and usually does not require changes.
-  * We strongly recommend using nsjail in all challenges. While NsJail is already installed, you need to configure it [here](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/image/nsjail.cfg). For more information on nsjail, see the [official website](https://nsjail.dev/).
+  * We strongly recommend using nsjail in all challenges. While nsjail is already installed, you need to configure it [here](https://github.com/google/kctf/blob/master/base/challenge-skeleton/challenge/image/nsjail.cfg). For more information on nsjail, see the [official website](https://nsjail.dev/).
 * Your challenge receives connections on port 1337.
 * The healthcheck directory is optional.
   * If it exists, the image should run a webserver on port 45281 and respond to `/healthz` requests.
