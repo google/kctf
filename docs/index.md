@@ -4,11 +4,11 @@ kCTF is a Kubernetes-based infrastructure for CTF competitions.
 
 The following documentation resources are available:
 
-* [Local testing walthrough](docs/local-testing.md) – A quick start guide showing you how to build and test challenges locally.
-* [kCTF in 8 minutes](docs/introduction.md) – A quick 8-minute summary of what kCTF is and how it interacts with Kubernetes.
-* [Google Cloud walkthrough](docs/google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud. 
-* [Troubleshooting](docs/troubleshooting.md) – Help with fixing broken challenges.
-* [DNS setup](docs/dns.md) – Information on setting up DNS for the CTF.
+* [Local testing walthrough](local-testing.md) – A quick start guide showing you how to build and test challenges locally.
+* [kCTF in 8 minutes](introduction.md) – A quick 8-minute summary of what kCTF is and how it interacts with Kubernetes.
+* [Google Cloud walkthrough](google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud. 
+* [Troubleshooting](troubleshooting.md) – Help with fixing broken challenges.
+* [DNS setup](dns.md) – Information on setting up DNS for the CTF.
 
 ## Prerequisites
 
@@ -18,6 +18,6 @@ The following documentation resources are available:
 
 ## Samples
 
-The [samples](samples) directory contains two examples:
+The [samples](https://github.com/google/kctf/tree/master/samples) directory contains two examples:
 * A web challenge that acts like an XSS bot.
 * A web challenge that acts like a vulnerable PHP application with support for sessions and file uploads.
