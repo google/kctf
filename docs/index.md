@@ -4,7 +4,7 @@ kCTF is a Kubernetes-based infrastructure for CTF competitions.
 
 The following documentation resources are available:
 
-* [Local Testing Walthrough](local-testing.md) – A quick start guide showing you how to build and test challenges locally.
+* [Local Testing Walkthrough](local-testing.md) – A quick start guide showing you how to build and test challenges locally.
 * [kCTF in 8 Minutes](introduction.md) – A quick 8-minute summary of what kCTF is and how it interacts with Kubernetes.
 * [Google Cloud Walkthrough](google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud. 
 * [Troubleshooting](troubleshooting.md) – Help with fixing broken challenges.
