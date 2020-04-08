@@ -1,4 +1,4 @@
-{% assign .Client.Os = "{{.Client.Os}}" %}
+{% assign .Client.Os = "[.Client.Os]" %}
 
 # Local Testing Walkthrough
 
