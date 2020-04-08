@@ -1,3 +1,5 @@
+{% assign .Client.Os = "{{.Client.Os}}" %}
+
 # Local Testing Walkthrough
 
 The purpose of this walkthrough is to teach you how to use the kCTF infrastructure.
