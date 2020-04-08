@@ -49,7 +49,7 @@ PATH="$PATH:$(pwd)/bin"
 ### Run the configuration script
 
 ```
-kctf-config-create --chal-dir ~/kctf-demo --project { { project-id } } --start-cluster
+kctf-config-create --chal-dir ~/kctf-demo --project { {project-id} } --start-cluster
 ```
 
 ### Set configuration properties
@@ -60,7 +60,7 @@ Enter a path for storing the challenges:
 
 Enter your project id:
 ```
-{ { project-id } }
+{ {project-id} }
 ```
 
 ### Other settings 
