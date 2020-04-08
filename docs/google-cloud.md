@@ -1,3 +1,5 @@
+{% assign project-id = "foo" %}
+
 # kCTF Infrastructure Walkthrough
 
 Welcome to the kCTF walkthrough for Google Cloud!
