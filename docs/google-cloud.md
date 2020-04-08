@@ -1,4 +1,4 @@
-{% assign project-id = "foo" %}
+{% assign project-id = "your_project_id" %}
 
 # kCTF Infrastructure Walkthrough
 
