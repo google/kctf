@@ -49,7 +49,7 @@ PATH="$PATH:$(pwd)/bin"
 ### Run the configuration script
 
 ```
-kctf-config-create --chal-dir ~/kctf-demo --project {{project-id}} --start-cluster
+kctf-config-create --chal-dir ~/kctf-demo --project { { project-id } } --start-cluster
 ```
 
 ### Set configuration properties
@@ -60,7 +60,7 @@ Enter a path for storing the challenges:
 
 Enter your project id:
 ```
-{{ project-id }}
+{ { project-id } }
 ```
 
 ### Other settings 
@@ -87,7 +87,7 @@ The above steps ensure the availability of the challenges, while using computing
 
 Your cluster should soon be ready, when it is, you can continue with this walkthrough.
 
-Note: If you are curious and have some spare time, take a look at the [kCTF introduction](https://github.com/google/kctf/blob/master/docs/introduction.md), which includes a quick 8 minute summary of what kCTF is and how it interacts with Kubernetes.
+Note: If you are curious and have some spare time, take a look at the [kCTF introduction](https://google.github.io/kctf/introduction.html), which includes a quick 8 minute summary of what kCTF is and how it interacts with Kubernetes.
 
 # Step 2 – Create a challenge
 Now that you have set up a cluster, you can create a challenge.
