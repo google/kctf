@@ -1,5 +1,3 @@
-{% assign Client.Os = "your_.Client.Os" %}
-
 # Local Testing Walkthrough
 
 The purpose of this walkthrough is to teach you how to use the kCTF infrastructure.
@@ -189,7 +187,7 @@ chmod +x $HOME/.local/bin/docker $HOME/.local/bin/kubectl
 
 Make sure you are running the windows version of Docker and kubectl:
 ```
-docker version --format {{Client.Os}}
+docker version --format { {.Client.Os} }
 kubectl version --client -o yaml | grep platform
 ```
 If the commands say linux, you must uninstall the local linux versions, and make sure `~/.local/bin` is in your PATH.
