@@ -99,10 +99,10 @@ healthcheck-logs: .cluster-config
 	kubectl logs -l "app=${CHALLENGE_NAME}" -c healthcheck
 
 ssh: .cluster-config
-	kubectl exec deployment/chal -c challenge -it /bin/bash
+	kubectl exec deployment/chal -c challenge -it -- /bin/bash
 
 healthcheck-ssh: .cluster-config
-	kubectl exec deployment/chal -c healthcheck -it /bin/bash
+	kubectl exec deployment/chal -c healthcheck -it -- /bin/bash
 
 port-forward: .cluster-config
 	kubectl port-forward deployment/chal :1337 &
