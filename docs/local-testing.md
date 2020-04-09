@@ -186,10 +186,12 @@ chmod +x $HOME/.local/bin/docker $HOME/.local/bin/kubectl
 ```
 
 Make sure you are running the windows version of Docker and kubectl:
+<!-- {% raw  %} -->
 ```
-docker version --format <!-- {% raw  %} --> {{.Client.Os}} <!-- {% endraw  %} -->
+docker version --format  {{.Client.Os}} 
 kubectl version --client -o yaml | grep platform
 ```
+<!-- {% endraw  %} -->
 If the commands say linux, you must uninstall the local linux versions, and make sure `~/.local/bin` is in your PATH.
 
 To run on docker for windows use the command:
