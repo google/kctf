@@ -29,5 +29,4 @@ COPY bot.js /home/user/
 COPY cookie /home/user/
 RUN cd /home/user && npm install puppeteer proof-of-work
 
-# Since we don't need nsjail here, we could also run as user in the k8s config
-CMD kctf_setup && drop_privs /usr/bin/bash -c 'while true; do /usr/bin/node /home/user/bot.js; done'
+CMD kctf_setup && mount -t tmpfs none /tmp && drop_privs /usr/bin/bash -c 'while true; do /usr/bin/node /home/user/bot.js; done'
