@@ -33,10 +33,10 @@ if [ ! -d "${CHAL_DIR}" ]; then
 fi
 
 CHAL_DIR=$(realpath -L ${CHAL_DIR})
+mkdir -p "${CHAL_DIR}/kctf-conf"
 
 # copy the base files to the chal dir
-if [ ! -d "${CHAL_DIR}/kctf-conf" ]; then
-    mkdir -p "${CHAL_DIR}/kctf-conf"
+if [ ! -d "${CHAL_DIR}/kctf-conf/base" ]; then
     umask o+rx
     cp -p -R "${DIR}/base" "${CHAL_DIR}/kctf-conf/"
 fi
