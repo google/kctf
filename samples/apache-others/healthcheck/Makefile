@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-secretGenerator:
-- name: apache-others-secrets
-  files:
-  - flag
-generatorOptions:
-  disableNameSuffixHash: true
-  labels:
-    type: generated
-  annotations:
-    note: generated
+
+# IMPORTANT
+# - This will be the entrypoint when building the docker image.
+.gen/docker-image: .FORCE
+	docker build image --iidfile $@
+
+.PHONY: .FORCE
+.FORCE:

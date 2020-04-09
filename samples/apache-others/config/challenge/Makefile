@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-bases:
-- ../../.gen/k8s/deployment
 
-patchesStrategicMerge:
-- autoscaling.yaml
-- containers.yaml
+# IMPORTANT
+# - This will be the entrypoint when building the docker image.
+.gen/docker-image: .FORCE
+	docker build image --iidfile $@
+
+.PHONY: .FORCE
+.FORCE:

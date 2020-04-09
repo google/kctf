@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-secretGenerator:
-- name: apache-others-healthcheck-secrets
-  files:
-generatorOptions:
-  disableNameSuffixHash: true
-  labels:
-    type: generated
-  annotations:
-    note: generated
+FROM kctf-healthcheck
+
+COPY healthz.py /home/user/
+COPY doit.py /home/user/
+COPY run.sh /home/user/
+COPY env /home/user/
+
+CMD drop_privs /home/user/run.sh & /home/user/healthz.py

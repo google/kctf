@@ -13,7 +13,9 @@
 # limitations under the License.
 
 # IMPORTANT
-# - ../../.gen/src is required, don't remove it
-# - Output files should go to ../files
-../../.gen/src:
-	touch $@
+# - This will be the entrypoint when building the docker image.
+.gen/docker-image: .FORCE
+	docker build image --iidfile $@
+
+.PHONY: .FORCE
+.FORCE:

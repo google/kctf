@@ -13,15 +13,15 @@
 # limitations under the License.
 FROM kctf-nsjail
 
+COPY flag /chroot/
+
 RUN apt-get update && apt-get install -yq --no-install-recommends apache2 && rm -rf /var/lib/apt/lists/*
 
 RUN service apache2 start
 
 RUN ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/
 RUN ln -s /etc/apache2/mods-available/proxy_http.load /etc/apache2/mods-enabled/
-RUN ln -s /config/apache2-nsjail-others.conf /etc/apache2/conf-enabled/
-
-RUN echo nameserver 8.8.8.8 > /chroot/etc/resolv.conf
+COPY apache2-nsjail-others.conf /etc/apache2/conf-enabled/
 
 RUN chroot /chroot apt-get update \
     && chroot /chroot apt-get install -yq --no-install-recommends \
@@ -37,10 +37,13 @@ RUN chroot /chroot curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.ke
     && chroot /chroot apt-get install -yq --no-install-recommends nodejs socat \
     && rm -rf /chroot/var/lib/apt/lists/*
 
-RUN mkdir -p /chroot/home/user && chown user:user /chroot/home/user
-COPY files /home/user/
-RUN chown -R user:user /home/user
+RUN mkdir -p /chroot/home/user
+RUN mkdir -p /chroot/home/user/chroot
+COPY chroot /home/user/chroot
+COPY node /home/user/node
+COPY nsjail.cfg /home/user/nsjail.cfg
 
-CMD /usr/bin/k8s_nsjail_setup.sh \
+CMD kctf_setup \
     && /home/user/node/start.sh \
+    && mount -t tmpfs none /var/run/apache2 \
     && bash -c 'source /etc/apache2/envvars && APACHE_RUN_USER=user APACHE_RUN_GROUP=user /usr/sbin/apache2 -D FOREGROUND'
