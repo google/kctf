@@ -188,7 +188,7 @@ chmod +x $HOME/.local/bin/docker $HOME/.local/bin/kubectl
 Make sure you are running the windows version of Docker and kubectl:
 <!-- {% raw  %} -->
 ```
-docker version --format  {{.Client.Os}} 
+docker version --format {{.Client.Os}} 
 kubectl version --client -o yaml | grep platform
 ```
 <!-- {% endraw  %} -->
