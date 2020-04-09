@@ -1,5 +1,5 @@
 bases:
-- ../../.gen/k8s/deployment
+- ../../../.gen/k8s/deployment
 
 patchesStrategicMerge:
 - autoscaling.yaml
