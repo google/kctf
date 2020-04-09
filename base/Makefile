@@ -48,7 +48,7 @@ MAYBE_REMOTE_HEALTHCHECK_IMAGE=
 MAYBE_HEALTHCHECK=
 endif
 
-docker: challenge/.gen/docker-image
+docker: .gen/challenge-image
 
 start:
 ifeq ($(DEPLOY), true)
@@ -113,8 +113,8 @@ test-docker: .gen/docker-id
 healthcheck-test-docker: .gen/healthcheck-docker-id
 	docker ps -f "id=$$(Icat .gen/healthcheck-docker-id)"
 
-.gen/healthcheck-docker-id: .gen/docker-name healthcheck/.gen/docker-image
-	IMAGE_ID="$$(cat healthcheck/.gen/docker-image)"
+.gen/healthcheck-docker-id: .gen/docker-name .gen/healthcheck-image
+	IMAGE_ID="$$(cat .gen/healthcheck-image)"
 	test -s .gen/healthcheck-docker-id && docker kill $$(cat .gen/healthcheck-docker-id) || true
 	docker run -d -it --network "container:$$(cat .gen/docker-name)" \
 		"$${IMAGE_ID}" > $@
@@ -123,9 +123,9 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 	docker ps --all -f id=$$(cat .gen/docker-id) --format {{.Names}} > $@
 
 .gen/docker-id: PUSH_TARGET="LOCAL_DOCKER"
-.gen/docker-id: challenge/.gen/docker-image
+.gen/docker-id: .gen/challenge-image
 	test -s .gen/docker-id && docker kill $$(cat .gen/docker-id) || true
-	IMAGE_ID="$$(cat challenge/.gen/docker-image)"
+	IMAGE_ID="$$(cat .gen/challenge-image)"
 	docker run -d -it -p 1337 --privileged "$${IMAGE_ID}" > $@
 
 test-kind: LOCAL_KUBECONFIG=".gen/kind-kubeconfig"
@@ -176,9 +176,15 @@ ifeq ($(HEALTHCHECK), true)
 	fi
 endif
 
+.gen/challenge-image: challenge/.gen/docker-image
+	NEW_ID=$$(cat challenge/.gen/docker-image | cut -d ':' -f 2)
+	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
+	  echo "$${NEW_ID}" > $@;
+	fi
+	docker tag "$${NEW_ID}" "kctf-chal-${CHALLENGE_NAME}"
+
 challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
 	$(MAKE) -C challenge .gen/docker-image
-	docker tag "$$(cat $@)" "kctf-chal-${CHALLENGE_NAME}"
 
 .gen/kind-kubeconfig: .FORCE
 	@command -v kind || (echo "error: kind not installed. Visit https://kind.sigs.k8s.io/" && false)
@@ -189,8 +195,8 @@ challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .
 	rm -f $@
 	docker.exe context export default --kubeconfig $@
 
-${CLUSTER_GEN}/image-tagged: challenge/.gen/docker-image | .cluster-config
-	IMAGE_ID="$$(cat challenge/.gen/docker-image)"
+${CLUSTER_GEN}/image-tagged: .gen/challenge-image | .cluster-config
+	IMAGE_ID="$$(cat .gen/challenge-image)"
 	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
 	docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
@@ -205,12 +211,18 @@ ${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
 	fi
 	touch $@
 
-healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image
-	$(MAKE) -C healthcheck .gen/docker-image
-	docker tag "$$(cat $@)" "kctf-healthcheck-${CHALLENGE_NAME}"
+.gen/healthcheck-image: healthcheck/.gen/docker-image
+	NEW_ID=$$(cat healthcheck/.gen/docker-image | cut -d ':' -f 2)
+	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
+	  echo "$${NEW_ID}" > $@;
+	fi
+	docker tag "$${NEW_ID}" "kctf-healthcheck-${CHALLENGE_NAME}"
 
-${CLUSTER_GEN}/healthcheck-image-tagged: healthcheck/.gen/docker-image | .cluster-config
-	IMAGE_ID="$$(cat healthcheck/.gen/docker-image)"
+healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
+	$(MAKE) -C healthcheck .gen/docker-image
+
+${CLUSTER_GEN}/healthcheck-image-tagged: .gen/healthcheck-image | .cluster-config
+	IMAGE_ID="$$(cat .gen/healthcheck-image)"
 	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck:$${IMAGE_ID}"
 	docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
 	echo -n "$${IMAGE_TAG}" > $@
