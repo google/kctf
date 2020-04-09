@@ -31,6 +31,8 @@ RUN bash -c "source /venv/bin/activate && pip3 install ecdsa"
 RUN mv /venv /chroot/
 
 RUN mkdir /kctf
+RUN mkdir -p /kctf/.fullproc/proc
+RUN chmod 0700 /kctf/.fullproc
 RUN mkdir /chroot/.kctf
 RUN mkdir /chroot/.kctf/pow
 RUN mkdir /chroot/.kctf/pow-bypass
