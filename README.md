@@ -9,17 +9,21 @@ kCTF is a Kubernetes-based infrastructure for CTF competitions.
 * [docker](https://docs.docker.com/install/)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.17+
 
-## Getting Started
+## Getting Started / Documentation
 
-If you want to quickly get started, **follow the [local testing](docs/local-testing.md) walkthrough**, this will show you how to build and test challenges locally.
+For an introduction to what kCTF is and how it interacts with Kubernetes, see [kCTF in 8 Minutes](https://google.github.io/kctf/introduction.html).
 
-If you want to read more about how kCTF works, take a look at [kCTF in 8 minutes](docs/introduction.md): A quick 8 minutes summary of what is kCTF and how it interacts with Kubernetes.
+Additional documentation resources are:
 
-Once you have everything up and running, you can try deploying to Google Cloud. Follow the [Google Cloud walkthrough](docs/google-cloud.md).
-
-You can also find a [troubleshooting playbook](docs/troubleshooting.md) (for fixing broken challenges), and a guide for [setting up DNS](docs/dns.md) for the CTF.
+* [Local Testing Walkthrough](https://google.github.io/kctf/local-testing.html) – A quick start guide showing you how to build and test challenges locally.
+* [Google Cloud Walkthrough](https://google.github.io/kctf/google-cloud.html) – Once you have everything up and running, try deploying to Google Cloud. 
+* [Troubleshooting](https://google.github.io/kctf/troubleshooting.html) – Help with fixing broken challenges.
+* [DNS Setup](https://google.github.io/kctf/dns.html) – Information on setting up DNS for the CTF.
+* [Security Threat Model](https://google.github.io/kctf/security-threat-model.html) – Security considerations regarding kCTF including information on assets, risks, and potential attackers.
 
 ## Samples
 
-In the [samples](samples) directory you can find a couple example web challenges. One of them is a challenge that acts as an XSS bot, and the other is a challenge that acts as a vulnerable PHP application with support for sessions and file uploads.
+The [samples](https://github.com/google/kctf/tree/master/samples) directory contains two examples:
+* A web challenge that acts like an XSS bot.
+* A web challenge that acts like a vulnerable PHP application with support for sessions and file uploads.
 
