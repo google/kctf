@@ -11,6 +11,7 @@ env:
   GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
   GKE_ZONE: us-east1-c
   GKE_CLUSTER: github-ci
+  GKE_REGISTRY: us.gcr.io
 
 jobs:
   build-and-deploy:
@@ -62,15 +63,7 @@ jobs:
     - name: Configure kCTF cluster
       run: |
         export PATH=$PATH:$PWD/bin
-        echo PROJECT=$GKE_PROJECT > /tmp/kctf.conf
-        echo ZONE=$GKE_ZONE >> /tmp/kctf.conf
-        echo CLUSTER_NAME=$GKE_CLUSTER >> /tmp/kctf.conf
-        echo DOMAIN_NAME=$GKE_CLUSTER.kctf.dev >> /tmp/kctf.conf
-        # hack until https://github.com/google/kctf/issues/19 is fixed
-        KCTF_DIRECTORY=${GKE_PROJECT}_${GKE_ZONE}_${GKE_CLUSTER}
-        mkdir -p samples/kctf-conf/$KCTF_DIRECTORY/
-        mv /tmp/kctf.conf samples/kctf-conf/$KCTF_DIRECTORY/cluster.conf
-        kctf-config-load samples/kctf-conf/$KCTF_DIRECTORY/cluster.conf
+        kctf-config-create --chal-dir samples --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster
 
     - name: Expose sample tasks
       run: |
