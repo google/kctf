@@ -15,6 +15,12 @@ FROM kctf-nsjail
 
 COPY flag /chroot/
 
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends tzdata \
+    && ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update && apt-get install -yq --no-install-recommends apache2 && rm -rf /var/lib/apt/lists/*
 
 RUN service apache2 start
