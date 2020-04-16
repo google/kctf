@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SHELL := bash
-
 # IMPORTANT
 # - This will be the entrypoint when building the docker image.
-.gen/docker-image: .gen/new-image-id
-	NEW_ID=$$(cat .gen/new-image-id | cut -d ':' -f 2); if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then echo "$${NEW_ID}" > $@; fi
-
-.gen/new-image-id: .FORCE
+.gen/docker-image: .FORCE
 	docker build image --iidfile $@
 
 .PHONY: .FORCE
