@@ -52,8 +52,7 @@ jobs:
           scripts/dev/docker.sh chroot gcr.io/kctf-nsjail/kctf-nsjail-chroot latest
           scripts/dev/docker.sh pwntools gcr.io/kctf-nsjail/kctf-pwntools latest
         fi
-        
-    
+
     - name: Configure kCTF directory
       run: |        
         export PATH=$PATH:$PWD/bin
@@ -67,8 +66,8 @@ jobs:
 
     - name: Expose sample tasks
       run: |
-        echo PUBLIC=true | tee -a $(ls samples/*/chal.conf)
-        echo HEALTHCHECK=true | tee -a $(ls samples/*/chal.conf)
+        echo PUBLIC=true | tee -a $(ls samples/*/config/chal.conf)
+        echo HEALTHCHECK=true | tee -a $(ls samples/*/config/chal.conf)
 
     - name: Build all tasks
       run: |
