@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-POW_FILE="/.kctf/pow/pow.conf"
+FROM kctf-nsjail
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
+COPY flag /chroot/
 
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
+VOLUME /tmp
+VOLUME /var/log/apache2
+VOLUME /var/run/apache2
 
-exec "$@"
+RUN apt-get update && apt-get install -yq --no-install-recommends apache2 \
+    && rm -rf /var/lib/apt/lists/*
+CMD echo chroot /chroot apt-get update && /bin/bash

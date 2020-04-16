@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-POW_FILE="/.kctf/pow/pow.conf"
-
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
-
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
-
-exec "$@"
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "chal"
+#spec:
+#  ports:
+#  - name: "netcat"
+#    protocol: "TCP"
+## This will be the public port
+#    port: 1
+## This is the port exposed by the pod
+#    targetPort: 1337

@@ -16,7 +16,7 @@ FROM gcr.io/kctf-docker/kctf-nsjail-bin:latest AS bin
 FROM ubuntu:19.10
 
 RUN apt-get update \
-    && apt-get install -yq --no-install-recommends uidmap libprotobuf17 libnl-route-3-200 gnupg wget netcat ca-certificates \
+    && apt-get install -yq --no-install-recommends uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
@@ -24,9 +24,21 @@ RUN /usr/sbin/useradd --no-create-home -u 1000 user
 COPY --from=bin /usr/bin/nsjail /usr/bin/nsjail
 COPY --from=chroot /chroot /chroot
 
-RUN mkdir /chroot/config
-RUN mkdir /chroot/secrets
+# create a python3 venv and install ecdsa for the proof-of-work
+RUN apt-get update && apt-get -y install python3-venv
+RUN python3 -m venv /venv
+RUN bash -c "source /venv/bin/activate && pip3 install ecdsa"
+RUN mv /venv /chroot/
 
-COPY files/k8s_nsjail_setup.sh /usr/bin/
+RUN mkdir /kctf
+RUN mkdir -p /kctf/.fullproc/proc
+RUN chmod 0700 /kctf/.fullproc
+RUN mkdir /chroot/.kctf
+RUN mkdir /chroot/.kctf/pow
+RUN mkdir /chroot/.kctf/pow-bypass
+
+COPY files/kctf_setup /usr/bin/
+COPY files/drop_privs /usr/bin/
 COPY files/proof_of_work/pow.py /chroot/usr/bin/
 COPY files/proof_of_work/maybe_pow.sh /chroot/usr/bin/
+COPY files/nsjail_base.cfg /kctf/nsjail_base.cfg

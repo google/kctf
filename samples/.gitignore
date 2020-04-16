@@ -1,4 +1,5 @@
 kctf-conf/*
 !kctf-conf/base/
+!kctf-conf/secrets/
 #!kctf-conf/base/*
 #!kctf-conf/base/**

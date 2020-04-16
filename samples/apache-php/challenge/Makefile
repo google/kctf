@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-POW_FILE="/.kctf/pow/pow.conf"
+SHELL := bash
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
+# IMPORTANT
+# - This will be the entrypoint when building the docker image.
+.gen/docker-image: .gen/new-image-id
+	NEW_ID=$$(cat .gen/new-image-id | cut -d ':' -f 2); if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then echo "$${NEW_ID}" > $@; fi
 
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
+.gen/new-image-id: .FORCE
+	docker build image --iidfile $@
 
-exec "$@"
+.PHONY: .FORCE
+.FORCE:

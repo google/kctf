@@ -12,17 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set -Eeuxo pipefail
 
-POW_FILE="/.kctf/pow/pow.conf"
-
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
-
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
-
-exec "$@"
+# We need a clean proc for user namespaces
+mount -t proc none /kctf/.fullproc/proc

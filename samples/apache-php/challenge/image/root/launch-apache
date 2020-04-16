@@ -1,0 +1,7 @@
+#!/bin/bash
+
+service apache2 start
+
+wget -O - http://127.0.0.1:1337/?apache-is-running
+
+tail -f /var/log/apache2/*

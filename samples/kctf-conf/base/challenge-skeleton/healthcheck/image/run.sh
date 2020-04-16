@@ -12,17 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set -Eeuo pipefail
 
-POW_FILE="/.kctf/pow/pow.conf"
+TIMEOUT=20
+PERIOD=30
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
+export TERM=linux
+export TERMINFO=/etc/terminfo
 
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
+# Activate the pwntools venv
+PS1=""
+source /venv/bin/activate
+
+while true; do
+  source /home/user/env
+  echo -n "[$(date)] "
+  if timeout "${TIMEOUT}" /home/user/doit.py; then
+    echo 'ok' | tee /tmp/healthz
+  else
+    echo -n "$? "
+    echo 'err' | tee /tmp/healthz
   fi
-fi
-
-exec "$@"
+  sleep "${PERIOD}"
+done

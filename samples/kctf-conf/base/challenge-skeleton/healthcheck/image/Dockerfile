@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM kctf-healthcheck
 
-POW_FILE="/.kctf/pow/pow.conf"
+COPY healthz.py /home/user/
+COPY doit.py /home/user/
+COPY run.sh /home/user/
+COPY env /home/user/
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
-
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
-
-exec "$@"
+CMD drop_privs /home/user/run.sh & /home/user/healthz.py

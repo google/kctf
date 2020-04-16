@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-POW_FILE="/.kctf/pow/pow.conf"
+import pwnlib
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
+def handle_pow(r):
+    print(r.recvuntil('./pow.py solve '))
+    challenge = r.recvline().strip()
+    p = pwnlib.tubes.process.process(['bypass_pow', challenge])
+    solution = p.readall().strip()
+    r.sendline(solution)
+    print(r.recvuntil('Correct\n'))
 
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
+r = pwnlib.tubes.remote.remote('127.0.0.1', 1337)
+print(r.recvuntil('== proof-of-work: '))
+if r.recvline().startswith('enabled'):
+    handle_pow(r)
 
-exec "$@"
+print(r.recvuntil('CTF{'))
+print(r.recvuntil('}'))
+
+exit(0)

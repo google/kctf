@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-POW_FILE="/.kctf/pow/pow.conf"
+import pwnlib
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
+if "imanode" in pwnlib.util.web.wget("http://localhost:1337/nodejs?edonami"):
+      exit(0)
 
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
-
-exec "$@"
+exit(1)

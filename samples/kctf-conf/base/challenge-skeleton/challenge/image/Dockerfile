@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM kctf-nsjail
 
-POW_FILE="/.kctf/pow/pow.conf"
+COPY flag /chroot/
+COPY chal /chroot/home/user/
+COPY nsjail.cfg /home/user/
 
-if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
-
-  POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
-    echo 'pow fail'
-    exit 1
-  fi
-fi
-
-exec "$@"
+CMD kctf_setup && drop_privs nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg -- /usr/bin/stdbuf -i0 -o0 -e0 maybe_pow.sh /home/user/chal
