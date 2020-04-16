@@ -13,7 +13,7 @@
 # limitations under the License.
 FROM gcr.io/kctf-docker/kctf-nsjail-chroot:latest AS chroot
 FROM gcr.io/kctf-docker/kctf-nsjail-bin:latest AS bin
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates \
