@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
 ENV BUILD_PACKAGES build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev ca-certificates
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
@@ -17,19 +17,19 @@
 import pwnlib
 
 def handle_pow(r):
-    print(r.recvuntil('./pow.py solve '))
-    challenge = r.recvline().strip()
+    print(r.recvuntil(b'./pow.py solve '))
+    challenge = r.recvline().decode('ascii').strip()
     p = pwnlib.tubes.process.process(['bypass_pow', challenge])
     solution = p.readall().strip()
     r.sendline(solution)
-    print(r.recvuntil('Correct\n'))
+    print(r.recvuntil(b'Correct\n'))
 
 r = pwnlib.tubes.remote.remote('127.0.0.1', 1337)
 print(r.recvuntil('== proof-of-work: '))
-if r.recvline().startswith('enabled'):
+if r.recvline().startswith(b'enabled'):
     handle_pow(r)
 
-print(r.recvuntil('CTF{'))
-print(r.recvuntil('}'))
+print(r.recvuntil(b'CTF{'))
+print(r.recvuntil(b'}'))
 
 exit(0)

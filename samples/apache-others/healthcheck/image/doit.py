@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
@@ -16,7 +16,7 @@
 
 import pwnlib
 
-if "imanode" in pwnlib.util.web.wget("http://localhost:1337/nodejs?edonami"):
+if b"imanode" in pwnlib.util.web.wget("http://localhost:1337/nodejs?edonami"):
       exit(0)
 
 exit(1)
