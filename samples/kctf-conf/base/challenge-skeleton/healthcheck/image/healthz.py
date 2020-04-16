@@ -23,13 +23,13 @@ class HealthzHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        content = 'err'
+        content = b'err'
         try:
-            with open('/tmp/healthz', 'r') as fd:
+            with open('/tmp/healthz', 'rb') as fd:
                 content = fd.read().strip()
         except:
             pass
-        self.send_response(200 if content == 'ok' else 400)
+        self.send_response(200 if content == b'ok' else 400)
         self.send_header("Content-type", "text/plain")
         self.send_header("Content-length", str(len(content)))
         self.end_headers()
