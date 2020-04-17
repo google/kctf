@@ -3,9 +3,9 @@
 Users are reporting a challenge is down, the author is offline, and you don't know how long the challenge has been broken. The challenge had no healthcheck configured, and there's no documentation. Someone forgot to test the task. A nightmare come true.
 
 This guide will show you how to troubleshoot a broken challenge, assuming you don't know how the challenge works. The guide is divided into three parts that take you through troubleshooting a task in different environments:
-* [In Docker](#troubleshooting-with-docker)
-* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes)
-* [Remotely](#troubleshooting-remotely)
+* [In Docker](#troubleshooting-with-docker) – Testing locally with `make test-docker` is the easiest and fastest way to troubleshoot challenges, and you don't need to know much apart from some basic Docker commands presented in the following section.
+* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes) – Troubleshooting with Kubernetes requires more setup, but is needed only on rare occasions, as it is only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF.
+* [Remotely](#troubleshooting-remotely) – Troubleshooting remotely is trivial, although it runs the risk of the user leaving the remote state in an inconsistent state, however it's a good last-resort.
 
 Note: The commands in this guide use the `kctf-chal-troubleshooting` placeholder as the name of the broken challenge, replace this placeholder with the actual name of your challenge.
 
@@ -99,7 +99,7 @@ This should output more errors, and these errors should provide more details abo
 
 ## Troubleshooting with Kubernetes
 
-If everything works in Docker, the problem might be higher up (in Kubernetes). The first step to debug this would be to check if the challenge works in a local cluster. Follow the instructions [here](local-testing.md#running-the-challenge-in-kubernetes) for getting the task running in KIND.
+If everything works in Docker, the problem might be higher up (in Kubernetes). The first step to debug this would be to check if the challenge works in a local cluster. Follow the instructions [here](local-testing.md#running-the-challenge-in-kubernetes) for getting the task running in [KIND](https://github.com/kubernetes-sigs/kind).
 
 ### Basic commands
 
@@ -231,11 +231,3 @@ To temporarily undo a bad rollout, run:
 ```
 kubectl rollout undo deployment/chal
 ```
-
-## Conclusion
-
-Testing locally with `make test-docker` is the easiest and fastest way to troubleshoot challenges, and you don't need to know much besides some basic Docker commands presented on this page.
-
-Troubleshooting with Kubernetes requires more setup, and should be needed only on rare occasions (only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF).
-
-Troubleshooting remotely is trivial, although it runs the risk of the user leaving the remote state in an inconsistent state, however it's a good last-resort.
