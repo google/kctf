@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 FROM gcr.io/kctf-docker/kctf-pwntools:latest AS pwntools
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
-RUN apt-get update && apt-get -yq --no-install-recommends install cpio openssl python2.7 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get -yq --no-install-recommends install cpio openssl python3 && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 

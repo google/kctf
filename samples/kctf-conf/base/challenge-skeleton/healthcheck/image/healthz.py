@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 # 
@@ -13,9 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import BaseHTTPServer
+import http.server
 
-class HealthzHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class HealthzHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path != '/healthz':
             self.send_response(404)
@@ -23,17 +23,17 @@ class HealthzHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        content = 'err'
+        content = b'err'
         try:
-            with open('/tmp/healthz', 'r') as fd:
+            with open('/tmp/healthz', 'rb') as fd:
                 content = fd.read().strip()
         except:
             pass
-        self.send_response(200 if content == 'ok' else 400)
+        self.send_response(200 if content == b'ok' else 400)
         self.send_header("Content-type", "text/plain")
         self.send_header("Content-length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
 
-httpd = BaseHTTPServer.HTTPServer(('', 45281), HealthzHandler)
+httpd = http.server.HTTPServer(('', 45281), HealthzHandler)
 httpd.serve_forever()

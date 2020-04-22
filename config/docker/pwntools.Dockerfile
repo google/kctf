@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
-ENV BUILD_PACKAGES build-essential python-virtualenv virtualenv python2-dev
+ENV BUILD_PACKAGES build-essential python3-virtualenv virtualenv python3-dev
 
 RUN apt-get update \
     && apt-get -yq --no-install-recommends install $BUILD_PACKAGES \
     && rm -rf /var/lib/apt/lists/* \
-    && python2 -m virtualenv /venv \
+    && python3 -m virtualenv /venv \
     && bash -c "source /venv/bin/activate && pip install pwntools" \
     && apt-get remove --purge -y $BUILD_PACKAGES $(apt-mark showauto)
