@@ -18,15 +18,13 @@ import base64
 import secrets
 import socket
 import sys
-from ecdsa import VerifyingKey
-from ecdsa.util import sigdecode_der
 import hashlib
 
 VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
-SOLVER_URL = 'https://github.com/google/kctf/blob/master/base/nsjail-docker/files/proof_of_work/pow.py'
+SOLVER_URL = 'https://github.com/google/kctf/raw/master/base/nsjail-docker/files/proof_of_work/pow.py'
 
 def sloth_root(x, diff, p):
     for i in range(diff):
@@ -63,7 +61,9 @@ def solve_challenge(chal):
     y = sloth_root(x, diff, MODULUS)
     return encode_challenge([y])
 
-def can_bypass(chal, sol):
+def can_bypass(chal, sol):    
+    from ecdsa import VerifyingKey
+    from ecdsa.util import sigdecode_der
     if not sol.startswith('b.'):
         return False
     sig = bytes.fromhex(sol[2:])
@@ -105,9 +105,8 @@ def main():
 
         sys.stdout.write("== proof-of-work: enabled ==\n")
         sys.stdout.write("please solve a pow first\n")
-        sys.stdout.write("You can find the solver at:\n")
-        sys.stdout.write("  {}\n".format(SOLVER_URL))
-        sys.stdout.write("./pow.py solve {}\n".format(challenge))
+        sys.stdout.write("You can run the solver with:\n")
+        sys.stdout.write("    python3 <(curl -sSL {}) solve {}\n".format(SOLVER_URL, challenge))
         sys.stdout.write("===================\n")
         sys.stdout.write("\n")
         sys.stdout.write("Solution? ")
@@ -129,7 +128,9 @@ def main():
         solution = solve_challenge(challenge)
 
         if verify_challenge(challenge, solution):
-            sys.stdout.write("Solution: \n{}\n".format(solution))
+            sys.stderr.write("Solution: \n".format(solution))
+            sys.stderr.flush()
+            sys.stdout.write(solution)
             sys.stdout.flush()
             sys.exit(0)
     else:
