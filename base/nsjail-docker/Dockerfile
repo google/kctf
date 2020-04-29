@@ -26,7 +26,7 @@ COPY --from=chroot /chroot /chroot
 
 # create a python3 venv and install ecdsa for the proof-of-work
 RUN apt-get update && apt-get -y install python3-venv
-RUN python3 -m venv /venv
+RUN python3 -m venv --copies /venv
 RUN bash -c "source /venv/bin/activate && pip3 install ecdsa"
 RUN mv /venv /chroot/
 
