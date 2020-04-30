@@ -37,7 +37,10 @@ fi
 echo "loaded config for ${CLUSTER_NAME} in ${PROJECT}"
 
 mkdir -p "${HOME}/.config/kctf"
-ln -fs "${CONFIG_FILE}" "${HOME}/.config/kctf/cluster.conf"
+ln -fs "${CONFIG_FILE}" "${CONFIG_DIR}/cluster.conf"
+CONFIG_FILE_DIR="$(dirname ${CONFIG_FILE})"
+CHAL_DIR=$(realpath "${CONFIG_FILE_DIR}/../..")
+ln -nfs "${CHAL_DIR}" "${CONFIG_DIR}/challenges"
 
 create_gcloud_config
 
