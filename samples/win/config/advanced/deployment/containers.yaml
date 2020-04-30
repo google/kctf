@@ -24,4 +24,6 @@ spec:
         kubernetes.io/os: windows
       containers:
       - name: "challenge"
+        ports:
+        - containerPort: 80
         securityContext: null
