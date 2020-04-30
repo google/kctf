@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: win
+  name: iis
+  labels:
+    app: iis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iis
+  template:
+    metadata:
+      labels:
+        app: iis
+    spec:
+      nodeSelector:
+        kubernetes.io/os: windows
+      containers:
+      - name: iis-server
+        image: eu.gcr.io/kctf-test/win:v1
+        ports:
+        - containerPort: 80
