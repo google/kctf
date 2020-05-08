@@ -18,11 +18,6 @@ source "${DIR}/scripts/lib/config.sh"
 
 load_config
 
-gcloud config set project ${PROJECT}
-gcloud config set compute/zone ${ZONE}
-
-
-
 MACHINE_TYPE="n2-standard-4"
 MIN_NODES="1"
 MAX_NODES="2"
