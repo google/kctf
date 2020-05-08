@@ -26,7 +26,7 @@ MACHINE_TYPE="n2-standard-4"
 EXISTING_CLUSTER=$(gcloud container clusters list --filter "name=${CLUSTER_NAME}" --format 'get(name)')
 
 if [ -z "${EXISTING_CLUSTER}" ]; then
-  gcloud container clusters create --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --create-subnetwork name=kctf-${CLUSTER_NAME}-subnet --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr 172.16.0.32/28 --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} ${CLUSTER_NAME}
+  gcloud container clusters create --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --create-subnetwork name=kctf-${CLUSTER_NAME}-subnet --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr 172.16.0.32/28 --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME}
 fi
 
 EXISTING_ROUTER=$(gcloud compute routers list --filter "name=kctf-${CLUSTER_NAME}-nat-router" --format 'get(name)')
@@ -57,12 +57,14 @@ if [ -z "${GSA_EMAIL}" ]; then
   done
 fi
 
-if ! kubectl get secret/gcsfuse-secrets --namespace kube-system; then
-  KEY_PATH=$(mktemp -d)/key.json
-  gcloud iam service-accounts keys create "${KEY_PATH}" --iam-account "${GSA_EMAIL}"
-  kubectl create secret generic gcsfuse-secrets --from-file="${KEY_PATH}" --namespace kube-system
-  rm -rf $(dirname "${KEY_PATH}")
+KSA_NAME="${GSA_NAME}"
+
+if ! kubectl get serviceaccount/${KSA_NAME} --namespace kube-system; then
+  kubectl create serviceaccount --namespace kube-system ${KSA_NAME}
 fi
+
+gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${KSA_NAME}]" ${GSA_EMAIL}
+kubectl annotate serviceaccount --namespace kube-system ${KSA_NAME} iam.gke.io/gcp-service-account=${GSA_EMAIL} --overwrite
 
 if ! gsutil du "gs://${BUCKET_NAME}/"; then
   gsutil mb -l eu "gs://${BUCKET_NAME}/"
@@ -72,7 +74,7 @@ gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
 
-kubectl apply -f "${DIR}/config/daemon-gcsfuse.yaml"
+sed "s/{{KSA_NAME}}/${KSA_NAME}/g" "${DIR}/config/daemon-gcsfuse.yaml" | kubectl apply -f -
 kubectl apply -f "${DIR}/config/apparmor.yaml"
 kubectl apply -f "${DIR}/config/daemon.yaml"
 kubectl apply -f "${DIR}/config/network-policy.yaml"
