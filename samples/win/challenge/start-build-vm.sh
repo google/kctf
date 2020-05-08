@@ -5,6 +5,7 @@ set -Eeuo pipefail
 VM_TAG="win-build-vm"
 MACHINE_TYPE="n1-standard-4"
 IMAGE="windows-server-1909-dc-core-for-containers-v20200414"
+# if you change this, also update stop-build-vm.sh
 VM_NAME="win-build-vm"
 FIREWALL_RULE="gke-kctf-win-build-vm"
 FIREWALL_DESCRIPTION="winrm access to gke kctf win build vm"
