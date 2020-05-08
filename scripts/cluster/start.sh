@@ -68,6 +68,13 @@ if ! gsutil du "gs://${BUCKET_NAME}/"; then
   gsutil mb -l eu "gs://${BUCKET_NAME}/"
 fi
 
+if gsutil uniformbucketlevelaccess get "gs://${BUCKET_NAME}" | grep -q "Enabled: True"; then
+  gsutil iam ch "serviceAccount:${GSA_EMAIL}:roles/storage.legacyBucketOwner" "gs://${BUCKET_NAME}"
+  gsutil iam ch "serviceAccount:${GSA_EMAIL}:roles/storage.legacyObjectOwner" "gs://${BUCKET_NAME}"
+else
+  gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
+fi
+
 gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
