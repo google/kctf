@@ -75,8 +75,6 @@ else
   gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 fi
 
-gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
-
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
 
 kubectl apply -f "${DIR}/config/daemon-gcsfuse.yaml"
