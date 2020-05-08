@@ -15,7 +15,7 @@
 # IMPORTANT
 # - This will be the entrypoint when building the docker image.
 .gen/docker-image: .FORCE
-	echo "${REMOTE_IMAGE}:v1" > $@
+	./build_remote.sh > $@
 
 .PHONY: .FORCE
 .FORCE:
