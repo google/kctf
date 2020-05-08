@@ -1,16 +1,8 @@
 #!/bin/bash
 
 set -Eeuo pipefail
-
-VM_TAG="win-build-vm"
-MACHINE_TYPE="n1-standard-4"
-IMAGE="windows-server-1909-dc-core-for-containers-v20200414"
-# if you change this, also update stop-build-vm.sh
-VM_NAME="win-build-vm"
-FIREWALL_RULE="gke-kctf-win-build-vm"
-FIREWALL_DESCRIPTION="winrm access to gke kctf win build vm"
-TIMEOUT=$((5*60))
-SLEEP=20
+DIR="$( cd "$( dirname "$( readlink -f "${BASH_SOURCE[0]}")" )" >/dev/null && pwd )"
+source "${DIR}/vm_config.sh"
 
 echo "[*] creating windows vm"
 gcloud beta compute instances create "${VM_NAME}" \
@@ -27,14 +19,14 @@ gcloud compute firewall-rules create "${FIREWALL_RULE}" \
   --target-tags "${VM_TAG}"
 
 while true; do
-  echo -n "[*] Trying to fetch windows credentials, remaining timeout: ${TIMEOUT}s"
+  echo -n "[*] Trying to fetch windows credentials, remaining timeout: ${CREDENTIAL_FETCH_TIMEOUT}s"
   gcloud --quiet beta compute reset-windows-password "${VM_NAME}" > windows_creds 2>/dev/null && break
-  if [[ ${TIMEOUT} -lt ${SLEEP} ]]; then
+  if [[ ${CREDENTIAL_FETCH_TIMEOUT} -lt ${CREDENTIAL_FETCH_SLEEP} ]]; then
     echo ": failed, giving up"
     exit 1
   fi
-  echo ": failed, sleeping ${SLEEP}s"
-  sleep ${SLEEP}
-  TIMEOUT=$((${TIMEOUT} - ${SLEEP}))
+  echo ": failed, sleeping ${CREDENTIAL_FETCH_SLEEP}s"
+  sleep ${CREDENTIAL_FETCH_SLEEP}
+  CREDENTIAL_FETCH_TIMEOUT=$((${CREDENTIAL_FETCH_TIMEOUT} - ${CREDENTIAL_FETCH_SLEEP}))
 done
 echo ': success'
