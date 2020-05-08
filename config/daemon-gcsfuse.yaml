@@ -27,7 +27,7 @@ spec:
       labels:
         name: ctf-daemon-gcsfuse
     spec:
-      serviceAccountName: {{KSA_NAME}}
+      serviceAccountName: gcsfuse-sa
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule

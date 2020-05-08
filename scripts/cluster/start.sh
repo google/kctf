@@ -57,7 +57,7 @@ if [ -z "${GSA_EMAIL}" ]; then
   done
 fi
 
-KSA_NAME="${GSA_NAME}"
+KSA_NAME="gcsfuse-sa"
 
 if ! kubectl get serviceaccount/${KSA_NAME} --namespace kube-system; then
   kubectl create serviceaccount --namespace kube-system ${KSA_NAME}
@@ -74,7 +74,7 @@ gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
 
-sed "s/{{KSA_NAME}}/${KSA_NAME}/g" "${DIR}/config/daemon-gcsfuse.yaml" | kubectl apply -f -
+kubectl apply -f "${DIR}/config/daemon-gcsfuse.yaml"
 kubectl apply -f "${DIR}/config/apparmor.yaml"
 kubectl apply -f "${DIR}/config/daemon.yaml"
 kubectl apply -f "${DIR}/config/network-policy.yaml"
