@@ -42,6 +42,9 @@ COPY apache2-nsjail-php.conf /etc/apache2/conf-enabled/nsjail-php.conf
 RUN rm -rf /var/www
 RUN ln -s /chroot/var/www /var/www
 
+VOLUME /mnt/disks/sessions
+VOLUME /mnt/disks/uploads
+
 RUN rm -rf /chroot/var/lib/php/sessions
 RUN chroot /chroot rm -rf /var/lib/php/sessions
 RUN chroot /chroot mkdir -p /mnt/disks/sessions /mnt/disks/uploads
