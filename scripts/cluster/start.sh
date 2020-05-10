@@ -59,10 +59,7 @@ fi
 
 KSA_NAME="gcsfuse-sa"
 
-if ! kubectl get serviceaccount/${KSA_NAME} --namespace kube-system; then
-  kubectl create serviceaccount --namespace kube-system ${KSA_NAME}
-fi
-
+kubectl create serviceaccount --namespace kube-system ${KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
 gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${KSA_NAME}]" ${GSA_EMAIL}
 kubectl annotate serviceaccount --namespace kube-system ${KSA_NAME} iam.gke.io/gcp-service-account=${GSA_EMAIL} --overwrite
 
