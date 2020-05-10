@@ -26,7 +26,7 @@ MACHINE_TYPE="n2-standard-4"
 EXISTING_CLUSTER=$(gcloud container clusters list --filter "name=${CLUSTER_NAME}" --format 'get(name)')
 
 if [ -z "${EXISTING_CLUSTER}" ]; then
-  gcloud container clusters create --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --create-subnetwork name=kctf-${CLUSTER_NAME}-subnet --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr 172.16.0.32/28 --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME}
+  gcloud container clusters create --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --create-subnetwork name=kctf-${CLUSTER_NAME}-subnet --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr 172.16.0.32/28 --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} ${CLUSTER_NAME}
 fi
 
 EXISTING_ROUTER=$(gcloud compute routers list --filter "name=kctf-${CLUSTER_NAME}-nat-router" --format 'get(name)')
@@ -57,11 +57,12 @@ if [ -z "${GSA_EMAIL}" ]; then
   done
 fi
 
-KSA_NAME="gcsfuse-sa"
-
-kubectl create serviceaccount --namespace kube-system ${KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
-gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${KSA_NAME}]" ${GSA_EMAIL}
-kubectl annotate serviceaccount --namespace kube-system ${KSA_NAME} iam.gke.io/gcp-service-account=${GSA_EMAIL} --overwrite
+if ! kubectl get secret/gcsfuse-secrets --namespace kube-system; then
+  KEY_PATH=$(mktemp -d)/key.json
+  gcloud iam service-accounts keys create "${KEY_PATH}" --iam-account "${GSA_EMAIL}"
+  kubectl create secret generic gcsfuse-secrets --from-file="${KEY_PATH}" --namespace kube-system
+  rm -rf $(dirname "${KEY_PATH}")
+fi
 
 if ! gsutil du "gs://${BUCKET_NAME}/"; then
   gsutil mb -l eu "gs://${BUCKET_NAME}/"
