@@ -29,6 +29,7 @@ print(r.recvuntil('== proof-of-work: '))
 if r.recvline().startswith(b'enabled'):
     handle_pow(r)
 
+r.sendline(b'cat /flag')
 print(r.recvuntil(b'CTF{'))
 print(r.recvuntil(b'}'))
 
