@@ -71,8 +71,8 @@ def can_bypass(chal, sol):
         vk = VerifyingKey.from_pem(fd.read())
     return vk.verify(signature=sig, data=bytes(chal, 'ascii'), hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
 
-def verify_challenge(chal, sol):
-    if can_bypass(chal, sol):
+def verify_challenge(chal, sol, allow_bypass=True):
+    if allow_bypass and can_bypass(chal, sol):
         return True
     [diff, x] = decode_challenge(chal)
     [y] = decode_challenge(sol)
@@ -83,6 +83,9 @@ def usage():
     sys.stdout.write('Usage:\n')
     sys.stdout.write('Solve pow: {} solve $challenge\n')
     sys.stdout.write('Check pow: {} ask $difficulty\n')
+    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU):')
+    sys.stdout.write('             1337: 10 secs')
+    sys.stdout.write('             31337: 5 mins')
     sys.stdout.flush()
     sys.exit(1)
 
@@ -127,11 +130,13 @@ def main():
         challenge = sys.argv[2]
         solution = solve_challenge(challenge)
 
-        if verify_challenge(challenge, solution):
+        if verify_challenge(challenge, solution, False):
             sys.stderr.write("Solution: \n".format(solution))
             sys.stderr.flush()
             sys.stdout.write(solution)
             sys.stdout.flush()
+            sys.stderr.write("\n")
+            sys.stderr.flush()
             sys.exit(0)
     else:
         usage()
