@@ -61,12 +61,12 @@ stop: .cluster-config
 	kubectl delete namespace ${CHALLENGE_NAME}
 
 ip: .cluster-config
-	LB_IP=""
-	while [ -z "$${LB_IP}" ]; do
-	  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-	  sleep 3
-	done
-	echo "$${LB_IP}"
+	@LB_IP=""
+	@while [ -z "$${LB_IP}" ]; do
+	@  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+	@  sleep 3
+	@done
+	@echo "$${LB_IP}"
 
 status: .cluster-config
 	@echo "= INSTANCES / PODs ="
