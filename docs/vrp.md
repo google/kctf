@@ -59,3 +59,6 @@ We want to encourage the community to help research vulnerabilities such as thos
 
 *   The person that develops the exploit and receives the reward might not be the same as the person that discovered or patched the vulnerability.
 *   It's ok to use 1-day exploits against the lab environment using publicly known vulnerabilities that exploit the patch gap between the time when a patch is announced and the lab environment is updated, however we will only issue a single reward per vulnerability.
+
+
+In case of questions or suggestions, you can reach us at kctf@google.com
