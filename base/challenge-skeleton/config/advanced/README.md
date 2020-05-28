@@ -116,7 +116,7 @@ spec:
     spec:
       containers:
       - name: challenge
-      ports:
+        ports:
         - containerPort: 1234
 ```
 
