@@ -87,7 +87,7 @@ In this step, you'll learn how to:
 * Deploy the Docker image to the cluster
 * Expose the Docker image to the internet
 
-  **Note**: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding steps. Continue with the next steps if you already created a cluster.
+**Note**: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding step. Continue with the next steps if you already created a cluster.
 
 ## Call kctf-chal-create.sh to copy the skeleton
 Run the following command to create a challenge called "demo-challenge":
