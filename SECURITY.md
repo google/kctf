@@ -1,6 +1,6 @@
 # Security Policy
 
-To report a vulnerability in this repository, or in Google Cloud please contact the Google Security Team at https://g.co/vulnz
+To report a vulnerability in this repository, or in Google Cloud please contact the Google Security Team at https://g.co/vulnz. Read more about reporting vulnerabilities in kCTF [here](docs/vrp.md). You can read the threat model [here](docs/security-threat-model.md).
 
 To report a vulnerability in a dependency, please contact the upstream maintainer directly.
 
