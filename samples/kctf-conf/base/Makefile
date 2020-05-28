@@ -61,12 +61,12 @@ stop: .cluster-config
 	kubectl delete namespace ${CHALLENGE_NAME}
 
 ip: .cluster-config
-	LB_IP=""
-	while [ -z "$${LB_IP}" ]; do
-	  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-	  sleep 3
-	done
-	echo "$${LB_IP}"
+	@LB_IP=""
+	@while [ -z "$${LB_IP}" ]; do
+	@  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+	@  sleep 3
+	@done
+	@echo "$${LB_IP}"
 
 status: .cluster-config
 	@echo "= INSTANCES / PODs ="
@@ -262,9 +262,9 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged
 	@  exit 1
 	@fi
 	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
-	kubectl config set-context --current --namespace="${CHALLENGE_NAME}"
-	kubectl create namespace "${CHALLENGE_NAME}" --dry-run -oyaml | kubectl apply -f -
-	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
+	kubectl config set-context --current --namespace="${CHALLENGE_NAME}" >&2
+	kubectl create namespace "${CHALLENGE_NAME}" --dry-run -oyaml | kubectl apply -f - >&2
+	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" >&2
 	mkdir -p ${CLUSTER_GEN} >&2
 
 .FORCE:
