@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-.PHONY: docker
+.PHONY: docker .FORCE
 
 docker: .gen/docker-image
 
-.gen/docker-image: Dockerfile $(shell find files)
+.gen/docker-image: .FORCE
 	docker build -t "kctf-healthcheck" .
 	echo $$(docker image ls "kctf-healthcheck" -q) > $@
+
+.FORCE:

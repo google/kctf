@@ -18,15 +18,13 @@ import base64
 import secrets
 import socket
 import sys
-from ecdsa import VerifyingKey
-from ecdsa.util import sigdecode_der
 import hashlib
 
 VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
-SOLVER_URL = 'https://github.com/google/kctf/blob/master/base/nsjail-docker/files/proof_of_work/pow.py'
+SOLVER_URL = 'https://github.com/google/kctf/raw/master/base/nsjail-docker/files/proof_of_work/pow.py'
 
 def sloth_root(x, diff, p):
     for i in range(diff):
@@ -64,6 +62,8 @@ def solve_challenge(chal):
     return encode_challenge([y])
 
 def can_bypass(chal, sol):
+    from ecdsa import VerifyingKey
+    from ecdsa.util import sigdecode_der
     if not sol.startswith('b.'):
         return False
     sig = bytes.fromhex(sol[2:])
@@ -71,8 +71,8 @@ def can_bypass(chal, sol):
         vk = VerifyingKey.from_pem(fd.read())
     return vk.verify(signature=sig, data=bytes(chal, 'ascii'), hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
 
-def verify_challenge(chal, sol):
-    if can_bypass(chal, sol):
+def verify_challenge(chal, sol, allow_bypass=True):
+    if allow_bypass and can_bypass(chal, sol):
         return True
     [diff, x] = decode_challenge(chal)
     [y] = decode_challenge(sol)
@@ -83,6 +83,9 @@ def usage():
     sys.stdout.write('Usage:\n')
     sys.stdout.write('Solve pow: {} solve $challenge\n')
     sys.stdout.write('Check pow: {} ask $difficulty\n')
+    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU):')
+    sys.stdout.write('             1337: 10 secs')
+    sys.stdout.write('             31337: 5 mins')
     sys.stdout.flush()
     sys.exit(1)
 
@@ -105,9 +108,8 @@ def main():
 
         sys.stdout.write("== proof-of-work: enabled ==\n")
         sys.stdout.write("please solve a pow first\n")
-        sys.stdout.write("You can find the solver at:\n")
-        sys.stdout.write("  {}\n".format(SOLVER_URL))
-        sys.stdout.write("./pow.py solve {}\n".format(challenge))
+        sys.stdout.write("You can run the solver with:\n")
+        sys.stdout.write("    python3 <(curl -sSL {}) solve {}\n".format(SOLVER_URL, challenge))
         sys.stdout.write("===================\n")
         sys.stdout.write("\n")
         sys.stdout.write("Solution? ")
@@ -128,9 +130,13 @@ def main():
         challenge = sys.argv[2]
         solution = solve_challenge(challenge)
 
-        if verify_challenge(challenge, solution):
-            sys.stdout.write("Solution: \n{}\n".format(solution))
+        if verify_challenge(challenge, solution, False):
+            sys.stderr.write("Solution: \n".format(solution))
+            sys.stderr.flush()
+            sys.stdout.write(solution)
             sys.stdout.flush()
+            sys.stderr.write("\n")
+            sys.stderr.flush()
             sys.exit(0)
     else:
         usage()
