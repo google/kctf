@@ -61,7 +61,7 @@ def solve_challenge(chal):
     y = sloth_root(x, diff, MODULUS)
     return encode_challenge([y])
 
-def can_bypass(chal, sol):    
+def can_bypass(chal, sol):
     from ecdsa import VerifyingKey
     from ecdsa.util import sigdecode_der
     if not sol.startswith('b.'):
