@@ -1,4 +1,4 @@
-{% assign project-id = "your_project_id" %}
+<!-- {% assign project-id = "your_project_id" %} -->
 
 # kCTF Infrastructure Walkthrough
 
@@ -8,7 +8,7 @@ Welcome to the kCTF walkthrough for Google Cloud!
 
 The purpose of this walkthrough is to guide you through the configuration of the kCTF infrastructure using Google Cloud.
 
-Note: If not already doing so, you can also open this walkthrough directly in [Google Cloud Shell](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/google/kctf&tutorial=docs/google-cloud.md).
+  **Note**: If not already doing so, you can also open this walkthrough directly in [Google Cloud Shell](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/google/kctf&tutorial=docs/google-cloud.md&shellonly=true).
 
 # Step 1 – Set up the cluster
 
@@ -48,30 +48,17 @@ gcloud auth configure-docker
 PATH="$PATH:$(pwd)/bin"
 ```
 
+## Create the cluster
+
 ### Run the configuration script
 
 ```
 kctf-config-create --chal-dir ~/kctf-demo --project {{project-id}} --start-cluster
 ```
 
-### Set configuration properties
-Enter a path for storing the challenges:
-```
-~/kctf-demo
-```
-
-Enter your project id:
-```
-{{project-id}}
-```
-
-### Other settings 
-For all other settings, use the default values.
-
-## Create the cluster
 After configuring the project, the cluster is created automatically. This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
 
-It can take around a minute for the cluster to be created, during which the following message is displayed:
+It can take around 5 minutes for the cluster to be created, during which the following message is displayed:
 
 ```Creating cluster ... in ... Cluster is being health-checked...``` 
 
@@ -89,7 +76,7 @@ The above steps ensure the availability of the challenges, while using computing
 
 Your cluster should soon be ready, when it is, you can continue with this walkthrough.
 
-Note: If you are curious and have some spare time, take a look at the [kCTF introduction](https://google.github.io/kctf/introduction.html), which includes a quick 8 minute summary of what kCTF is and how it interacts with Kubernetes.
+  **Note**: If you are curious and have some spare time, take a look at the [kCTF introduction](https://google.github.io/kctf/introduction.html), which includes a quick 8 minute summary of what kCTF is and how it interacts with Kubernetes.
 
 # Step 2 – Create a challenge
 Now that you have set up a cluster, you can create a challenge.
@@ -100,7 +87,7 @@ In this step, you'll learn how to:
 * Deploy the Docker image to the cluster
 * Expose the Docker image to the internet
 
-Note: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding steps. Continue with the next steps if you already created a cluster.
+  **Note**: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding steps. Continue with the next steps if you already created a cluster.
 
 ## Call kctf-chal-create.sh to copy the skeleton
 Run the following command to create a challenge called "demo-challenge":
@@ -142,8 +129,7 @@ This step can take a minute. It reserves an IP address for your challenge and re
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The ports exposed by the challenge are configured by nsjail (see `nsjail.cfg`) and `config/advanced/network/network.yaml`. Make sure these files are kept in sync.
- * In `network.yaml`, `targetPort` is the port that nsjail is listening on. `port` is the port that the external IP listens on.
+ * The port exposed by the challenge is configured by nsjail (see `config/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally on port 1**.
 
 # Step 3 – Test the challenge
 
@@ -174,20 +160,23 @@ In the next step we'll see how to edit the challenge, add a proof of work to pre
 ## Add a proof of work
 To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
-1. Open <walkthrough-editor-select-regex filePath="kctf-demo/demo-challenge/config/pow.conf" regex="0">pow.yaml</walkthrough-editor-select-regex> and change the 0 to 1.
+1. Open `config/pow.conf` and change the 0 to 1.
+    ```
+    emacs config/pow.conf
+    ```
 1. Run the following command to enable the proof of work:
     ```
     make start
     ```
 
-Note: This is a very weak proof of work (strength of 1). For it to be useful in a real CTF, you probably want to set it to 15, 20, or more to require people to actually do some work. That said, for this walkthrough, let's take it easy, and leave it at 1.
+  **Note**: This is a very weak proof of work (strength of 1). For it to be useful in a real CTF, you probably want to set it to 1337 for 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 1.
 
 Once the challenge is updated, run:
 ```
-nc $(kctf-chal-ip demo-challenge) 1
+telnet $(make ip) 1
 ```
 
-This connects you to the challenge with a proof of work in front. Enter **00** to pass the proof of work (as mentioned, the difficulty of 1 isn't very strict). If it doesn't work, try again (or run the script).
+This connects you to the challenge with a proof of work in front.
 
 And that's it. Now that you saw how to push a challenge and update it, let's see how you can debug the Kubernetes deployment.
 
@@ -205,17 +194,17 @@ make stop
 
 To test the deletion, run:
 ```
-telnet $(kctf-chal-ip demo-challenge) 1
+telnet $(make ip) 1
 ```
 
 If deletion worked correctly, the connection will fail and an error is returned instead.
 
-## Stop the cluster
+### Stop the cluster
 To avoid being charged for the VMs any longer, stop the cluster by running:
 ```
 kctf-cluster-stop
 ```
 
-Note: This stops the cluster, and all the challenges with it. Only stop the cluster if you really want to stop it permanently.
+  **Note**: This stops the cluster, and all the challenges with it. Only stop the cluster if you really want to stop it permanently.
 
 Thank you for completing this walkthrough, and good luck with your CTF challenges!
