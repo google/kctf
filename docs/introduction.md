@@ -1,6 +1,6 @@
 # kCTF in 8 minutes
 
-kCTF is a template for deploying tasks using Kubernetes that uses nsjail for isolation between tasks. Learning to use kCTF is the same as learning about a subset of nsjail, Docker, and Kubernetes.
+kCTF is a template for deploying tasks using Kubernetes that uses nsjail for isolation between players. Learning to use kCTF is the same as learning about a subset of nsjail, Docker, and Kubernetes.
 
 
 # Configuring kCTF
@@ -67,8 +67,6 @@ They are useful in order to detect broken tasks, as well as when unrelated chang
 
 The challenge template shows how to make a healthcheck with pwntools. By plugging in the exploit for the task you can guarantee the challenges are solvable. It is not necessary to use pwntools, however.
 
-The healthcheck setup encrypts the exploit in order to prevent a single vulnerability in the infrastructure from leaking the solutions to all challenges. This is why there is a folder called "exploit", anything outside of that directory won't be encrypted. See [Security Threat Model](security-threat-model.md) for more information.
-
 
 ## Configuring Kubernetes
 
@@ -81,7 +79,7 @@ In kCTF, every task has a Deployment with 2 containers:
 
 They run together so that the healthcheck can test the status of the challenge individually, and locally. The Deployment also configures how much CPU and resources the containers need and are allowed to use, as well as the minimum and/or maximum numbers of replicas. A Deployment usually also configures things such as mounting of special files (like Configurations or Secrets).
 
-Configurations and Secrets are special directories that are updated automatically by Kubernetes across all instances, and that's where you can store things like the proof of work configuration, or the flag for the challenges.
+Configurations are special directories that are updated automatically by Kubernetes across all instances, and that's where you can store things like the proof of work configuration.
 
 Initially, a Deployment is not exposed to the internet. To expose a Deployment to the internet, you need a Load Balancer. A Load Balancer distributes the load among all running instances of the challenge. Without a load balancer, the challenges don't receive external traffic, and you can only connect to them with Kubernetes tools.
 
