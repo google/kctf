@@ -53,7 +53,7 @@ As you can see, the flags include a timestamp and are rotated frequently. You ca
 
 ### Notes
 
-We want to encourage the community to help research vulnerabilities such as those [found by Syzkaller](https://syzkaller.appspot.com/upstream), but which are still unfixed since they have not been shown to be exploitable. As such:
+We want to encourage the community to help research vulnerabilities such as those [found by Syzkaller](https://syzkaller.appspot.com/upstream#open), but which are still unfixed since they have not been shown to be exploitable. As such:
 
 
 
