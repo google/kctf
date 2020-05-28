@@ -17,6 +17,7 @@
 import pwnlib
 
 def handle_pow(r):
+    print(r.recvuntil(b'python3 '))
     print(r.recvuntil(b' solve '))
     challenge = r.recvline().decode('ascii').strip()
     p = pwnlib.tubes.process.process(['bypass_pow', challenge])
