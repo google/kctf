@@ -23,7 +23,7 @@ gcloud compute routers delete "kctf-${CLUSTER_NAME}-nat-router" --region "${ZONE
 
 SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
 GSA_NAME="kctf-gcsfuse-${SUFFIX:0:16}"
-GSA_EMAIL=$(gcloud iam service-accounts list --filter "name=${GSA_NAME}" --format 'get(email)' || true)
+GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
 if [ -z "${GSA_EMAIL}" ]; then
   gcloud iam service-accounts delete "${GSA_EMAIL}"
 fi
