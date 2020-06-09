@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-apiVersion: "v1"
-kind: "Service"
+apiVersion: "networking.k8s.io/v1beta1"
+kind: "Ingress"
 metadata:
-  name: "chal"
+  name: "ingress"
+  annotations:
+    networking.gke.io/managed-certificates: "certificate"
 spec:
-  type: "NodePort"
-  ports:
-  - name: "http"
-    protocol: "TCP"
-    port: 80
-    targetPort: 1337
+  backend:
+    serviceName: "chal"
+    servicePort: 80
