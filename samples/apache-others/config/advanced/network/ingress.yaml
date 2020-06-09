@@ -20,4 +20,4 @@ metadata:
 spec:
   backend:
     serviceName: "chal"
-    servicePort: 80
+    servicePort: 1
