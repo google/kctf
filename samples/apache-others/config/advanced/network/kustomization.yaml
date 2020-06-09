@@ -14,4 +14,9 @@
 resources:
 - ingress.yaml
 - certificate.yaml
+
+bases:
+- ../../../.gen/k8s/network
+
+patchesStrategicMerge:
 - network.yaml
