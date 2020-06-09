@@ -181,7 +181,7 @@ export CERTIFICATE_TEMPLATE
 export INGRESS_TEMPLATE
 
 .https: .cluster-config
-ifeq ($(HTTPS),true)
+ifeq ($(HTTPS), true)
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
 else
