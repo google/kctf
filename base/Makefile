@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .cluster-config .deployment .FORCE
+.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .https .cluster-config .deployment .FORCE
 
 SHELL := bash
 .ONESHELL:
@@ -31,7 +31,7 @@ REGISTRY:=CONFIGMISSING
 PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
-# sets DEPLOY, PUBLIC and HEALTHCHECK
+# sets DEPLOY, PUBLIC, HEALTHCHECK, HTTPS
 include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
@@ -62,8 +62,13 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
+ifeq($(HTTPS),true)
+	@LB_IP_NAME="ingress/https"
+else
+	@LB_IP_NAME="service/chal"
+endif
 	@while [ -z "$${LB_IP}" ]; do
-	@  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+	@  LB_IP=$$(kubectl get "$${LB_IP_NAME}" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 	@  sleep 3
 	@done
 	@echo "$${LB_IP}"
@@ -90,6 +95,7 @@ status: .cluster-config
 	@echo "This shows you if the challenge is exposed externally."
 	@echo
 	@kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
+	@kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
 	@echo
 
 logs: .cluster-config
@@ -149,7 +155,40 @@ clean:
 
 .deploy: .deployment .cluster-config .network
 
-.network: .gen/k8s | .cluster-config
+define CERTIFICATE_TEMPLATE
+apiVersion: "networking.gke.io/v1beta1"
+kind: "ManagedCertificate"
+metadata:
+  name: "kctf-certificate"
+spec:
+  domains:
+endef
+
+define INGRESS_TEMPLATE
+apiVersion: "networking.k8s.io/v1beta1"
+kind: "Ingress"
+metadata:
+  name: "https"
+  annotations:
+    networking.gke.io/managed-certificates: "kctf-certificate"
+spec:
+  backend:
+    serviceName: "chal"
+    servicePort: 1
+endef
+
+export CERTIFICATE_TEMPLATE
+export INGRESS_TEMPLATE
+
+.https: .cluster-config
+ifeq ($(HTTPS),true)
+	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
+	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
+else
+	@(kubectl get ingress/https && kubectl delete ingress/https || true) 2>/dev/null
+endif
+
+.network: .gen/k8s .https | .cluster-config
 ifeq ($(PUBLIC), true)
 	kubectl apply -k config/advanced/network
 else
