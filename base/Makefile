@@ -62,7 +62,7 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
-ifeq($(HTTPS),true)
+ifeq ($(HTTPS), true)
 	@LB_IP_NAME="ingress/https"
 else
 	@LB_IP_NAME="service/chal"
@@ -181,7 +181,7 @@ export CERTIFICATE_TEMPLATE
 export INGRESS_TEMPLATE
 
 .https: .cluster-config
-ifeq ($(HTTPS),true)
+ifeq ($(HTTPS), true)
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
 else

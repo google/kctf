@@ -62,7 +62,7 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
-ifeq($(HTTPS),true)
+ifeq ($(HTTPS), true)
 	@LB_IP_NAME="ingress/https"
 else
 	@LB_IP_NAME="service/chal"
