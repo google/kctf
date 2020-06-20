@@ -82,3 +82,36 @@ kubectl apply -f "${DIR}/config/daemon.yaml"
 kubectl apply -f "${DIR}/config/network-policy.yaml"
 kubectl apply -f "${DIR}/config/allow-dns.yaml"
 kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
+
+# Cloud DNS
+
+if [ ! -z "${DOMAIN_NAME}" ]
+then
+  DNS_ZONE=$(gcloud dns managed-zones list --filter "dns_name:${DOMAIN_NAME}" --format 'get(name)')
+  if [ -z "${DNS_ZONE}" ]; then
+    gcloud dns managed-zones create "${CLUSTER_NAME}-dns-zone" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
+  fi
+
+  GSA_NAME="kctf-cloud-dns"
+  GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
+
+  if [ -z "${GSA_EMAIL}" ]; then
+    gcloud iam service-accounts create "${GSA_NAME}" --description "kCTF Cloud DNS service account ${CLUSTER_NAME} ${ZONE}" --display-name "kCTF Cloud DNS ${CLUSTER_NAME} ${ZONE}"
+    GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+    while [ -z "${GSA_EMAIL}" ]; do
+      sleep 1
+      GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+    done
+  fi
+
+  KSA_NAME="external-dns-sa"
+
+  kubectl create serviceaccount --namespace kube-system ${KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
+  gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${KSA_NAME}]" ${GSA_EMAIL}
+  kubectl annotate serviceaccount --namespace kube-system ${KSA_NAME} iam.gke.io/gcp-service-account=${GSA_EMAIL} --overwrite
+
+  gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${GSA_EMAIL} --role=roles/dns.admin
+
+  kubectl create configmap --namespace kube-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --dry-run=client -o yaml | kubectl apply -f -
+  kubectl apply -f "${DIR}/config/external-dns.yaml"
+fi
