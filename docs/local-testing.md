@@ -47,10 +47,10 @@ This will take a bit longer the first time it is run, as it has to build a chroo
 cd $CHALDIR/test-1
 make test-docker
 sudo apt-get install -y netcat
-nc 127.0.0.1 external_port
+nc 127.0.0.1 [external_port]
 ```
 
-When `make test-docker` runs, you will see `0.0.0.0:external_port->1337/tcp` in the terminal.
+When `make test-docker` runs, you will see `0.0.0.0:[external_port]->1337/tcp` in the terminal.
 
 If all went well, you should have a shell inside an nsjail bash (use Ctrl+C to exit):
 ```
