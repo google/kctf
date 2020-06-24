@@ -105,7 +105,7 @@ Use the following command to connect to the challenge:
 ```
 kubectl port-forward --namespace=[name_of_the_challenge] deployment/chal :1337 &
 ```
-Example: If you ran the challenge sample in the `samples/apache-php` folder, specify `apache-php` as the namespace. After you run the `port-forward` command, the command line displays from which external port the challenge is being forwarded. Based on that information, you can access `127.0.0.1:external_port` from your browser and should see a page similar to this one:
+Example: If you ran the challenge sample in the `samples/apache-php` folder, specify `apache-php` as the namespace. After you run the `port-forward` command, the command line displays from which external port the challenge is being forwarded. Based on that information, you can access `127.0.0.1:[external_port]` from your browser and should see a page similar to this one:
 ![Apache PHP sample page](https://raw.githubusercontent.com/google/kctf/master/docs/images/php_sample.png)
 
 ## Debug failures
