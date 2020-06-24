@@ -42,6 +42,7 @@ CONFIG_FILE_DIR="$(dirname ${CONFIG_FILE})"
 CHAL_DIR=$(realpath "${CONFIG_FILE_DIR}/../..")
 ln -nfs "${CHAL_DIR}" "${CONFIG_DIR}/challenges"
 
+# checks if gcloud is installed, if not, it loads only locally
 if command -v gcloud >/dev/null 2>&1; then
     create_gcloud_config
 else
