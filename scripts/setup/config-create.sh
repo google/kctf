@@ -120,8 +120,6 @@ if command -v gcloud >/dev/null 2>&1; then
 else
     echo "Configuration created only locally. Gcloud not installed." >&2
 fi
-    
-create_gcloud_config
 
 # there might be an existing cluster
 # if it already exists, we try to update it
