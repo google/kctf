@@ -47,10 +47,19 @@ This will take a bit longer the first time it is run, as it has to build a chroo
 cd $CHALDIR/test-1
 make test-docker
 sudo apt-get install -y netcat
-nc 127.0.0.1 1337
+nc 127.0.0.1 [external_port]
 ```
 
-If all went well, you should have a shell inside an nsjail bash. If you don't, there might be some issues with your system (support for nsjail, Docker etc.). See the [debugging instructions](#errors-with-docker) further down on this page.
+When `make test-docker` runs, you will see `0.0.0.0:[external_port]->1337/tcp` in the terminal.
+
+If all went well, you should have a shell inside an nsjail bash (use Ctrl+C to exit):
+```
+== kCTF challenge skeleton ==
+Flag: CTF{TestFlag}
+=========================
+```
+
+If you don't, there might be some issues with your system (support for nsjail, Docker etc.). See the [debugging instructions](#errors-with-docker) further down on this page.
 
 ## Testing with Kubernetes
 
@@ -73,11 +82,17 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 
 There are several options for installing a local Kubernetes cluster:
 
-1. **KIND** – [Follow these instructions](https://kind.sigs.k8s.io/docs/user/quick-start/).
+1. **KIND** – On Linux, use the following command:
+    ```
+    curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.8.1/kind-$(uname)-amd64
+    chmod +x ./kind
+    sudo mv ./kind /usr/local/bin/kind
+    ```
+    MacOS users can follow the same approach, but might need to adjust the path. Windows users can [follow these instructions](https://kind.sigs.k8s.io/docs/user/quick-start/).
 1. **Docker for Desktop** – Windows users can try the built-in Kubernetes cluster. See the [WSL1 instructions](#wsl1).
 
 ### Running the challenge in Kubernetes
-Once you run the command to create the cluster (`kind create cluster`), run:
+Once you run the command to create the cluster (`kind create cluster`), run a challenge sample inside the cluster (e.g. in the `samples/apache-php` folder) using:
 ```
 make test-kind
 ```
@@ -86,9 +101,12 @@ This deploys the challenge and healthcheck to the local Kubernetes cluster.
 
 ### Connect to the challenge
 
+Use the following command to connect to the challenge:
 ```
-kubectl port-forward deployment/test-1 :1337 &
+kubectl port-forward --namespace=[name_of_the_challenge] deployment/chal :1337 &
 ```
+Example: If you ran the challenge sample in the `samples/apache-php` folder, specify `apache-php` as the namespace. After you run the `port-forward` command, the command line displays from which external port the challenge is being forwarded. Based on that information, you can access `127.0.0.1:[external_port]` from your browser and should see a page similar to this one:
+![Apache PHP sample page](https://raw.githubusercontent.com/google/kctf/master/docs/images/php_sample.png)
 
 ## Debug failures
 
