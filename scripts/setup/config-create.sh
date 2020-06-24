@@ -114,6 +114,12 @@ EOF
 
 ln -fs "${CLUSTER_CONFIG}" "${CONFIG_FILE}"
 
+if command -v gcloud >/dev/null 2>&1; then
+    create_gcloud_config
+else
+    echo "Configuration created only locally. Gcloud not installed." >&2
+fi
+    
 create_gcloud_config
 
 # there might be an existing cluster
