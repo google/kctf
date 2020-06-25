@@ -97,7 +97,7 @@ Once you run the command to create the cluster (`kind create cluster`), create a
 kctf-config-create --chal-dir [directory_of_the_challenge] --project test-kind-kctf
 ```
 
-Then, run the challenge sample inside the cluster calling the following command inside the challenge folder (in the challenge suggested, it would be inside the `samples/apache-php` folder) using:
+Then, run the challenge inside the cluster by calling the following command from inside the challenge folder:
 ```
 make test-kind
 ```
