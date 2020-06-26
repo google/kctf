@@ -92,7 +92,12 @@ There are several options for installing a local Kubernetes cluster:
 1. **Docker for Desktop** – Windows users can try the built-in Kubernetes cluster. See the [WSL1 instructions](#wsl1).
 
 ### Running the challenge in Kubernetes
-Once you run the command to create the cluster (`kind create cluster`), run a challenge sample inside the cluster (e.g. in the `samples/apache-php` folder) using:
+Once you run the command to create the cluster (`kind create cluster`), create a configuration for one of the challenge samples (e.g. the one located in the `kctf/samples/apache-php` folder) using the following command:
+```
+kctf-config-create --chal-dir [directory_of_the_challenge] --project test-kind-kctf
+```
+
+Then, run the challenge inside the cluster by calling the following command from inside the challenge folder:
 ```
 make test-kind
 ```
