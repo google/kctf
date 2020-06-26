@@ -25,7 +25,9 @@
         <span id="logo"></span>
 
         <a href="{{ site.github.repository_url }}" class="button fork"><strong>View On GitHub</strong></a>
+        {% if page.title != "" %}
         <a href="https://google.github.io/kctf/" class="button fork" style="margin-left:-190px"><strong>Go to Doc Home</strong></a>
+        {% endif %}
         {% if site.show_downloads %}
           <div class="downloads">
             <span>Downloads:</span>
