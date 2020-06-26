@@ -1,6 +1,6 @@
-# kCTF Infrastructure Walkthrough
-
 <!-- {% assign project-id = "your_project_id" %} -->
+
+# kCTF Infrastructure Walkthrough
 
 Welcome to the kCTF walkthrough for Google Cloud!
 
