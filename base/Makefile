@@ -152,6 +152,9 @@ clean:
 .network: .gen/k8s | .cluster-config
 ifeq ($(PUBLIC), true)
 	kubectl apply -k config/advanced/network
+ifeq ($(DNS), true)
+	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
+endif
 else
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
 endif
