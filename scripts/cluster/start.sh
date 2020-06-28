@@ -45,33 +45,33 @@ get_cluster_creds
 
 SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
 BUCKET_NAME="kctf-gcsfuse-${SUFFIX:0:16}"
-GSA_NAME="${BUCKET_NAME}"
-GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
+GCS_GSA_NAME="${BUCKET_NAME}"
+GCS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GCS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
 
-if [ -z "${GSA_EMAIL}" ]; then
-  gcloud iam service-accounts create "${GSA_NAME}" --description "kCTF GCSFUSE service account ${CLUSTER_NAME} ${ZONE}" --display-name "kCTF GCSFUSE ${CLUSTER_NAME} ${ZONE}"
-  GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
-  while [ -z "${GSA_EMAIL}" ]; do
+if [ -z "${GCS_GSA_EMAIL}" ]; then
+  gcloud iam service-accounts create "${GCS_GSA_NAME}" --description "kCTF GCSFUSE service account ${CLUSTER_NAME} ${ZONE}" --display-name "kCTF GCSFUSE ${CLUSTER_NAME} ${ZONE}"
+  GCS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GCS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+  while [ -z "${GCS_GSA_EMAIL}" ]; do
     sleep 1
-    GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+    GCS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GCS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
   done
 fi
 
-KSA_NAME="gcsfuse-sa"
+GCS_KSA_NAME="gcsfuse-sa"
 
-kubectl create serviceaccount --namespace kube-system ${KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
-gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${KSA_NAME}]" ${GSA_EMAIL}
-kubectl annotate serviceaccount --namespace kube-system ${KSA_NAME} iam.gke.io/gcp-service-account=${GSA_EMAIL} --overwrite
+kubectl create serviceaccount --namespace kube-system ${GCS_KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
+gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL}
+kubectl annotate serviceaccount --namespace kube-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite
 
 if ! gsutil du "gs://${BUCKET_NAME}/"; then
   gsutil mb -l eu "gs://${BUCKET_NAME}/"
 fi
 
 if gsutil uniformbucketlevelaccess get "gs://${BUCKET_NAME}" | grep -q "Enabled: True"; then
-  gsutil iam ch "serviceAccount:${GSA_EMAIL}:roles/storage.legacyBucketOwner" "gs://${BUCKET_NAME}"
-  gsutil iam ch "serviceAccount:${GSA_EMAIL}:roles/storage.legacyObjectOwner" "gs://${BUCKET_NAME}"
+  gsutil iam ch "serviceAccount:${GCS_GSA_EMAIL}:roles/storage.legacyBucketOwner" "gs://${BUCKET_NAME}"
+  gsutil iam ch "serviceAccount:${GCS_GSA_EMAIL}:roles/storage.legacyObjectOwner" "gs://${BUCKET_NAME}"
 else
-  gsutil acl ch -u "${GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
+  gsutil acl ch -u "${GCS_GSA_EMAIL}:O" "gs://${BUCKET_NAME}"
 fi
 
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run -o yaml | kubectl apply -f -
@@ -82,3 +82,36 @@ kubectl apply -f "${DIR}/config/daemon.yaml"
 kubectl apply -f "${DIR}/config/network-policy.yaml"
 kubectl apply -f "${DIR}/config/allow-dns.yaml"
 kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
+
+# Cloud DNS
+
+if [ ! -z "${DOMAIN_NAME}" ]
+then
+  DNS_ZONE=$(gcloud dns managed-zones list --filter "dns_name:${DOMAIN_NAME}" --format 'get(name)')
+  if [ -z "${DNS_ZONE}" ]; then
+    gcloud dns managed-zones create "${CLUSTER_NAME}-dns-zone" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
+  fi
+
+  DNS_GSA_NAME="kctf-cloud-dns"
+  DNS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${DNS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
+
+  if [ -z "${DNS_GSA_EMAIL}" ]; then
+    gcloud iam service-accounts create "${DNS_GSA_NAME}" --description "kCTF Cloud DNS service account ${CLUSTER_NAME} ${ZONE}" --display-name "kCTF Cloud DNS ${CLUSTER_NAME} ${ZONE}"
+    DNS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${DNS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+    while [ -z "${DNS_GSA_EMAIL}" ]; do
+      sleep 1
+      DNS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${DNS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)')
+    done
+  fi
+
+  DNS_KSA_NAME="external-dns-sa"
+
+  kubectl create serviceaccount --namespace kube-system ${DNS_KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
+  gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${DNS_KSA_NAME}]" ${DNS_GSA_EMAIL}
+  kubectl annotate serviceaccount --namespace kube-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite
+
+  gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin
+
+  kubectl create configmap --namespace kube-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --dry-run=client -o yaml | kubectl apply -f -
+  kubectl apply -f "${DIR}/config/external-dns.yaml"
+fi
