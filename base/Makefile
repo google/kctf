@@ -31,7 +31,7 @@ REGISTRY:=CONFIGMISSING
 PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
-# sets DEPLOY, PUBLIC, HEALTHCHECK, HTTPS
+# sets DEPLOY, PUBLIC, HEALTHCHECK, PROTOCOL
 include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
@@ -62,7 +62,7 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
-ifeq ($(HTTPS), true)
+ifeq ($(PROTOCOL), https)
 	@LB_IP_NAME="ingress/https"
 else
 	@LB_IP_NAME="service/chal"
@@ -181,11 +181,14 @@ export CERTIFICATE_TEMPLATE
 export INGRESS_TEMPLATE
 
 .https: .cluster-config
-ifeq ($(HTTPS), true)
+ifeq ($(PROTOCOL), https)
+ifeq ($(DOMAIN_NAME),)
+        $(error 'PROTOCOL=https but DOMAIN_NAME is not set.')
+endif
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
 else
-	@(kubectl get ingress/https && kubectl delete ingress/https || true) 2>/dev/null
+	@(kubectl get "ingress/https" && kubectl delete "ingress/https" || true) 2>/dev/null
 endif
 
 .network: .gen/k8s .https | .cluster-config
@@ -195,6 +198,11 @@ ifeq ($(DNS), true)
 ifeq ($(DOMAIN_NAME),)
 	$(error 'DNS=true but DOMAIN_NAME is not set.')
 endif
+ifeq ($(PROTOCOL), https)
+	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname-
+	kubectl annotate "ingress/https" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
+else
+	kubectl annotate "ingress/https" external-dns.alpha.kubernetes.io/hostname-
 	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
 endif
 else
@@ -206,14 +214,14 @@ endif
 	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -
-	# update the challenge container if the image changed
+# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
 	  kubectl set image "deployment/chal" "challenge=$${PUSHED_IMAGE}"
 	fi
 ifeq ($(HEALTHCHECK), true)
-	# update the healthcheck container if the image changed
+# update the healthcheck container if the image changed
 	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
