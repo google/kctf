@@ -177,11 +177,15 @@ export INGRESS_TEMPLATE
 
 .https: .cluster-config
 ifeq ($(HTTPS), true)
+ifneq ($(DNS), true)
+	$(error 'HTTPS=true but DNS=false. Need DNS to get certificate.')
+endif
 ifeq ($(DOMAIN_NAME),)
         $(error 'HTTPS=true but DOMAIN_NAME is not set.')
 endif
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
+	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-http.${DOMAIN_NAME}" --overwrite
 else
 	@(kubectl get "ingress/https" && kubectl delete "ingress/https" || true) 2>/dev/null
 endif
@@ -193,12 +197,9 @@ ifeq ($(DNS), true)
 ifeq ($(DOMAIN_NAME),)
 	$(error 'DNS=true but DOMAIN_NAME is not set.')
 endif
-ifeq ($(HTTPS), true)
-	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-web.${DOMAIN_NAME}" --overwrite
+	kubectl get "service/chal" >/dev/null 2>&1 && kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
 endif
-	kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
-endif
-else # Not PUBLIC
+else
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
 endif
 
