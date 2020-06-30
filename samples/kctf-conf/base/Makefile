@@ -197,6 +197,7 @@ ifeq ($(HTTPS), true)
 	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-web.${DOMAIN_NAME}" --overwrite
 endif
 	kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
+endif
 else # Not PUBLIC
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
 endif
