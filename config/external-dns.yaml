@@ -65,7 +65,7 @@ spec:
         args:
         - --log-level=debug
         - --source=service
-	- --source=ingress
+        - --source=ingress
         - --provider=google
         - --domain-filter=$(DOMAIN_NAME)
         - --registry=txt
