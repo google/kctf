@@ -31,7 +31,7 @@ REGISTRY:=CONFIGMISSING
 PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
-# sets DEPLOY, PUBLIC, HEALTHCHECK, PROTOCOL
+# sets DEPLOY, PUBLIC, HEALTHCHECK, HTTPS
 include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
@@ -62,13 +62,8 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
-ifeq ($(PROTOCOL), https)
-	@LB_IP_NAME="ingress/https"
-else
-	@LB_IP_NAME="service/chal"
-endif
 	@while [ -z "$${LB_IP}" ]; do
-	@  LB_IP=$$(kubectl get "$${LB_IP_NAME}" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+	@  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 	@  sleep 3
 	@done
 	@echo "$${LB_IP}"
@@ -181,9 +176,9 @@ export CERTIFICATE_TEMPLATE
 export INGRESS_TEMPLATE
 
 .https: .cluster-config
-ifeq ($(PROTOCOL), https)
+ifeq ($(HTTPS), true)
 ifeq ($(DOMAIN_NAME),)
-        $(error 'PROTOCOL=https but DOMAIN_NAME is not set.')
+        $(error 'HTTPS=true but DOMAIN_NAME is not set.')
 endif
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
@@ -198,14 +193,11 @@ ifeq ($(DNS), true)
 ifeq ($(DOMAIN_NAME),)
 	$(error 'DNS=true but DOMAIN_NAME is not set.')
 endif
-ifeq ($(PROTOCOL), https)
-	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname-
-	kubectl annotate "ingress/https" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
-else
-	kubectl annotate "ingress/https" external-dns.alpha.kubernetes.io/hostname-
-	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
+ifeq ($(HTTPS), true)
+	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-web.${DOMAIN_NAME}" --overwrite
 endif
-else
+	kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
+else # Not PUBLIC
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
 endif
 

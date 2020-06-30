@@ -62,13 +62,8 @@ stop: .cluster-config
 
 ip: .cluster-config
 	@LB_IP=""
-ifeq ($(HTTPS), true)
-	@LB_IP_NAME="ingress/https"
-else
-	@LB_IP_NAME="service/chal"
-endif
 	@while [ -z "$${LB_IP}" ]; do
-	@  LB_IP=$$(kubectl get "$${LB_IP_NAME}" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+	@  LB_IP=$$(kubectl get "service/chal" -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 	@  sleep 3
 	@done
 	@echo "$${LB_IP}"
@@ -182,10 +177,13 @@ export INGRESS_TEMPLATE
 
 .https: .cluster-config
 ifeq ($(HTTPS), true)
+ifeq ($(DOMAIN_NAME),)
+        $(error 'HTTPS=true but DOMAIN_NAME is not set.')
+endif
 	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
 else
-	@(kubectl get ingress/https && kubectl delete ingress/https || true) 2>/dev/null
+	@(kubectl get "ingress/https" && kubectl delete "ingress/https" || true) 2>/dev/null
 endif
 
 .network: .gen/k8s .https | .cluster-config
@@ -195,9 +193,11 @@ ifeq ($(DNS), true)
 ifeq ($(DOMAIN_NAME),)
 	$(error 'DNS=true but DOMAIN_NAME is not set.')
 endif
-	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
+ifeq ($(HTTPS), true)
+	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-web.${DOMAIN_NAME}" --overwrite
 endif
-else
+	kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
+else # Not PUBLIC
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
 endif
 
@@ -206,14 +206,14 @@ endif
 	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -
-	# update the challenge container if the image changed
+# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
 	  kubectl set image "deployment/chal" "challenge=$${PUSHED_IMAGE}"
 	fi
 ifeq ($(HEALTHCHECK), true)
-	# update the healthcheck container if the image changed
+# update the healthcheck container if the image changed
 	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
