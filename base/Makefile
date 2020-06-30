@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .cluster-config .deployment .FORCE
+.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .network .https .cluster-config .deployment .FORCE
 
 SHELL := bash
 .ONESHELL:
@@ -31,7 +31,7 @@ REGISTRY:=CONFIGMISSING
 PROJECT:=CONFIGMISSING
 CLUSTER_NAME:=CONFIGMISSING
 ZONE:=CONFIGMISSING
-# sets DEPLOY, PUBLIC and HEALTHCHECK
+# sets DEPLOY, PUBLIC, HEALTHCHECK, HTTPS
 include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
@@ -90,6 +90,7 @@ status: .cluster-config
 	@echo "This shows you if the challenge is exposed externally."
 	@echo
 	@kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
+	@kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
 	@echo
 
 logs: .cluster-config
@@ -149,14 +150,54 @@ clean:
 
 .deploy: .deployment .cluster-config .network
 
-.network: .gen/k8s | .cluster-config
+define CERTIFICATE_TEMPLATE
+apiVersion: "networking.gke.io/v1beta1"
+kind: "ManagedCertificate"
+metadata:
+  name: "kctf-certificate"
+spec:
+  domains:
+endef
+
+define INGRESS_TEMPLATE
+apiVersion: "networking.k8s.io/v1beta1"
+kind: "Ingress"
+metadata:
+  name: "https"
+  annotations:
+    networking.gke.io/managed-certificates: "kctf-certificate"
+spec:
+  backend:
+    serviceName: "chal"
+    servicePort: 1
+endef
+
+export CERTIFICATE_TEMPLATE
+export INGRESS_TEMPLATE
+
+.https: .cluster-config
+ifeq ($(HTTPS), true)
+ifneq ($(DNS), true)
+	$(error 'HTTPS=true but DNS=false. Need DNS to get certificate.')
+endif
+ifeq ($(DOMAIN_NAME),)
+        $(error 'HTTPS=true but DOMAIN_NAME is not set.')
+endif
+	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
+	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
+	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-http.${DOMAIN_NAME}" --overwrite
+else
+	@(kubectl get "ingress/https" && kubectl delete "ingress/https" || true) 2>/dev/null
+endif
+
+.network: .gen/k8s .https | .cluster-config
 ifeq ($(PUBLIC), true)
 	kubectl apply -k config/advanced/network
 ifeq ($(DNS), true)
 ifeq ($(DOMAIN_NAME),)
 	$(error 'DNS=true but DOMAIN_NAME is not set.')
 endif
-	kubectl annotate "service/chal" external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}.${DOMAIN_NAME} --overwrite
+	kubectl get "service/chal" >/dev/null 2>&1 && kubectl annotate "service/chal" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-tcp.${DOMAIN_NAME}" --overwrite
 endif
 else
 	kubectl get "service/chal" >/dev/null 2>&1 && kubectl delete "service/chal" || true
@@ -167,14 +208,14 @@ endif
 	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -
-	# update the challenge container if the image changed
+# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
 	  kubectl set image "deployment/chal" "challenge=$${PUSHED_IMAGE}"
 	fi
 ifeq ($(HEALTHCHECK), true)
-	# update the healthcheck container if the image changed
+# update the healthcheck container if the image changed
 	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
