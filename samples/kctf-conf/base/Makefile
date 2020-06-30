@@ -205,9 +205,9 @@ endif
 
 .deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
 	kubectl apply -k config/advanced/deployment
-	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run -o yaml | kubectl apply -f -
-	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run -o yaml | kubectl apply -f -
-	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run -o yaml | kubectl apply -f -
+	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run=client -o yaml | kubectl apply -f -
 # update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
@@ -310,7 +310,7 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged
 	@fi
 	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
 	kubectl config set-context --current --namespace="${CHALLENGE_NAME}" >&2
-	kubectl create namespace "${CHALLENGE_NAME}" --dry-run -oyaml | kubectl apply -f - >&2
+	kubectl create namespace "${CHALLENGE_NAME}" --dry-run=client -oyaml | kubectl apply -f - >&2
 	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" >&2
 	mkdir -p ${CLUSTER_GEN} >&2
 
