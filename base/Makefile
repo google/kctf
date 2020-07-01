@@ -164,6 +164,8 @@ apiVersion: "networking.k8s.io/v1beta1"
 kind: "Ingress"
 metadata:
   name: "https"
+  labels:
+    app: "$(CHALLENGE_NAME)"
   annotations:
     networking.gke.io/managed-certificates: "kctf-certificate"
 spec:
