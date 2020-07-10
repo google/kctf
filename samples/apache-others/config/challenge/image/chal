@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo '== kCTF challenge skeleton =='
-echo -n 'Flag: '
-cat /flag
-echo
-echo '============================='
