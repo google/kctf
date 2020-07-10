@@ -1,6 +1,10 @@
 name: Push docker base image cache to GCR cache
 
 on:
+  schedule:
+    # Runs at midnight UTC daily
+    - cron: '0 0 * * *'
+
   push:
     # Only trigger for nsjail-docker changes
     paths: 
@@ -35,7 +39,7 @@ jobs:
     needs: test
 
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'schedule'
 
     steps:
       - uses: actions/checkout@v2
