@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,7 +10,7 @@ import (
 type PortSpec struct {
 	// TODO: port shouldn't be an obligatory field
 	Port       int    `json:"port"`
-	TargetPort int    `json:"targetport"`
+	TargetPort int    `json:"targetPort"`
 	Protocol   string `json:"protocol"`
 }
 
@@ -20,21 +21,21 @@ type NetworkSpec struct {
 }
 
 type HealthcheckSpec struct {
-	Enabled bool `json:"healthcheckEnabled"`
+	Enabled bool `json:"enabled"`
 	// TODO: container should be always healthcheck, i guess
-	Container string `json:"healthcheckContainer"`
+	Container string `json:"container"`
 }
 
 type AutoscalingSpec struct {
-	Enabled                        bool `json:"autoscalingEnabled"`
-	MinReplicas                    int  `json:"minreplicas"`
-	MaxReplicas                    int  `json:"maxreplicas"`
-	TargetCPUUtilizationPercentage int  `json:"targetcpuutilizationpercentage"`
+	Enabled                        bool `json:"enabled"`
+	MinReplicas                    int  `json:"minReplicas"`
+	MaxReplicas                    int  `json:"maxReplicas"`
+	TargetCPUUtilizationPercentage int  `json:"targetCPUUtilizationPercentage"`
 }
 
 type DeploymentSpec struct {
-	// TODO: see how to use persistent volumes and etc ...
-
+	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim"`
+	Template              corev1.PodTemplate           `json:"podTemplate"`
 }
 
 // ChallengeSpec defines the desired state of Challenge
@@ -46,12 +47,12 @@ type ChallengeSpec struct {
 	// TODO: add maximum, minimum and default value
 	// TODO: discover how to include disk stuff
 	// TODO: ready in status or in spec?
-	ImageTemplate        string          `json:"imagetemplate"`
-	PowDifficultySeconds int             `json:"powdifficultyseconds"`
+	ImageTemplate        string          `json:"imageTemplate"`
+	PowDifficultySeconds int             `json:"powDifficultySeconds"`
 	Network              NetworkSpec     `json:"network"`
 	Healthcheck          HealthcheckSpec `json:"healthcheck"`
 	Autoscaling          AutoscalingSpec `json:"autoscaling"`
-	// Deployment DeploymentSpec `json:"deployment"`
+	Deployment           DeploymentSpec  `json:"deployment"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
