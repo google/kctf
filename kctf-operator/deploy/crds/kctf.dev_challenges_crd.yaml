@@ -1,0 +1,114 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: challenges.kctf.dev
+spec:
+  group: kctf.dev
+  names:
+    kind: Challenge
+    listKind: ChallengeList
+    plural: challenges
+    singular: challenge
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Challenge is the Schema for the challenges API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ChallengeSpec defines the desired state of Challenge
+            properties:
+              autoscaling:
+                properties:
+                  autoscalingEnabled:
+                    type: boolean
+                  maxreplicas:
+                    type: integer
+                  minreplicas:
+                    type: integer
+                  targetcpuutilizationpercentage:
+                    type: integer
+                required:
+                - autoscalingEnabled
+                - maxreplicas
+                - minreplicas
+                - targetcpuutilizationpercentage
+                type: object
+              healthcheck:
+                properties:
+                  healthcheckContainer:
+                    description: 'TODO: container should be always healthcheck, i
+                      guess'
+                    type: string
+                  healthcheckEnabled:
+                    type: boolean
+                required:
+                - healthcheckContainer
+                - healthcheckEnabled
+                type: object
+              imagetemplate:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "operator-sdk generate k8s" to regenerate code after
+                  modifying this file Add custom validation using kubebuilder tags:
+                  https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+                  TODO: add other fields TODO: add maximum, minimum and default value
+                  TODO: discover how to include disk stuff TODO: ready in status or
+                  in spec?'
+                type: string
+              network:
+                properties:
+                  dns:
+                    type: boolean
+                  ports:
+                    items:
+                      properties:
+                        port:
+                          description: 'TODO: port shouldn''t be an obligatory field'
+                          type: integer
+                        protocol:
+                          type: string
+                        targetport:
+                          type: integer
+                      required:
+                      - port
+                      - protocol
+                      - targetport
+                      type: object
+                    type: array
+                  public:
+                    type: boolean
+                required:
+                - dns
+                - ports
+                - public
+                type: object
+              powdifficultyseconds:
+                type: integer
+            required:
+            - autoscaling
+            - healthcheck
+            - imagetemplate
+            - network
+            - powdifficultyseconds
+            type: object
+          status:
+            description: ChallengeStatus defines the observed state of Challenge
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
