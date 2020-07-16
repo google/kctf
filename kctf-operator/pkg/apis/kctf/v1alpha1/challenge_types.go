@@ -1,3 +1,4 @@
+// +kubebuilder:validation:Required
 package v1alpha1
 
 import (
@@ -5,54 +6,134 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+func HealthcheckDefault() HealthcheckSpec {
+	var healthcheckDefault = HealthcheckSpec{
+		Enabled:   false,
+		Container: "healthcheck",
+	}
+	return healthcheckDefault
+}
+
+func NetworkDefault() NetworkSpec {
+	var networkDefault = NetworkSpec{
+		Public: true,
+		Dns:    false,
+		Ports:  PortsDefault(),
+	}
+	return networkDefault
+}
+
+func PortsDefault() []PortSpec {
+	var portsDefault = []PortSpec{
+		PortSpec{
+			Port:       1,
+			TargetPort: 1337,
+			Protocol:   "TCP",
+		},
+	}
+	return portsDefault
+}
 
 type PortSpec struct {
-	// TODO: port shouldn't be an obligatory field
-	Port       int    `json:"port"`
-	TargetPort int    `json:"targetPort"`
-	Protocol   string `json:"protocol"`
+
+	// The default value is 1 if empty and protocol not being HTTP
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=65336
+	Port int `json:"port,omitempty"`
+
+	// +kubebuider:default:=1337
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=65336
+	TargetPort int `json:"targetPort,omitempty"`
+
+	// +kubebuilder:default:="TCP"
+	Protocol string `json:"protocol,omitempty"`
 }
 
 type NetworkSpec struct {
-	Public bool       `json:"public"`
-	Dns    bool       `json:"dns"`
-	Ports  []PortSpec `json:"ports"`
+
+	// +kubebuilder:default:=true
+	Public bool `json:"public,omitempty"`
+
+	// +kubebuilder:default:=false
+	Dns bool `json:"dns,omitempty"`
+
+	// By default, one port is set with default values
+	// +kubebuilder:default:= PortsDefault()
+	Ports []PortSpec `json:"ports,omitempty"`
 }
 
 type HealthcheckSpec struct {
-	Enabled bool `json:"enabled"`
-	// TODO: container should be always healthcheck, i guess
-	Container string `json:"container"`
+
+	// +kubebuilder:default:=false
+	Enabled bool `json:"enabled,omitempty"`
+
+	// +kubebuilder:default:="healthcheck"
+	Container string `json:"container,omitempty"`
 }
 
 type AutoscalingSpec struct {
-	Enabled                        bool `json:"enabled"`
-	MinReplicas                    int  `json:"minReplicas"`
-	MaxReplicas                    int  `json:"maxReplicas"`
-	TargetCPUUtilizationPercentage int  `json:"targetCPUUtilizationPercentage"`
+
+	// +kubebuilder:default:=false
+	Enabled bool `json:"enabled,omitempty"`
+
+	// +kubebuilder:default:=1
+	MinReplicas int `json:"minReplicas,omitempty"`
+
+	// +kubebuilder:default:=1
+	MaxReplicas int `json:"maxReplicas,omitempty"`
+
+	// If empty, this feature won't be used
+	// +kubebuilder:validation:Optional
+	TargetCPUUtilizationPercentage int `json:"targetCPUUtilizationPercentage,omitempty"`
 }
 
+// TODO: create functions that return default values for this
 type DeploymentSpec struct {
-	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim"`
-	Template              corev1.PodTemplate           `json:"podTemplate"`
+
+	// +kubebuilder:default:=true
+	Enabled bool `json:"enabled,omitempty"`
+
+	// TODO default
+	// Default value: size 1Gb
+	// +kubebuilder:validation:Optional
+	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
+
+	// TODO default
+	// Default value: 1 container and 1 volume with the name of the challenge
+	// +kubebuilder:validation:Optional
+	Template corev1.PodTemplate `json:"podTemplate,omitempty"`
 }
 
 // ChallengeSpec defines the desired state of Challenge
 type ChallengeSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	// TODO: add other fields
-	// TODO: add maximum, minimum and default value
-	// TODO: discover how to include disk stuff
+	// TODO: add default values externally
 	// TODO: ready in status or in spec?
-	ImageTemplate        string          `json:"imageTemplate"`
-	PowDifficultySeconds int             `json:"powDifficultySeconds"`
-	Network              NetworkSpec     `json:"network"`
-	Healthcheck          HealthcheckSpec `json:"healthcheck"`
-	Autoscaling          AutoscalingSpec `json:"autoscaling"`
-	Deployment           DeploymentSpec  `json:"deployment"`
+
+	// description
+	// Not optional and image should be passed by user (by now)
+	ImageTemplate string `json:"imageTemplate"`
+
+	// +kubebuilder:default:=0
+	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
+
+	// +kubebuilder:default:=NetworkDefault()
+	Network NetworkSpec `json:"network,omitempty"`
+
+	// If empty, healthcheck is not enabled by default
+	// +kubebuilder:default:HealthcheckDefault()
+	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
+
+	// If empty, autoscaling is not enabled by default
+	// +kubebuilder:validation:Optional
+	Autoscaling AutoscalingSpec `json:"autoscaling,omitempty"`
+
+	// If empty, volumes won't be used
+	// +kubebuilder:validation:Optional
+	Deployment DeploymentSpec `json:"deployment,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
@@ -60,6 +141,13 @@ type ChallengeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	// Default value will be set to false for security reasons
+	// +kubebuilder:validation:Optional
+	Deployed bool `json:"deployed,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Status string `json:"challengeStatus"`
 	// TODO: implement status for the challenges like READY and etc..
 }
 
