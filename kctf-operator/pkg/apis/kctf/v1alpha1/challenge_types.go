@@ -96,11 +96,6 @@ type DeploymentSpec struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// TODO default
-	// Default value: size 1Gb
-	// +kubebuilder:validation:Optional
-	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
-
-	// TODO default
 	// Default value: 1 container and 1 volume with the name of the challenge
 	// +kubebuilder:validation:Optional
 	Template corev1.PodTemplate `json:"podTemplate,omitempty"`
@@ -116,6 +111,9 @@ type ChallengeSpec struct {
 	// description
 	// Not optional and image should be passed by user (by now)
 	ImageTemplate string `json:"imageTemplate"`
+
+	// +kubebuilder:default:=false
+	Deployed bool `json:"deployed,omitempty"`
 
 	// +kubebuilder:default:=0
 	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
@@ -134,6 +132,11 @@ type ChallengeSpec struct {
 	// If empty, volumes won't be used
 	// +kubebuilder:validation:Optional
 	Deployment DeploymentSpec `json:"deployment,omitempty"`
+
+	// TODO default
+	// Default value: size 1Gb
+	// +kubebuilder:validation:Optional
+	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
@@ -141,10 +144,6 @@ type ChallengeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
-	// Default value will be set to false for security reasons
-	// +kubebuilder:validation:Optional
-	Deployed bool `json:"deployed,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	Status string `json:"challengeStatus"`
