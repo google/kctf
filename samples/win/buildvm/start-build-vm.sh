@@ -20,7 +20,7 @@ gcloud compute firewall-rules create "${FIREWALL_RULE}" \
 
 while true; do
   echo -n "[*] Trying to fetch windows credentials, remaining timeout: ${CREDENTIAL_FETCH_TIMEOUT}s"
-  gcloud --quiet beta compute reset-windows-password "${VM_NAME}" > windows_creds 2>/dev/null && break
+  "${DIR}/fetch-creds.sh" 2>/dev/null && break
   if [[ ${CREDENTIAL_FETCH_TIMEOUT} -lt ${CREDENTIAL_FETCH_SLEEP} ]]; then
     echo ": failed, giving up"
     exit 1

@@ -15,7 +15,7 @@
 # IMPORTANT
 # - This will be the entrypoint when building the docker image.
 .gen/docker-image: .FORCE
-	./build_remote.sh > $@
+	../buildvm/build_remote.sh ${CURDIR} > $@
 
 .PHONY: .FORCE
 .FORCE:

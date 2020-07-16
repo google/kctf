@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 from __future__ import print_function
 from winrm.protocol import Protocol
@@ -6,9 +6,9 @@ import sys
 import subprocess
 import re
 
-GS_PATH, IMAGE_TAG = sys.argv[1:]
+GS_PATH, IMAGE_TAG, CREDS_PATH = sys.argv[1:]
 
-with open('windows_creds', 'r') as fd:
+with open(CREDS_PATH, 'r') as fd:
     hostname = re.match('ip_address:\s*(.*)', fd.readline()).group(1)
     password = re.match('password:\s*(.*)', fd.readline()).group(1)
     username = re.match('username:\s*(.*)', fd.readline()).group(1)
@@ -39,9 +39,9 @@ run_cmd(['mkdir', 'c:\\build'])
 run_cmd(['gsutil', 'cp', '-r', GS_PATH+'/*', 'c:\\build'])
 run_cmd(['gcloud', 'auth', 'configure-docker', '--quiet'])
 tmp_tag = '{}:tmp'.format(IMAGE_TAG)
-run_cmd(['docker', 'build', '-t', tmp_tag, 'c:\\build'])
+run_cmd(['docker', 'build', '-t', tmp_tag, 'c:\\build\\image'])
 digest = run_cmd(['docker', 'image', 'ls', '-q', tmp_tag]).strip()
-full_tag = '{}:{}'.format(IMAGE_TAG, digest)
+full_tag = '{}:{}'.format(IMAGE_TAG, digest.decode('ascii'))
 run_cmd(['docker', 'tag', tmp_tag, full_tag])
 run_cmd(['docker', 'push', full_tag])
 p.close_shell(shell_id)
