@@ -40,12 +40,12 @@ type PortSpec struct {
 	// +kubebuilder:default:=1
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=65336
-	Port int `json:"port,omitempty"`
+	Port int32 `json:"port,omitempty"`
 
 	// +kubebuider:default:=1337
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=65336
-	TargetPort int `json:"targetPort,omitempty"`
+	TargetPort int32 `json:"targetPort,omitempty"`
 
 	// +kubebuilder:default:="TCP"
 	Protocol string `json:"protocol,omitempty"`
@@ -79,14 +79,14 @@ type AutoscalingSpec struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// +kubebuilder:default:=1
-	MinReplicas int `json:"minReplicas,omitempty"`
+	MinReplicas int32 `json:"minReplicas,omitempty"`
 
 	// +kubebuilder:default:=1
-	MaxReplicas int `json:"maxReplicas,omitempty"`
+	MaxReplicas int32 `json:"maxReplicas,omitempty"`
 
 	// If empty, this feature won't be used
 	// +kubebuilder:validation:Optional
-	TargetCPUUtilizationPercentage int `json:"targetCPUUtilizationPercentage,omitempty"`
+	TargetCPUUtilizationPercentage int32 `json:"targetCPUUtilizationPercentage,omitempty"`
 }
 
 // TODO: create functions that return default values for this
@@ -116,7 +116,7 @@ type ChallengeSpec struct {
 	Deployed bool `json:"deployed,omitempty"`
 
 	// +kubebuilder:default:=0
-	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
+	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
 
 	// +kubebuilder:default:=NetworkDefault()
 	Network NetworkSpec `json:"network,omitempty"`
