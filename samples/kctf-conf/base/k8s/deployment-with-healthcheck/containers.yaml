@@ -51,4 +51,3 @@ spec:
       - name: "pow-bypass"
         secret:
           secretName: "pow-bypass"
-          defaultMode: 0444
