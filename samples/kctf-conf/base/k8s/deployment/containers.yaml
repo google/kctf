@@ -51,4 +51,3 @@ spec:
       - name: "pow-bypass-pub"
         secret:
           secretName: "pow-bypass-pub"
-          defaultMode: 0444
