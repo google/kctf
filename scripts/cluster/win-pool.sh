@@ -70,6 +70,7 @@ while :; do
             ;;
     esac
     shift
+    shift
 done
 
 gcloud container node-pools create "${POOL_NAME}" \
