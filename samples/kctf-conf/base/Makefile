@@ -27,18 +27,20 @@ SHELL := bash
 
 PUSH_TARGET="REMOTE"
 
-REGISTRY:=CONFIGMISSING
-PROJECT:=CONFIGMISSING
-CLUSTER_NAME:=CONFIGMISSING
-ZONE:=CONFIGMISSING
+export REGISTRY:=CONFIGMISSING
+export PROJECT:=CONFIGMISSING
+export CLUSTER_NAME:=CONFIGMISSING
+export ZONE:=CONFIGMISSING
 # sets DEPLOY, PUBLIC, HEALTHCHECK, HTTPS
 include config/chal.conf
 -include $(HOME)/.config/kctf/cluster.conf
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
 export KUBECONFIG
 
-CHALLENGE_NAME:=$(shell basename ${CURDIR})
+export CHALLENGE_NAME:=$(shell basename ${CURDIR})
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
+export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
+export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
 ifeq ($(HEALTHCHECK), true)
 MAYBE_REMOTE_HEALTHCHECK_IMAGE=${CLUSTER_GEN}/remote-healthcheck-image
@@ -210,15 +212,15 @@ endif
 	kubectl create configmap pow --from-file=pow.conf=config/pow.conf --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass --from-file="../kctf-conf/secrets/pow-bypass-key.pem" --dry-run=client -o yaml | kubectl apply -f -
 	kubectl create secret generic pow-bypass-pub --from-file="../kctf-conf/secrets/pow-bypass-key-pub.pem" --dry-run=client -o yaml | kubectl apply -f -
-# update the challenge container if the image changed
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
+	# update the challenge container if the image changed
+	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
 	  kubectl set image "deployment/chal" "challenge=$${PUSHED_IMAGE}"
 	fi
 ifeq ($(HEALTHCHECK), true)
-# update the healthcheck container if the image changed
-	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
+	# update the healthcheck container if the image changed
+	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
 	  kubectl set image "deployment/chal" "healthcheck=$${PUSHED_HEALTHCHECK_IMAGE}"
@@ -226,11 +228,13 @@ ifeq ($(HEALTHCHECK), true)
 endif
 
 .gen/challenge-image: challenge/.gen/docker-image
-	NEW_ID=$$(cat challenge/.gen/docker-image | cut -d ':' -f 2)
+	NEW_ID=$$(cat challenge/.gen/docker-image)
+	if [[ "$$NEW_ID" = sha256:* ]]; then
+	  NEW_ID=$$(echo "$$NEW_ID" | cut -d ':' -f 2)
+	fi
 	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
 	  echo "$${NEW_ID}" > $@;
 	fi
-	docker tag "$${NEW_ID}" "kctf-chal-${CHALLENGE_NAME}"
 
 challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
 	$(MAKE) -C challenge .gen/docker-image
@@ -244,47 +248,49 @@ challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .
 	rm -f $@
 	docker.exe context export default --kubeconfig $@
 
-${CLUSTER_GEN}/image-tagged: .gen/challenge-image | .cluster-config
+${CLUSTER_GEN}/image-pushed: .gen/challenge-image | .cluster-config
 	IMAGE_ID="$$(cat .gen/challenge-image)"
-	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}:$${IMAGE_ID}"
-	docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
-	echo -n "$${IMAGE_TAG}" > $@
-
-${CLUSTER_GEN}/image-pushed: ${CLUSTER_GEN}/image-tagged
-	IMAGE_TAG="$$(cat ${CLUSTER_GEN}/image-tagged)"
-	if [ "${PUSH_TARGET}" == "REMOTE" ]; then
-	  docker push "$${IMAGE_TAG}"
+	if [[ "$${IMAGE_ID}" = "$${REMOTE_IMAGE}:"* ]]; then
+	  IMAGE_TAG="$${IMAGE_ID}"
+	else
+	  IMAGE_TAG="${REMOTE_IMAGE}:$${IMAGE_ID}"
+	  docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
+	  if [ "${PUSH_TARGET}" == "REMOTE" ]; then
+	    docker push "$${IMAGE_TAG}"
+	  fi
 	fi
 	if [ "${PUSH_TARGET}" == "KIND" ]; then
 	  kind load docker-image "$${IMAGE_TAG}"
 	fi
-	touch $@
+	echo -n "$${IMAGE_TAG}" > $@
 
 .gen/healthcheck-image: healthcheck/.gen/docker-image
-	NEW_ID=$$(cat healthcheck/.gen/docker-image | cut -d ':' -f 2)
+	NEW_ID=$$(cat healthcheck/.gen/docker-image)
+	if [[ "$$NEW_ID" = sha256:* ]]; then
+	  NEW_ID=$$(echo "$$NEW_ID" | cut -d ':' -f 2)
+	fi
 	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
 	  echo "$${NEW_ID}" > $@;
 	fi
-	docker tag "$${NEW_ID}" "kctf-healthcheck-${CHALLENGE_NAME}"
 
 healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
 	$(MAKE) -C healthcheck .gen/docker-image
 
-${CLUSTER_GEN}/healthcheck-image-tagged: .gen/healthcheck-image | .cluster-config
+${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-config
 	IMAGE_ID="$$(cat .gen/healthcheck-image)"
-	IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck:$${IMAGE_ID}"
-	docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
-	echo -n "$${IMAGE_TAG}" > $@
-
-${CLUSTER_GEN}/healthcheck-image-pushed: ${CLUSTER_GEN}/healthcheck-image-tagged
-	IMAGE_TAG="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
-	if [ "${PUSH_TARGET}" == "REMOTE" ]; then
-		docker push "$${IMAGE_TAG}"
+	if [[ "$${IMAGE_ID}" = "$${REMOTE_HEALTHCHECK_IMAGE}:"* ]]; then
+	  IMAGE_TAG="$${IMAGE_ID}"
+	else
+	  IMAGE_TAG="${REMOTE_HEALTHCHECK_IMAGE}-$${IMAGE_ID}"
+	  docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
+	  if [ "${PUSH_TARGET}" == "REMOTE" ]; then
+	    docker push "$${IMAGE_TAG}"
+	  fi
 	fi
 	if [ "${PUSH_TARGET}" == "KIND" ]; then
-		kind load docker-image "$${IMAGE_TAG}"
+	  kind load docker-image "$${IMAGE_TAG}"
 	fi
-	touch $@
+	echo -n "$${IMAGE_TAG}" > $@
 
 ../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
@@ -292,12 +298,12 @@ ${CLUSTER_GEN}/healthcheck-image-pushed: ${CLUSTER_GEN}/healthcheck-image-tagged
 ../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
-${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-tagged .FORCE
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-tagged)"
+${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-pushed .FORCE
+	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
 	(kubectl get deployment/chal -o jsonpath='{.spec.template.spec.containers[?(@.name == "challenge")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}") > $@
 
-${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-tagged .FORCE
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-tagged)"
+${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed .FORCE
+	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
 	REMOTE_TAG=$$(kubectl get deployment/chal -o jsonpath='{.spec.template.spec.containers[?(@.name == "healthcheck")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}")
 	# if we previously deployed without a healthcheck, the output might be empty
 	if [ -z "$${REMOTE_TAG}" ]; then
