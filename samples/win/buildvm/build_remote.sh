@@ -15,8 +15,8 @@ CONTAINER_DIR="$1"
 
 gsutil ls "${BUCKET}" >/dev/null 2>/dev/null || gsutil mb "${BUCKET}" >&2
 gsutil rm -R "${GS_PATH}" >/dev/null 2>/dev/null || true
-gsutil cp -R "${CONTAINER_DIR}/image" "${GS_PATH}/" >&2
-gsutil cp -R "${CONTAINER_DIR}/build.ps1" "${GS_PATH}/" >&2
+gsutil -m cp -R "${CONTAINER_DIR}/image" "${GS_PATH}/" >&2
+gsutil -m cp -R "${CONTAINER_DIR}/build.ps1" "${GS_PATH}/" >&2
 
 VENV="${DIR}/venv"
 
