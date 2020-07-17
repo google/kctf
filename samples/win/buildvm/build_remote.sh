@@ -4,12 +4,12 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "$( readlink -f "${BASH_SOURCE[0]}")" )" >/dev/null && pwd )"
 
 if [ -z "${PROJECT}" ]; then echo 'missing PROJECT'; exit 1; fi
-if [ -z "${CHALLENGE_NAME}" ]; then echo 'missing CHALLENGE_NAME'; exit 1; fi
+if [ -z "${IMAGE_NAME}" ]; then echo 'missing IMAGE_NAME'; exit 1; fi
 if [ -z "${REGISTRY}" ]; then echo 'missing REGISTRY'; exit 1; fi
 BUCKET="gs://${PROJECT}-remote-build"
 #TODO reusing the gs path like this means we can't run in parallel
-GS_PATH="${BUCKET}/remote_build/${CHALLENGE_NAME}"
-IMAGE_TAG="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}"
+GS_PATH="${BUCKET}/remote_build/${IMAGE_NAME}"
+IMAGE_TAG="${REGISTRY}/${PROJECT}/${IMAGE_NAME}"
 
 CONTAINER_DIR="$1"
 
