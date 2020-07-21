@@ -3,80 +3,8 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// Functions to return the default values
-func PersistentVolumeClaimDefault() corev1.PersistentVolumeClaim {
-	var persistentVolumeClaimDefault = corev1.PersistentVolumeClaim{
-		Spec: corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					"storage": *resource.NewQuantity(1*1024*1024*1024*1024, resource.BinarySI),
-				},
-			},
-		},
-	}
-	return persistentVolumeClaimDefault
-}
-
-func PodTemplateDefault() corev1.PodTemplate {
-	var podTemplateDefault = corev1.PodTemplate{
-		Template: corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				InitContainers: nil,
-				Containers:     nil,
-			},
-		},
-	}
-	return podTemplateDefault
-}
-
-func HealthcheckDefault() HealthcheckSpec {
-	var healthcheckDefault = HealthcheckSpec{
-		Enabled:   false,
-		Container: "healthcheck",
-	}
-	return healthcheckDefault
-}
-
-func NetworkDefault() NetworkSpec {
-	var networkDefault = NetworkSpec{
-		Public: true,
-		Dns:    false,
-		Ports:  PortsDefault(),
-	}
-	return networkDefault
-}
-
-func PortsDefault() []PortSpec {
-	var portsDefault = []PortSpec{
-		PortSpec{
-			Port:       1,
-			TargetPort: 1337,
-			Protocol:   "TCP",
-		},
-	}
-	return portsDefault
-}
-
-type PortSpec struct {
-
-	// The default value is 1 if empty and protocol not being HTTP
-	// +kubebuilder:default:=1
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=65336
-	Port int32 `json:"port,omitempty"`
-
-	// +kubebuider:default:=1337
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=65336
-	TargetPort int32 `json:"targetPort,omitempty"`
-
-	// +kubebuilder:default:="TCP"
-	Protocol string `json:"protocol,omitempty"`
-}
 
 type NetworkSpec struct {
 
@@ -87,8 +15,8 @@ type NetworkSpec struct {
 	Dns bool `json:"dns,omitempty"`
 
 	// By default, one port is set with default values
-	// +kubebuilder:default:PortsDefault()
-	Ports []PortSpec `json:"ports,omitempty"`
+	// +kubebuilder:validation:Optional
+	Ports []corev1.ContainerPort `json:"ports,omitempty"`
 }
 
 type HealthcheckSpec struct {
@@ -122,8 +50,7 @@ type DeploymentSpec struct {
 	// +kubebuilder:default:=true
 	Enabled bool `json:"enabled,omitempty"`
 
-	// TODO default
-	// Default value: 1 container and 1 volume with the name of the challenge
+	// kubebuilder:validation:Optional
 	Template corev1.PodTemplate `json:"podTemplate,omitempty"` // TODO: https://github.com/kubernetes-sigs/controller-tools/issues/444
 }
 
@@ -142,11 +69,11 @@ type ChallengeSpec struct {
 	// +kubebuilder:default:=0
 	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
 
-	// +kubebuilder:default:NetworkDefault()
+	// +kubebuilder:validation:Optional
 	Network NetworkSpec `json:"network,omitempty"`
 
 	// If empty, healthcheck is not enabled by default
-	// +kubebuilder:default:HealthcheckDefault()
+	// +kubebuilder:validation:Optional
 	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
 
 	// If empty, autoscaling is not enabled by default
@@ -158,7 +85,7 @@ type ChallengeSpec struct {
 	Deployment DeploymentSpec `json:"deployment,omitempty"`
 
 	// Default value: size 1Gb
-	// +kubebuilder:default:PersistentVolumeClaimDefault()
+	// +kubebuilder:validation:Optional
 	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
 }
 

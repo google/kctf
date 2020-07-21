@@ -60,8 +60,7 @@ spec:
                     default: true
                     type: boolean
                   podTemplate:
-                    description: 'TODO default Default value: 1 container and 1 volume
-                      with the name of the challenge'
+                    description: kubebuilder:validation:Optional
                     properties:
                       apiVersion:
                         description: 'APIVersion defines the versioned schema of this
@@ -6586,23 +6585,36 @@ spec:
                   ports:
                     description: By default, one port is set with default values
                     items:
+                      description: ContainerPort represents a network port in a single
+                        container.
                       properties:
-                        port:
-                          default: 1
-                          description: The default value is 1 if empty and protocol
-                            not being HTTP
+                        containerPort:
+                          description: Number of port to expose on the pod's IP address.
+                            This must be a valid port number, 0 < x < 65536.
                           format: int32
-                          maximum: 65336
-                          minimum: 0
                           type: integer
-                        protocol:
-                          default: TCP
+                        hostIP:
+                          description: What host IP to bind the external port to.
                           type: string
-                        targetPort:
+                        hostPort:
+                          description: Number of port to expose on the host. If specified,
+                            this must be a valid port number, 0 < x < 65536. If HostNetwork
+                            is specified, this must match ContainerPort. Most containers
+                            do not need this.
                           format: int32
-                          maximum: 65336
-                          minimum: 0
                           type: integer
+                        name:
+                          description: If specified, this must be an IANA_SVC_NAME
+                            and unique within the pod. Each named port in a pod must
+                            have a unique name. Name for the port that can be referred
+                            to by services.
+                          type: string
+                        protocol:
+                          description: Protocol for port. Must be UDP, TCP, or SCTP.
+                            Defaults to "TCP".
+                          type: string
+                      required:
+                      - containerPort
                       type: object
                     type: array
                   public:
@@ -6610,7 +6622,7 @@ spec:
                     type: boolean
                 type: object
               persistentVolumeClaim:
-                description: 'TODO default Default value: size 1Gb'
+                description: 'Default value: size 1Gb'
                 properties:
                   apiVersion:
                     description: 'APIVersion defines the versioned schema of this

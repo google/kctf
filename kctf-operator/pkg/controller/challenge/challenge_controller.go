@@ -1,3 +1,4 @@
+// TODO: Organize more this boilerplate code
 package challenge
 
 import (
@@ -103,6 +104,8 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, found)
 
 	if err != nil && errors.IsNotFound(err) {
+		// Set default values not configured by kubebuilder
+		SetDefaultValues(challenge)
 		// Define a new deployment
 		dep := r.deploymentForChallenge(challenge)
 		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -121,9 +124,9 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	// Ensure that the configurations in the CR are followed
 	// Check deployed (first if)
 
-	if challenge.Spec.Deployed == false {
-		var numReplicas int32 = 0
-		found.Spec.Replicas = &numReplicas
+	change := CheckConfigurations(challenge, found)
+
+	if change == true {
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
@@ -133,69 +136,13 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Check powDifficultySeconds
-
-	// TODO: how do we set powDifficulty ?
-
-	// Check network specs:
-
-	// TODO: public
-	// TODO: dns
-	// Ports are set in the deployment
-
-	// Check healthcheck specs
-
-	if challenge.Spec.Healthcheck.Enabled == true {
-		reqLogger.Info("Healthcheck enabled")
-		// TODO: add other deployment?
-	}
-
-	// Check autoscaling specs
-
-	if challenge.Spec.Autoscaling.Enabled == true && challenge.Spec.Deployed == true {
-		minRep := challenge.Spec.Autoscaling.MinReplicas
-		maxRep := challenge.Spec.Autoscaling.MaxReplicas
-
-		if *found.Spec.Replicas < minRep {
-			found.Spec.Replicas = &minRep
-			err = r.client.Update(context.TODO(), found)
-			if err != nil {
-				reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-				return reconcile.Result{}, err
-			}
-			// Spec updated - return and requeue
-			return reconcile.Result{Requeue: true}, nil
-		}
-
-		if *found.Spec.Replicas > maxRep {
-			found.Spec.Replicas = &maxRep
-			err = r.client.Update(context.TODO(), found)
-			if err != nil {
-				reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-				return reconcile.Result{}, err
-			}
-			// Spec updated - return and requeue
-			return reconcile.Result{Requeue: true}, nil
-		}
-
-		// TODO: TargetCPUUtilizationPercentage: change resources
-	}
-
-	// Check deployment specs
-
-	if challenge.Spec.Deployment.Enabled == true {
-		reqLogger.Info("Deployment configuration enabled")
-	}
-
-	// TODO: Check persistentVolumeClaim
-
 	return reconcile.Result{}, nil
 }
 
 // deploymentForChallenge returns a challenge Deployment object
 func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(m.Name)
-	replicas := m.Spec.Autoscaling.MinReplicas // TODO: change to the correct; before it was m.Spec.Size
+	var replicas int32 = 1
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -215,10 +162,7 @@ func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *
 					Containers: []corev1.Container{{
 						Image: m.Spec.ImageTemplate,
 						Name:  "challenge",
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 1337,
-							Name:          "challenge",
-						}},
+						Ports: m.Spec.Network.Ports,
 					}},
 				},
 			},
