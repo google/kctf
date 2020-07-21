@@ -123,8 +123,6 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Ensure that the configurations in the CR are followed
-	// Check deployed (first if)
-
 	change := CheckConfigurations(challenge, found)
 
 	if change == true {
