@@ -1,7 +1,0 @@
-apiVersion: kctf.dev/v1alpha1
-kind: Challenge
-metadata:
-  name: example-challenge
-spec:
-  # Add fields here
-  size: 3

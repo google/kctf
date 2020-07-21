@@ -24,11 +24,6 @@ const name = "challenge-controller"
 
 var log = logf.Log.WithName(name)
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new Challenge Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
@@ -80,8 +75,6 @@ type ReconcileChallenge struct {
 
 // Reconcile reads that state of the cluster for a Challenge object and makes changes based on the state read
 // and what is in the Challenge.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Challenge Deployment for each Challenge CR
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
@@ -108,6 +101,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, found)
+
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.deploymentForChallenge(challenge)
@@ -125,11 +119,11 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Ensure that the configurations in the CR are followed
-	// TODO
-	// Ensure the deployment size is the same as the spec
-	/*size := challenge.Spec.Size
-	if *found.Spec.Replicas != size {
-		found.Spec.Replicas = &size
+	// Check deployed (first if)
+
+	if challenge.Spec.Deployed == false {
+		var numReplicas int32 = 0
+		found.Spec.Replicas = &numReplicas
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
@@ -137,15 +131,67 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		}
 		// Spec updated - return and requeue
 		return reconcile.Result{Requeue: true}, nil
-	}*/
-	// -------------------------------- change
+	}
 
-	// TODO: update status
+	// Check powDifficultySeconds
+
+	// TODO: how do we set powDifficulty ?
+
+	// Check network specs:
+
+	// TODO: public
+	// TODO: dns
+	// Ports are set in the deployment
+
+	// Check healthcheck specs
+
+	if challenge.Spec.Healthcheck.Enabled == true {
+		reqLogger.Info("Healthcheck enabled")
+		// TODO: add other deployment?
+	}
+
+	// Check autoscaling specs
+
+	if challenge.Spec.Autoscaling.Enabled == true && challenge.Spec.Deployed == true {
+		minRep := challenge.Spec.Autoscaling.MinReplicas
+		maxRep := challenge.Spec.Autoscaling.MaxReplicas
+
+		if *found.Spec.Replicas < minRep {
+			found.Spec.Replicas = &minRep
+			err = r.client.Update(context.TODO(), found)
+			if err != nil {
+				reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+				return reconcile.Result{}, err
+			}
+			// Spec updated - return and requeue
+			return reconcile.Result{Requeue: true}, nil
+		}
+
+		if *found.Spec.Replicas > maxRep {
+			found.Spec.Replicas = &maxRep
+			err = r.client.Update(context.TODO(), found)
+			if err != nil {
+				reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+				return reconcile.Result{}, err
+			}
+			// Spec updated - return and requeue
+			return reconcile.Result{Requeue: true}, nil
+		}
+
+		// TODO: TargetCPUUtilizationPercentage: change resources
+	}
+
+	// Check deployment specs
+
+	if challenge.Spec.Deployment.Enabled == true {
+		reqLogger.Info("Deployment configuration enabled")
+	}
+
+	// TODO: Check persistentVolumeClaim
 
 	return reconcile.Result{}, nil
 }
 
-// TODO: review deploymentForChallenge
 // deploymentForChallenge returns a challenge Deployment object
 func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(m.Name)
@@ -167,11 +213,10 @@ func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "challenge:1.4.36-alpine",
-						Name:    "challenge",
-						Command: []string{"challenge", "-m=64", "-o", "modern", "-v"},
+						Image: m.Spec.ImageTemplate,
+						Name:  "challenge",
 						Ports: []corev1.ContainerPort{{
-							ContainerPort: 11211,
+							ContainerPort: 1337,
 							Name:          "challenge",
 						}},
 					}},
@@ -179,12 +224,12 @@ func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *
 			},
 		},
 	}
+
 	// Set Challenge instance as the owner and controller
 	controllerutil.SetControllerReference(m, dep, r.scheme)
 	return dep
 }
 
-// TODO: review labelsForChallenge
 // labelsForChallenge returns the labels for selecting the resources
 // belonging to the given challenge CR name.
 func labelsForChallenge(name string) map[string]string {

@@ -3,8 +3,35 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Functions to return the default values
+func PersistentVolumeClaimDefault() corev1.PersistentVolumeClaim {
+	var persistentVolumeClaimDefault = corev1.PersistentVolumeClaim{
+		Spec: corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"storage": *resource.NewQuantity(1*1024*1024*1024*1024, resource.BinarySI),
+				},
+			},
+		},
+	}
+	return persistentVolumeClaimDefault
+}
+
+func PodTemplateDefault() corev1.PodTemplate {
+	var podTemplateDefault = corev1.PodTemplate{
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				InitContainers: nil,
+				Containers:     nil,
+			},
+		},
+	}
+	return podTemplateDefault
+}
 
 func HealthcheckDefault() HealthcheckSpec {
 	var healthcheckDefault = HealthcheckSpec{
@@ -60,7 +87,7 @@ type NetworkSpec struct {
 	Dns bool `json:"dns,omitempty"`
 
 	// By default, one port is set with default values
-	// +kubebuilder:default:= PortsDefault()
+	// +kubebuilder:default:PortsDefault()
 	Ports []PortSpec `json:"ports,omitempty"`
 }
 
@@ -97,16 +124,13 @@ type DeploymentSpec struct {
 
 	// TODO default
 	// Default value: 1 container and 1 volume with the name of the challenge
-	// +kubebuilder:validation:Optional
-	Template corev1.PodTemplate `json:"podTemplate,omitempty"`
+	Template corev1.PodTemplate `json:"podTemplate,omitempty"` // TODO: https://github.com/kubernetes-sigs/controller-tools/issues/444
 }
 
 // ChallengeSpec defines the desired state of Challenge
 type ChallengeSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	// TODO: add default values externally
-	// TODO: ready in status or in spec?
 
 	// description
 	// Not optional and image should be passed by user (by now)
@@ -118,7 +142,7 @@ type ChallengeSpec struct {
 	// +kubebuilder:default:=0
 	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
 
-	// +kubebuilder:default:=NetworkDefault()
+	// +kubebuilder:default:NetworkDefault()
 	Network NetworkSpec `json:"network,omitempty"`
 
 	// If empty, healthcheck is not enabled by default
@@ -133,9 +157,8 @@ type ChallengeSpec struct {
 	// +kubebuilder:validation:Optional
 	Deployment DeploymentSpec `json:"deployment,omitempty"`
 
-	// TODO default
 	// Default value: size 1Gb
-	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:PersistentVolumeClaimDefault()
 	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
 }
 

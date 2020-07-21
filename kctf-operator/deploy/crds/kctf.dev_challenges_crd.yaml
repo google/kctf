@@ -39,12 +39,15 @@ spec:
                     type: boolean
                   maxReplicas:
                     default: 1
+                    format: int32
                     type: integer
                   minReplicas:
                     default: 1
+                    format: int32
                     type: integer
                   targetCPUUtilizationPercentage:
                     description: If empty, this feature won't be used
+                    format: int32
                     type: integer
                 type: object
               deployed:
@@ -6576,13 +6579,11 @@ spec:
                   user (by now)
                 type: string
               network:
-                default: NetworkDefault()
                 properties:
                   dns:
                     default: false
                     type: boolean
                   ports:
-                    default: PortsDefault()
                     description: By default, one port is set with default values
                     items:
                       properties:
@@ -6590,6 +6591,7 @@ spec:
                           default: 1
                           description: The default value is 1 if empty and protocol
                             not being HTTP
+                          format: int32
                           maximum: 65336
                           minimum: 0
                           type: integer
@@ -6597,6 +6599,7 @@ spec:
                           default: TCP
                           type: string
                         targetPort:
+                          format: int32
                           maximum: 65336
                           minimum: 0
                           type: integer
@@ -6817,6 +6820,7 @@ spec:
                 type: object
               powDifficultySeconds:
                 default: 0
+                format: int32
                 type: integer
             required:
             - imageTemplate
