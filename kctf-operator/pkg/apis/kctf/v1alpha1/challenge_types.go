@@ -1,3 +1,5 @@
+// This file is responsible for generating CRD (Custom Resource Definition)
+// kubebuilder might be used to set: default values, optional fields and etc
 // +kubebuilder:validation:Required
 package v1alpha1
 

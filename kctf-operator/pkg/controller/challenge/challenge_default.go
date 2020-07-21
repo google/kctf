@@ -1,3 +1,4 @@
+// File that set values not specified by the user to default
 package challenge
 
 import (
@@ -12,6 +13,7 @@ func PersistentVolumeClaimDefault() corev1.PersistentVolumeClaim {
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
+					// Set 1Gi for the user; TODO: I think this could be done better
 					"storage": *resource.NewQuantity(1*1024*1024*1024*1024, resource.BinarySI),
 				},
 			},
@@ -20,6 +22,8 @@ func PersistentVolumeClaimDefault() corev1.PersistentVolumeClaim {
 	return persistentVolumeClaimDefault
 }
 
+// Function that specifies the Default for PodTemplate
+// TODO: implement this
 func PodTemplateDefault() corev1.PodTemplate {
 	var podTemplateDefault = corev1.PodTemplate{
 		Template: corev1.PodTemplateSpec{

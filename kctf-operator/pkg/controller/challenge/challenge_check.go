@@ -9,7 +9,10 @@ import (
 // TODO: Put reqLogger ?
 func CheckConfigurations(challenge *kctfv1alpha1.Challenge, found *appsv1.Deployment) bool {
 
+	// This variable is responsible to say if something was change and so there must be a requeue
 	change := false
+
+	// First, check if the challenge is ready and, if not, set replicas to 0
 	if challenge.Spec.Deployed == false {
 		var numReplicas int32 = 0
 		found.Spec.Replicas = &numReplicas

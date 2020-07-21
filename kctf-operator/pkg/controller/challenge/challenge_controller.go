@@ -1,4 +1,5 @@
 // TODO: Organize more this boilerplate code
+// This file contains the reconcile function which is called when a CR is applied
 package challenge
 
 import (
