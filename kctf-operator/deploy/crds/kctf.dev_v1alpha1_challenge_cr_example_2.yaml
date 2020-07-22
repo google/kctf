@@ -8,7 +8,7 @@ spec:
   deployed: true
   powDifficultySeconds: 10
   network:
-    public: true
+    public: false
     dns: false
   autoscaling:
     enabled: true

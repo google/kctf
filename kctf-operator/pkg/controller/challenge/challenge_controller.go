@@ -1,5 +1,6 @@
 // TODO: Organize more this boilerplate code
 // This file contains the reconcile function which is called when a CR is applied
+// TODO; Check finalizers and add if necessary
 package challenge
 
 import (
@@ -9,12 +10,10 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -104,9 +103,10 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	found := &appsv1.Deployment{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, found)
 
+	// Just enters here if it's a new deployment
 	if err != nil && errors.IsNotFound(err) {
 		// Set default values not configured by kubebuilder
-		SetDefaultValues(challenge)
+		SetDefaultValues(challenge) // Think about where to place this
 		// Define a new deployment
 		dep := r.deploymentForChallenge(challenge)
 		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -122,7 +122,35 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	// Ensure that the configurations in the CR are followed
+	// Creates the service if it doesn't exist
+	// Check existence of the service:
+	serviceFound := &corev1.Service{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, serviceFound)
+
+	// Just enter here if the service doesn't exist yet:
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new service if the challenge is public
+		if challenge.Spec.Network.Public == true {
+			serv := r.serviceForChallenge(challenge)
+			reqLogger.Info("Creating a new Service", "Service.Namespace", serv.Namespace, "Service.Name", serv.Name)
+			err = r.client.Create(context.TODO(), serv)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new Service", "Deployment.Service", serv.Namespace, "Service.Name", serv.Name)
+				return reconcile.Result{}, err
+			}
+			// Service created successfully - return and requeue
+			return reconcile.Result{Requeue: true}, nil
+		} else {
+			// Case when the author change to public=false
+			// Challenge is erased
+			// TODO: stop/erase the service
+		}
+	} else if err != nil {
+		reqLogger.Error(err, "Failed to get Service")
+		return reconcile.Result{}, err
+	}
+
+	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 	change := CheckConfigurations(challenge, found)
 
 	if change == true {
@@ -136,45 +164,4 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	return reconcile.Result{}, nil
-}
-
-// deploymentForChallenge returns a challenge Deployment object
-func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
-	ls := labelsForChallenge(m.Name)
-	var replicas int32 = 1
-
-	dep := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image: m.Spec.ImageTemplate,
-						Name:  "challenge",
-						Ports: m.Spec.Network.Ports,
-					}},
-				},
-			},
-		},
-	}
-
-	// Set Challenge instance as the owner and controller
-	controllerutil.SetControllerReference(m, dep, r.scheme)
-	return dep
-}
-
-// labelsForChallenge returns the labels for selecting the resources
-// belonging to the given challenge CR name.
-func labelsForChallenge(name string) map[string]string {
-	return map[string]string{"app": "challenge", "challenge_cr": name}
 }

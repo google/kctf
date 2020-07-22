@@ -5,6 +5,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // Functions to return the default values
@@ -36,15 +37,14 @@ func PodTemplateDefault() corev1.PodTemplate {
 	return podTemplateDefault
 }
 
-// Default protocol: TCP
-func PortsDefault() []corev1.ContainerPort {
-	var portsDefault = []corev1.ContainerPort{
-		corev1.ContainerPort{
-			Name:          "challenge",
-			ContainerPort: 1,
-			// If testing with multiple pods, you may want to comment HostPort
-			// since two pods can't use the same one (at least with protocol TCP)
-			HostPort: 1337,
+func PortsDefault() []corev1.ServicePort {
+	var portsDefault = []corev1.ServicePort{
+		corev1.ServicePort{
+			// Keeping the same name as in previous network file
+			Name:       "netcat",
+			Port:       1,
+			TargetPort: intstr.FromInt(1337),
+			Protocol:   "TCP",
 		},
 	}
 	return portsDefault

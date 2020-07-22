@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Network specifications for the service
 type NetworkSpec struct {
 
 	// +kubebuilder:default:=true
@@ -18,9 +19,10 @@ type NetworkSpec struct {
 
 	// By default, one port is set with default values
 	// +kubebuilder:validation:Optional
-	Ports []corev1.ContainerPort `json:"ports,omitempty"`
+	Ports []corev1.ServicePort `json:"ports,omitempty"`
 }
 
+// Healthcheck specifications
 type HealthcheckSpec struct {
 
 	// +kubebuilder:default:=false
@@ -44,16 +46,6 @@ type AutoscalingSpec struct {
 	// If empty, this feature won't be used
 	// +kubebuilder:validation:Optional
 	TargetCPUUtilizationPercentage int32 `json:"targetCPUUtilizationPercentage,omitempty"`
-}
-
-// TODO: create functions that return default values for this
-type DeploymentSpec struct {
-
-	// +kubebuilder:default:=true
-	Enabled bool `json:"enabled,omitempty"`
-
-	// kubebuilder:validation:Optional
-	Template corev1.PodTemplate `json:"podTemplate,omitempty"` // TODO: https://github.com/kubernetes-sigs/controller-tools/issues/444
 }
 
 // ChallengeSpec defines the desired state of Challenge
@@ -84,7 +76,7 @@ type ChallengeSpec struct {
 
 	// If empty, volumes won't be used
 	// +kubebuilder:validation:Optional
-	Deployment DeploymentSpec `json:"deployment,omitempty"`
+	PodTemplate corev1.PodTemplate `json:"podTemplate,omitempty"`
 
 	// Default value: size 1Gb
 	// +kubebuilder:validation:Optional

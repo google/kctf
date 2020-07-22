@@ -6,62 +6,80 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-// TODO: Put reqLogger ?
-func CheckConfigurations(challenge *kctfv1alpha1.Challenge, found *appsv1.Deployment) bool {
-
-	// This variable is responsible to say if something was change and so there must be a requeue
-	change := false
-
+func CheckDeployed(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
 	// First, check if the challenge is ready and, if not, set replicas to 0
-	if challenge.Spec.Deployed == false {
+	if challenge.Spec.Deployed == false && *deployment.Spec.Replicas != 0 {
 		var numReplicas int32 = 0
-		found.Spec.Replicas = &numReplicas
-		change = true
+		deployment.Spec.Replicas = &numReplicas
+		return true
 	}
 
-	// Check powDifficultySeconds
+	return false
+}
 
-	// TODO: how do we set powDifficulty ?
+func CheckPowDifficultySeconds() bool {
+	// TODO
+	return false
+}
 
-	// Check network specs:
-
+func CheckNetworkSpecs() bool {
+	// Service is created in challenge_controller and here we just check if everything is alright
+	// TODO: Do we recheck ports here then?
 	// TODO: public
 	// TODO: dns
+	return false
+}
 
-	// Ports are set in the deployment
-
-	// Check healthcheck specs
-
+func CheckHealthcheck(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
 	if challenge.Spec.Healthcheck.Enabled == true {
 		// TODO: add other deployment?
 	}
+	return false
+}
 
-	// Check autoscaling specs
+// Check autoscaling specs
+func CheckAutoscaling(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
+	// Flag to say if there was any change done
+	change := false
 
 	if challenge.Spec.Autoscaling.Enabled == true && challenge.Spec.Deployed == true {
+
 		minRep := challenge.Spec.Autoscaling.MinReplicas
 		maxRep := challenge.Spec.Autoscaling.MaxReplicas
 
-		if *found.Spec.Replicas < minRep {
-			found.Spec.Replicas = &minRep
+		if *deployment.Spec.Replicas < minRep {
+			deployment.Spec.Replicas = &minRep
 			change = true
 		}
 
-		if *found.Spec.Replicas > maxRep {
-			found.Spec.Replicas = &maxRep
+		if *deployment.Spec.Replicas > maxRep {
+			deployment.Spec.Replicas = &maxRep
 			change = true
 		}
 
 		// TODO: TargetCPUUtilizationPercentage: change resources
 	}
 
-	// Check deployment specs
-
-	if challenge.Spec.Deployment.Enabled == true {
-		// TODO
-	}
-
-	// TODO: Check persistentVolumeClaim
-
 	return change
+}
+
+func CheckPodTemplate() bool {
+	// TODO
+	return false
+}
+
+func CheckPersistentVolumeClaim() bool {
+	// TODO
+	return false
+}
+
+// TODO: Put reqLogger ?
+func CheckConfigurations(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
+	// If any check returns true, it should be requeued;
+	requeued := CheckDeployed(challenge, deployment) || CheckPowDifficultySeconds() ||
+		CheckNetworkSpecs() || CheckHealthcheck(challenge, deployment) ||
+		CheckAutoscaling(challenge, deployment) || CheckPodTemplate() ||
+		CheckPersistentVolumeClaim()
+
+	return requeued
 }
