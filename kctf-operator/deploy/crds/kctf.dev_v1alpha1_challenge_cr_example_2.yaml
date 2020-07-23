@@ -11,6 +11,5 @@ spec:
     public: false
     dns: false
   autoscaling:
-    enabled: true
     minReplicas: 2
     maxReplicas: 2

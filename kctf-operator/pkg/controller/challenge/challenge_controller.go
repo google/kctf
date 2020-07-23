@@ -1,5 +1,5 @@
-// TODO: Organize more this boilerplate code
 // This file contains the reconcile function which is called when a CR is applied
+// TODO: Change namespace and make operator watch all namespaces
 // TODO; Check finalizers and add if necessary
 package challenge
 
@@ -40,12 +40,14 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New(name, mgr, controller.Options{Reconciler: r})
+
 	if err != nil {
 		return err
 	}
 
 	// Watch for changes to primary resource Challenge
 	err = c.Watch(&source.Kind{Type: &kctfv1alpha1.Challenge{}}, &handler.EnqueueRequestForObject{})
+
 	if err != nil {
 		return err
 	}
@@ -56,6 +58,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		IsController: true,
 		OwnerType:    &kctfv1alpha1.Challenge{},
 	})
+
 	if err != nil {
 		return err
 	}
@@ -94,6 +97,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			reqLogger.Info("Challenge resource not found. Ignoring since object must be deleted")
 			return reconcile.Result{}, nil
 		}
+
 		// Error reading the object - requeue the request.
 		reqLogger.Error(err, "Failed to get Challenge")
 		return reconcile.Result{}, err
@@ -103,20 +107,24 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	found := &appsv1.Deployment{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, found)
 
+	// Set default values not configured by kubebuilder
+	SetDefaultValues(challenge)
+
 	// Just enters here if it's a new deployment
 	if err != nil && errors.IsNotFound(err) {
-		// Set default values not configured by kubebuilder
-		SetDefaultValues(challenge) // Think about where to place this
 		// Define a new deployment
 		dep := r.deploymentForChallenge(challenge)
 		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Create(context.TODO(), dep)
+
 		if err != nil {
 			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
+
 		// Deployment created successfully - return and requeue
 		return reconcile.Result{Requeue: true}, nil
+
 	} else if err != nil {
 		reqLogger.Error(err, "Failed to get Deployment")
 		return reconcile.Result{}, err
@@ -128,31 +136,39 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, serviceFound)
 
 	// Just enter here if the service doesn't exist yet:
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
 		// Define a new service if the challenge is public
-		if challenge.Spec.Network.Public == true {
-			serv := r.serviceForChallenge(challenge)
-			reqLogger.Info("Creating a new Service", "Service.Namespace", serv.Namespace, "Service.Name", serv.Name)
-			err = r.client.Create(context.TODO(), serv)
-			if err != nil {
-				reqLogger.Error(err, "Failed to create new Service", "Deployment.Service", serv.Namespace, "Service.Name", serv.Name)
-				return reconcile.Result{}, err
-			}
-			// Service created successfully - return and requeue
-			return reconcile.Result{Requeue: true}, nil
-		} else {
-			// Case when the author change to public=false
-			// Challenge is erased
-			// TODO: stop/erase the service
+		serv := r.serviceForChallenge(challenge)
+		reqLogger.Info("Creating a new Service", "Service.Namespace", serv.Namespace, "Service.Name", serv.Name)
+		err = r.client.Create(context.TODO(), serv)
+
+		if err != nil {
+			reqLogger.Error(err, "Failed to create new Service", "Deployment.Service", serv.Namespace, "Service.Name", serv.Name)
+			return reconcile.Result{}, err
 		}
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Service")
+
+		// Service created successfully - return and requeue
+		return reconcile.Result{Requeue: true}, nil
+
+		// When service exists and public is changed to false
+	} else if err == nil && challenge.Spec.Network.Public == false {
+		reqLogger.Info("Deleting the Service", "Service.Namespace", serviceFound.Namespace, "Service.Name", serviceFound.Name)
+		err = r.client.Delete(context.TODO(), serviceFound)
+
+		if err != nil {
+			reqLogger.Error(err, "Failed to erase Service", "Deployment.Service", serviceFound.Namespace, "Service.Name", serviceFound.Name)
+			return reconcile.Result{}, err
+		}
+
+		// Service deleted successfully - return and requeue
 		return reconcile.Result{}, err
 	}
 
 	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
+	// change says if something in the configurations was different from what was found in the deploymeny
 	change := CheckConfigurations(challenge, found)
 
+	// If there's a change it must requeue
 	if change == true {
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {

@@ -10,10 +10,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// deploymentForChallenge returns a challenge Deployment object
-func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
+// Deployment with Healthcheck
+func (r *ReconcileChallenge) deploymentWithHealthcheck(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
+	//TODO
+	dep := &appsv1.Deployment{}
+	return dep
+}
+
+// Deployment without Healthcheck
+func (r *ReconcileChallenge) deploymentWithoutHealthcheck(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(m.Name)
-	var replicas int32 = 1
+	var replicas int32 = m.Spec.Autoscaling.MinReplicas
+	var readOnlyRootFilesystem = true
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -36,7 +44,15 @@ func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 1337,
 						}},
-						// TODO: complete with other deployment specs in yaml file
+						SecurityContext: &corev1.SecurityContext{
+							Capabilities: &corev1.Capabilities{
+								// []corev1.Capability{{}},
+								Add: []corev1.Capability{
+									"SYS_ADMIN",
+								},
+							},
+							ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
+						},
 					}},
 				},
 			},
@@ -46,6 +62,15 @@ func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *
 	// Set Challenge instance as the owner and controller
 	controllerutil.SetControllerReference(m, dep, r.scheme)
 	return dep
+}
+
+// deploymentForChallenge returns a challenge Deployment object
+func (r *ReconcileChallenge) deploymentForChallenge(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
+	if m.Spec.Healthcheck.Enabled == true {
+		return r.deploymentWithHealthcheck(m)
+	} else {
+		return r.deploymentWithoutHealthcheck(m)
+	}
 }
 
 // labelsForChallenge returns the labels for selecting the resources

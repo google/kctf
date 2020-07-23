@@ -25,14 +25,13 @@ func CheckPowDifficultySeconds() bool {
 func CheckNetworkSpecs() bool {
 	// Service is created in challenge_controller and here we just check if everything is alright
 	// TODO: Do we recheck ports here then?
-	// TODO: public
 	// TODO: dns
 	return false
 }
 
 func CheckHealthcheck(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
 	if challenge.Spec.Healthcheck.Enabled == true {
-		// TODO: add other deployment?
+		// TODO
 	}
 	return false
 }
@@ -42,7 +41,7 @@ func CheckAutoscaling(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Depl
 	// Flag to say if there was any change done
 	change := false
 
-	if challenge.Spec.Autoscaling.Enabled == true && challenge.Spec.Deployed == true {
+	if challenge.Spec.Deployed == true {
 
 		minRep := challenge.Spec.Autoscaling.MinReplicas
 		maxRep := challenge.Spec.Autoscaling.MaxReplicas

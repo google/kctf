@@ -32,19 +32,20 @@ type HealthcheckSpec struct {
 	Container string `json:"container,omitempty"`
 }
 
+// Autoscaling Specifications
 type AutoscalingSpec struct {
 
-	// +kubebuilder:default:=false
-	Enabled bool `json:"enabled,omitempty"`
-
+	// Minimum quantity of replicas
 	// +kubebuilder:default:=1
 	MinReplicas int32 `json:"minReplicas,omitempty"`
 
+	// Maximum quantity of replicas
 	// +kubebuilder:default:=1
 	MaxReplicas int32 `json:"maxReplicas,omitempty"`
 
+	// Target of CPU utilizantion in percentage
 	// If empty, this feature won't be used
-	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=50
 	TargetCPUUtilizationPercentage int32 `json:"targetCPUUtilizationPercentage,omitempty"`
 }
 
@@ -53,34 +54,42 @@ type ChallengeSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// description
+	// Image used by the deployment
 	// Not optional and image should be passed by user (by now)
 	ImageTemplate string `json:"imageTemplate"`
 
+	// Shows if the challenge is ready to be deployed, if not,
+	// it sets the replicas to 0
 	// +kubebuilder:default:=false
 	Deployed bool `json:"deployed,omitempty"`
 
+	// The quantity of seconds of the proof of work
 	// +kubebuilder:default:=0
 	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
 
+	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
 	// +kubebuilder:validation:Optional
 	Network NetworkSpec `json:"network,omitempty"`
 
+	// Healthcheck checks if the challenge works
 	// If empty, healthcheck is not enabled by default
 	// +kubebuilder:validation:Optional
 	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
 
+	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
 	// +kubebuilder:validation:Optional
 	Autoscaling AutoscalingSpec `json:"autoscaling,omitempty"`
 
+	// PodTemplate is used to set the paths of sessions and uploads
 	// If empty, volumes won't be used
 	// +kubebuilder:validation:Optional
 	PodTemplate corev1.PodTemplate `json:"podTemplate,omitempty"`
 
+	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
 	// Default value: size 1Gb
 	// +kubebuilder:validation:Optional
-	PersistentVolumeClaim corev1.PersistentVolumeClaim `json:"persistentVolumeClaim,omitempty"`
+	PersistentVolumeClaims corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge

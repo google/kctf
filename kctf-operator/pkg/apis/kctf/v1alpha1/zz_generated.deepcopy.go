@@ -93,7 +93,7 @@ func (in *ChallengeSpec) DeepCopyInto(out *ChallengeSpec) {
 	out.Healthcheck = in.Healthcheck
 	out.Autoscaling = in.Autoscaling
 	in.PodTemplate.DeepCopyInto(&out.PodTemplate)
-	in.PersistentVolumeClaim.DeepCopyInto(&out.PersistentVolumeClaim)
+	in.PersistentVolumeClaims.DeepCopyInto(&out.PersistentVolumeClaims)
 	return
 }
 
