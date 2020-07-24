@@ -9,18 +9,9 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// Function to return the default values of autoscaling
-func AutoscalingDefault(chal *kctfv1alpha1.Challenge) kctfv1alpha1.AutoscalingSpec {
-	var AutoscalingDefault = kctfv1alpha1.AutoscalingSpec{
-		MinReplicas:                    1,
-		MaxReplicas:                    1,
-		TargetCPUUtilizationPercentage: 50,
-	}
-	return AutoscalingDefault
-}
-
 // Functions to return the default values
 func PersistentVolumeClaimsDefault(chal *kctfv1alpha1.Challenge) corev1.PersistentVolumeClaimList {
+	stor, _ := resource.ParseQuantity("1Gi")
 	var persistentVolumeClaimsDefault = corev1.PersistentVolumeClaimList{
 		Items: []corev1.PersistentVolumeClaim{
 			corev1.PersistentVolumeClaim{
@@ -30,8 +21,7 @@ func PersistentVolumeClaimsDefault(chal *kctfv1alpha1.Challenge) corev1.Persiste
 				Spec: corev1.PersistentVolumeClaimSpec{
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
-							// Set 1Gi for the user
-							"storage": *resource.NewQuantity(1*1024*1024*1024*1024, resource.BinarySI),
+							"storage": stor,
 						},
 					},
 				},
@@ -56,9 +46,9 @@ func PodTemplateDefault() corev1.PodTemplate {
 }
 
 // Function to return the default ports
-func PortsDefault() []corev1.ServicePort {
-	var portsDefault = []corev1.ServicePort{
-		corev1.ServicePort{
+func PortsDefault() []kctfv1alpha1.PortSpec {
+	var portsDefault = []kctfv1alpha1.PortSpec{
+		kctfv1alpha1.PortSpec{
 			// Keeping the same name as in previous network file
 			Name:       "netcat",
 			Port:       1,
@@ -86,11 +76,5 @@ func SetDefaultValues(chal *kctfv1alpha1.Challenge) {
 	// To verify if the PersistentVolumeClaim wasn't defined, we check if the volume name is empty
 	if chal.Spec.PersistentVolumeClaims.Items == nil {
 		chal.Spec.PersistentVolumeClaims = PersistentVolumeClaimsDefault(chal)
-	}
-
-	// Set default of autoscaling
-	// To verify if the autoscaling wasn't defined, we check MaxReplicas
-	if chal.Spec.Autoscaling.MaxReplicas == 0 {
-		chal.Spec.Autoscaling = AutoscalingDefault(chal)
 	}
 }

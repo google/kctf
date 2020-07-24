@@ -4,9 +4,25 @@
 package v1alpha1
 
 import (
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
+
+type PortSpec struct {
+	//+kubebuilder:validation:Optional
+	Name string `json:"name"`
+
+	//+kubebuilder:validation:Optional
+	TargetPort intstr.IntOrString `json:"targetPort"`
+
+	//+kubebuilder:validation:Optional
+	Port int32 `json:"port"`
+
+	// Protocol is not optional
+	Protocol corev1.Protocol `json:"protocol"`
+}
 
 // Network specifications for the service
 type NetworkSpec struct {
@@ -19,7 +35,7 @@ type NetworkSpec struct {
 
 	// By default, one port is set with default values
 	// +kubebuilder:validation:Optional
-	Ports []corev1.ServicePort `json:"ports,omitempty"`
+	Ports []PortSpec `json:"ports,omitempty"`
 }
 
 // Healthcheck specifications
@@ -79,7 +95,7 @@ type ChallengeSpec struct {
 	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
 	// +kubebuilder:validation:Optional
-	Autoscaling AutoscalingSpec `json:"autoscaling,omitempty"`
+	HorizontalAutoscaling autoscalingv1.HorizontalPodAutoscaler `json:"horizontalAutoscaling,omitempty"`
 
 	// PodTemplate is used to set the paths of sessions and uploads
 	// If empty, volumes won't be used

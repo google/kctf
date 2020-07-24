@@ -1,12 +1,15 @@
 apiVersion: kctf.dev/v1alpha1
 kind: Challenge
 metadata:
-  name: mychal2
+  name: mychal3
 spec:
   # Add fields here
   imageTemplate: "memcached:1.4.36-alpine"
-  deployed: true
-  powDifficultySeconds: 10
+  deployed: false
   network:
     public: true
     dns: false
+    ports:
+    - protocol: "TCP"
+      port: 3
+      targetPort: 1337

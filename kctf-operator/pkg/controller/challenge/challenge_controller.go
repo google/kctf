@@ -166,7 +166,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 
 	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 	// change says if something in the configurations was different from what was found in the deploymeny
-	change := CheckConfigurations(challenge, found)
+	change := UpdateConfigurations(challenge, found)
 
 	// If there's a change it must requeue
 	if change == true {

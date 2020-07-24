@@ -20,7 +20,7 @@ func (r *ReconcileChallenge) deploymentWithHealthcheck(m *kctfv1alpha1.Challenge
 // Deployment without Healthcheck
 func (r *ReconcileChallenge) deploymentWithoutHealthcheck(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(m.Name)
-	var replicas int32 = m.Spec.Autoscaling.MinReplicas
+	var replicas int32 = 1
 	var readOnlyRootFilesystem = true
 
 	dep := &appsv1.Deployment{
@@ -46,14 +46,13 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(m *kctfv1alpha1.Challe
 						}},
 						SecurityContext: &corev1.SecurityContext{
 							Capabilities: &corev1.Capabilities{
-								// []corev1.Capability{{}},
 								Add: []corev1.Capability{
 									"SYS_ADMIN",
 								},
 							},
 							ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
 						},
-					}},
+					}}, // TODO: Complete deployment configurations
 				},
 			},
 		},

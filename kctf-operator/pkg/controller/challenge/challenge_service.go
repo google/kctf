@@ -15,9 +15,26 @@ func (r *ReconcileChallenge) serviceForChallenge(m *kctfv1alpha1.Challenge) *cor
 			Namespace: m.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
-			Type:  "LoadBalancer",
-			Ports: m.Spec.Network.Ports,
+			Type: "LoadBalancer",
 		},
 	}
+
+	// do the for : ingress or port
+
+	for _, port := range m.Spec.Network.Ports {
+		if port.Protocol == "HTTPS" {
+			// TODO: Creates the ingress
+		} else {
+			// Creates the port
+			servicePort := corev1.ServicePort{
+				Name:       port.Name,
+				Port:       port.Port,
+				TargetPort: port.TargetPort,
+				Protocol:   port.Protocol,
+			}
+			service.Spec.Ports = append(service.Spec.Ports, servicePort)
+		}
+	}
+
 	return service
 }
