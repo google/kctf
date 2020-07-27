@@ -14,7 +14,7 @@ type PortSpec struct {
 	//+kubebuilder:validation:Optional
 	Name string `json:"name"`
 
-	//+kubebuilder:validation:Optional
+	// TargetPort is not optional
 	TargetPort intstr.IntOrString `json:"targetPort"`
 
 	//+kubebuilder:validation:Optional

@@ -10,6 +10,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func ContainerPorts(m *kctfv1alpha1.Challenge) []corev1.ContainerPort {
+	ports := []corev1.ContainerPort{}
+
+	for _, port := range m.Spec.Network.Ports {
+		containerPort := corev1.ContainerPort{
+			ContainerPort: port.TargetPort.IntVal,
+		}
+		ports = append(ports, containerPort)
+	}
+
+	return ports
+}
+
 // Deployment with Healthcheck
 func (r *ReconcileChallenge) deploymentWithHealthcheck(m *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	//TODO
@@ -41,9 +54,6 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(m *kctfv1alpha1.Challe
 					Containers: []corev1.Container{{
 						Image: m.Spec.ImageTemplate,
 						Name:  "challenge",
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 1337,
-						}},
 						SecurityContext: &corev1.SecurityContext{
 							Capabilities: &corev1.Capabilities{
 								Add: []corev1.Capability{
@@ -57,6 +67,9 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(m *kctfv1alpha1.Challe
 			},
 		},
 	}
+
+	// Set container ports based on the ports that were passed
+	dep.Spec.Template.Spec.Containers[0].Ports = ContainerPorts(m)
 
 	// Set Challenge instance as the owner and controller
 	controllerutil.SetControllerReference(m, dep, r.scheme)

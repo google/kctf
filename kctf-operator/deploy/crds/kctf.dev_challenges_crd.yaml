@@ -172,9 +172,11 @@ spec:
                           anyOf:
                           - type: integer
                           - type: string
+                          description: TargetPort is not optional
                           x-kubernetes-int-or-string: true
                       required:
                       - protocol
+                      - targetPort
                       type: object
                     type: array
                   public:

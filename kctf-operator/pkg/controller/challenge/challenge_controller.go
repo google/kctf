@@ -9,6 +9,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -105,7 +106,8 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 
 	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, found)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, found)
 
 	// Set default values not configured by kubebuilder
 	SetDefaultValues(challenge)
@@ -114,11 +116,13 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.deploymentForChallenge(challenge)
-		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace",
+			dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Create(context.TODO(), dep)
 
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace",
+				dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
 
@@ -133,18 +137,49 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	// Creates the service if it doesn't exist
 	// Check existence of the service:
 	serviceFound := &corev1.Service{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, serviceFound)
+	ingressFound := &netv1beta1.Ingress{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, serviceFound)
+	err_ingress := r.client.Get(context.TODO(), types.NamespacedName{Name: "https",
+		Namespace: challenge.Namespace}, ingressFound)
 
 	// Just enter here if the service doesn't exist yet:
 	if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
 		// Define a new service if the challenge is public
-		serv := r.serviceForChallenge(challenge)
-		reqLogger.Info("Creating a new Service", "Service.Namespace", serv.Namespace, "Service.Name", serv.Name)
+		serv, ingress := r.serviceForChallenge(challenge)
+		// See if there's any port defined for the service
+		reqLogger.Info("Creating a new Service", "Service.Namespace",
+			serv.Namespace, "Service.Name", serv.Name)
 		err = r.client.Create(context.TODO(), serv)
 
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Service", "Deployment.Service", serv.Namespace, "Service.Name", serv.Name)
+			reqLogger.Error(err, "Failed to create new Service", "Deployment.Service",
+				serv.Namespace, "Service.Name", serv.Name)
 			return reconcile.Result{}, err
+		}
+
+		// Create ingress, if there's any https
+		if err_ingress != nil && errors.IsNotFound(err_ingress) {
+			// If there's a port HTTPS
+			if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == true {
+				// Create ingress in the client
+				reqLogger.Info("Creating a new Ingress", "Ingress.Namespace", ingress.Namespace,
+					"Ingress.Name", ingress.Name)
+				err = r.client.Create(context.TODO(), ingress)
+
+				if err != nil {
+					reqLogger.Error(err, "Failed to create new Ingress", "Ingress.Namespace", ingress.Namespace,
+						"Ingress.Name", ingress.Name)
+					return reconcile.Result{}, err
+				}
+
+				// Ingress created successfully
+				return reconcile.Result{}, err
+			}
+
+			if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == false {
+				reqLogger.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.")
+			}
 		}
 
 		// Service created successfully - return and requeue
@@ -152,12 +187,26 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 
 		// When service exists and public is changed to false
 	} else if err == nil && challenge.Spec.Network.Public == false {
-		reqLogger.Info("Deleting the Service", "Service.Namespace", serviceFound.Namespace, "Service.Name", serviceFound.Name)
+		reqLogger.Info("Deleting the Service", "Service.Namespace", serviceFound.Namespace,
+			"Service.Name", serviceFound.Name)
 		err = r.client.Delete(context.TODO(), serviceFound)
 
 		if err != nil {
-			reqLogger.Error(err, "Failed to erase Service", "Deployment.Service", serviceFound.Namespace, "Service.Name", serviceFound.Name)
+			reqLogger.Error(err, "Failed to erase Service", "Service.Namespace", serviceFound.Namespace,
+				"Service.Name", serviceFound.Name)
 			return reconcile.Result{}, err
+		}
+
+		// Delete ingress if existent
+		if err_ingress == nil {
+			reqLogger.Info("Deleting the Ingress", "Ingress.Namespace", ingressFound.Namespace, "Ingress.Name", ingressFound.Name)
+			err = r.client.Delete(context.TODO(), ingressFound)
+
+			if err != nil {
+				reqLogger.Error(err, "Failed to erase Ingress", "Ingress.Namespace", ingressFound.Namespace,
+					"Ingress.Name", ingressFound.Name)
+				return reconcile.Result{}, err
+			}
 		}
 
 		// Service deleted successfully - return and requeue
@@ -172,7 +221,8 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	if change == true {
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			reqLogger.Error(err, "Failed to update Deployment",
+				"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
 			return reconcile.Result{}, err
 		}
 		// Spec updated - return and requeue
