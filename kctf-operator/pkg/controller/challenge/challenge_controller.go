@@ -1,5 +1,7 @@
 // This file contains the reconcile function which is called when a CR is applied
-// TODO: Change namespace and make operator watch all namespaces
+// TODO: Change namespace
+// TODO: Synthesize this file : create a function that is called multiple times
+// since there's a lot of code that is repeated
 // TODO; Check finalizers and add if necessary
 package challenge
 
@@ -8,6 +10,7 @@ import (
 
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -134,6 +137,38 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
+	// Creates autoscaling object
+	// Checks if maxreplicas exists to see if it's enabled
+	// If enabled, it checks if it already exists
+	autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, autoscalingFound)
+
+	if challenge.Spec.HorizontalAutoscaling.MaxReplicas != 0 && err != nil && errors.IsNotFound(err) {
+		// creates autoscaling if it doesn't exist yet
+		autoscaling := r.autoscalingForChallenge(challenge)
+		reqLogger.Info("Creating a Autoscaling")
+		err = r.client.Create(context.TODO(), autoscaling)
+
+		if err != nil {
+			reqLogger.Error(err, "Failed to create Autoscaling")
+			return reconcile.Result{}, err
+		}
+
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// TODO: pass this and other deletes to challenge_update
+	if challenge.Spec.HorizontalAutoscaling.MaxReplicas == 0 && err == nil {
+		// delete autoscaling it's false
+		reqLogger.Info("Deleting Autoscaling")
+		err = r.client.Delete(context.TODO(), autoscalingFound)
+		if err != nil {
+			reqLogger.Error(err, "Failed to delete Autoscaling")
+			return reconcile.Result{}, err
+		}
+	}
+
 	// Creates the service if it doesn't exist
 	// Check existence of the service:
 	serviceFound := &corev1.Service{}
@@ -153,7 +188,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.client.Create(context.TODO(), serv)
 
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Service", "Deployment.Service",
+			reqLogger.Error(err, "Failed to create new Service", "Service.Namespace",
 				serv.Namespace, "Service.Name", serv.Name)
 			return reconcile.Result{}, err
 		}
@@ -192,7 +227,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.client.Delete(context.TODO(), serviceFound)
 
 		if err != nil {
-			reqLogger.Error(err, "Failed to erase Service", "Service.Namespace", serviceFound.Namespace,
+			reqLogger.Error(err, "Failed to delete Service", "Service.Namespace", serviceFound.Namespace,
 				"Service.Name", serviceFound.Name)
 			return reconcile.Result{}, err
 		}
@@ -203,7 +238,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			err = r.client.Delete(context.TODO(), ingressFound)
 
 			if err != nil {
-				reqLogger.Error(err, "Failed to erase Ingress", "Ingress.Namespace", ingressFound.Namespace,
+				reqLogger.Error(err, "Failed to delete Ingress", "Ingress.Namespace", ingressFound.Namespace,
 					"Ingress.Name", ingressFound.Name)
 				return reconcile.Result{}, err
 			}

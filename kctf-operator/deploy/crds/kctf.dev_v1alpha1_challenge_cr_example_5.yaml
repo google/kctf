@@ -1,0 +1,14 @@
+apiVersion: kctf.dev/v1alpha1
+kind: Challenge
+metadata:
+  name: mychal5
+spec:
+  # Add fields here
+  imageTemplate: "memcached:1.4.36-alpine"
+  deployed: true
+  network:
+    public: false
+    dns: false
+  autoscaling:
+    maxReplicas: 2
+    minReplicas: 2

@@ -10,12 +10,12 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (r *ReconcileChallenge) serviceForChallenge(m *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
+func (r *ReconcileChallenge) serviceForChallenge(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
 	// Service object
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      challenge.Name,
+			Namespace: challenge.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Type: "LoadBalancer",
@@ -26,13 +26,13 @@ func (r *ReconcileChallenge) serviceForChallenge(m *kctfv1alpha1.Challenge) (*co
 	ingress := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "https",
-			Namespace:   m.Namespace,
-			Labels:      map[string]string{"app": m.Name},
+			Namespace:   challenge.Namespace,
+			Labels:      map[string]string{"app": challenge.Name},
 			Annotations: map[string]string{"networking.gke.io/managed-certificates": "kctf-certificate"},
 		},
 	}
 
-	for _, port := range m.Spec.Network.Ports {
+	for _, port := range challenge.Spec.Network.Ports {
 		if port.Protocol == "HTTPS" {
 			// If not declared
 			if port.Port == 0 {
@@ -41,7 +41,7 @@ func (r *ReconcileChallenge) serviceForChallenge(m *kctfv1alpha1.Challenge) (*co
 
 			// Creates the ingress object
 			ingress.Spec.Backend = &netv1beta1.IngressBackend{
-				ServiceName: "chal",
+				ServiceName: challenge.Name,
 				ServicePort: intstr.FromInt(int(port.Port)),
 			}
 

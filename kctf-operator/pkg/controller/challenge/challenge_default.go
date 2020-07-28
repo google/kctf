@@ -10,13 +10,14 @@ import (
 )
 
 // Functions to return the default values
-func PersistentVolumeClaimsDefault(chal *kctfv1alpha1.Challenge) corev1.PersistentVolumeClaimList {
+func PersistentVolumeClaimsDefault(challenge *kctfv1alpha1.Challenge) corev1.PersistentVolumeClaimList {
 	stor, _ := resource.ParseQuantity("1Gi")
 	var persistentVolumeClaimsDefault = corev1.PersistentVolumeClaimList{
 		Items: []corev1.PersistentVolumeClaim{
 			corev1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: chal.Name,
+					Name:      challenge.Name,
+					Namespace: challenge.Namespace,
 				},
 				Spec: corev1.PersistentVolumeClaimSpec{
 					Resources: corev1.ResourceRequirements{
@@ -60,21 +61,21 @@ func PortsDefault() []kctfv1alpha1.PortSpec {
 }
 
 // Function to check if all is set to default
-func SetDefaultValues(chal *kctfv1alpha1.Challenge) {
+func SetDefaultValues(challenge *kctfv1alpha1.Challenge) {
 	// Set default ports
-	if chal.Spec.Network.Ports == nil {
-		chal.Spec.Network.Ports = PortsDefault()
+	if challenge.Spec.Network.Ports == nil {
+		challenge.Spec.Network.Ports = PortsDefault()
 	}
 
 	// Set default PodTemplate
 	// To verify if the PodTemplate is empty, we check if there aren't any containers
-	if chal.Spec.PodTemplate.Template.Spec.Containers == nil {
-		chal.Spec.PodTemplate = PodTemplateDefault()
+	if challenge.Spec.PodTemplate.Template.Spec.Containers == nil {
+		challenge.Spec.PodTemplate = PodTemplateDefault()
 	}
 
 	// Set default PersistentVolumeClaim
 	// To verify if the PersistentVolumeClaim wasn't defined, we check if the volume name is empty
-	if chal.Spec.PersistentVolumeClaims.Items == nil {
-		chal.Spec.PersistentVolumeClaims = PersistentVolumeClaimsDefault(chal)
+	if challenge.Spec.PersistentVolumeClaims.Items == nil {
+		challenge.Spec.PersistentVolumeClaims = PersistentVolumeClaimsDefault(challenge)
 	}
 }

@@ -31,6 +31,52 @@ spec:
           spec:
             description: ChallengeSpec defines the desired state of Challenge
             properties:
+              autoscaling:
+                description: Autoscaling features determine quantity of replicas and
+                  CPU utilization If empty, autoscaling is not enabled by default
+                properties:
+                  maxReplicas:
+                    description: upper limit for the number of pods that can be set
+                      by the autoscaler; cannot be smaller than MinReplicas.
+                    format: int32
+                    type: integer
+                  minReplicas:
+                    description: minReplicas is the lower limit for the number of
+                      replicas to which the autoscaler can scale down.  It defaults
+                      to 1 pod.  minReplicas is allowed to be 0 if the alpha feature
+                      gate HPAScaleToZero is enabled and at least one Object or External
+                      metric is configured.  Scaling is active as long as at least
+                      one metric value is available.
+                    format: int32
+                    type: integer
+                  scaleTargetRef:
+                    description: reference to scaled resource; horizontal pod autoscaler
+                      will learn the current resource consumption and will set the
+                      desired number of pods by using its Scale subresource.
+                    properties:
+                      apiVersion:
+                        description: API version of the referent
+                        type: string
+                      kind:
+                        description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                        type: string
+                      name:
+                        description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                        type: string
+                    required:
+                    - kind
+                    - name
+                    type: object
+                  targetCPUUtilizationPercentage:
+                    description: target average CPU utilization (represented as a
+                      percentage of requested CPU) over all the pods; if not specified
+                      the default autoscaling policy will be used.
+                    format: int32
+                    type: integer
+                required:
+                - maxReplicas
+                - scaleTargetRef
+                type: object
               deployed:
                 default: false
                 description: Shows if the challenge is ready to be deployed, if not,
@@ -46,104 +92,6 @@ spec:
                   enabled:
                     default: false
                     type: boolean
-                type: object
-              horizontalAutoscaling:
-                description: Autoscaling features determine quantity of replicas and
-                  CPU utilization If empty, autoscaling is not enabled by default
-                properties:
-                  apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                    type: string
-                  kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                    type: string
-                  metadata:
-                    description: 'Standard object metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
-                    type: object
-                  spec:
-                    description: 'behaviour of autoscaler. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.'
-                    properties:
-                      maxReplicas:
-                        description: upper limit for the number of pods that can be
-                          set by the autoscaler; cannot be smaller than MinReplicas.
-                        format: int32
-                        type: integer
-                      minReplicas:
-                        description: minReplicas is the lower limit for the number
-                          of replicas to which the autoscaler can scale down.  It
-                          defaults to 1 pod.  minReplicas is allowed to be 0 if the
-                          alpha feature gate HPAScaleToZero is enabled and at least
-                          one Object or External metric is configured.  Scaling is
-                          active as long as at least one metric value is available.
-                        format: int32
-                        type: integer
-                      scaleTargetRef:
-                        description: reference to scaled resource; horizontal pod
-                          autoscaler will learn the current resource consumption and
-                          will set the desired number of pods by using its Scale subresource.
-                        properties:
-                          apiVersion:
-                            description: API version of the referent
-                            type: string
-                          kind:
-                            description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                            type: string
-                          name:
-                            description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                            type: string
-                        required:
-                        - kind
-                        - name
-                        type: object
-                      targetCPUUtilizationPercentage:
-                        description: target average CPU utilization (represented as
-                          a percentage of requested CPU) over all the pods; if not
-                          specified the default autoscaling policy will be used.
-                        format: int32
-                        type: integer
-                    required:
-                    - maxReplicas
-                    - scaleTargetRef
-                    type: object
-                  status:
-                    description: current information about the autoscaler.
-                    properties:
-                      currentCPUUtilizationPercentage:
-                        description: current average CPU utilization over all pods,
-                          represented as a percentage of requested CPU, e.g. 70 means
-                          that an average pod is using now 70% of its requested CPU.
-                        format: int32
-                        type: integer
-                      currentReplicas:
-                        description: current number of replicas of pods managed by
-                          this autoscaler.
-                        format: int32
-                        type: integer
-                      desiredReplicas:
-                        description: desired number of replicas of pods managed by
-                          this autoscaler.
-                        format: int32
-                        type: integer
-                      lastScaleTime:
-                        description: last time the HorizontalPodAutoscaler scaled
-                          the number of pods; used by the autoscaler to control how
-                          often the number of pods is changed.
-                        format: date-time
-                        type: string
-                      observedGeneration:
-                        description: most recent generation observed by this autoscaler.
-                        format: int64
-                        type: integer
-                    required:
-                    - currentReplicas
-                    - desiredReplicas
-                    type: object
                 type: object
               imageTemplate:
                 description: Image used by the deployment Not optional and image should

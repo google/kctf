@@ -48,23 +48,6 @@ type HealthcheckSpec struct {
 	Container string `json:"container,omitempty"`
 }
 
-// Autoscaling Specifications
-type AutoscalingSpec struct {
-
-	// Minimum quantity of replicas
-	// +kubebuilder:default:=1
-	MinReplicas int32 `json:"minReplicas,omitempty"`
-
-	// Maximum quantity of replicas
-	// +kubebuilder:default:=1
-	MaxReplicas int32 `json:"maxReplicas,omitempty"`
-
-	// Target of CPU utilizantion in percentage
-	// If empty, this feature won't be used
-	// +kubebuilder:default:=50
-	TargetCPUUtilizationPercentage int32 `json:"targetCPUUtilizationPercentage,omitempty"`
-}
-
 // ChallengeSpec defines the desired state of Challenge
 type ChallengeSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -95,7 +78,7 @@ type ChallengeSpec struct {
 	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
 	// +kubebuilder:validation:Optional
-	HorizontalAutoscaling autoscalingv1.HorizontalPodAutoscaler `json:"horizontalAutoscaling,omitempty"`
+	HorizontalAutoscaling autoscalingv1.HorizontalPodAutoscalerSpec `json:"autoscaling,omitempty"`
 
 	// PodTemplate is used to set the paths of sessions and uploads
 	// If empty, volumes won't be used

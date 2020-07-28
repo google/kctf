@@ -8,7 +8,8 @@ import (
 
 func UpdateDeployed(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) bool {
 	// First, ensure if the challenge is ready and, if not, set replicas to 0
-	// TODO: check if horizontal autoscaling is enabled
+	// TODO: inline this, reference:
+	// TODO: Check if autoscaling is enabled
 	if challenge.Spec.Deployed == false && *deployment.Spec.Replicas != 0 {
 		var numReplicas int32 = 0
 		deployment.Spec.Replicas = &numReplicas
