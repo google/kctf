@@ -144,7 +144,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name,
 		Namespace: challenge.Namespace}, autoscalingFound)
 
-	if challenge.Spec.HorizontalAutoscaling.MaxReplicas != 0 && err != nil && errors.IsNotFound(err) {
+	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
 		// creates autoscaling if it doesn't exist yet
 		autoscaling := r.autoscalingForChallenge(challenge)
 		reqLogger.Info("Creating a Autoscaling")
@@ -159,7 +159,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// TODO: pass this and other deletes to challenge_update
-	if challenge.Spec.HorizontalAutoscaling.MaxReplicas == 0 && err == nil {
+	if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
 		// delete autoscaling it's false
 		reqLogger.Info("Deleting Autoscaling")
 		err = r.client.Delete(context.TODO(), autoscalingFound)

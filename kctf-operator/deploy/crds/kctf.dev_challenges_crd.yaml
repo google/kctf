@@ -31,7 +31,23 @@ spec:
           spec:
             description: ChallengeSpec defines the desired state of Challenge
             properties:
-              autoscaling:
+              deployed:
+                default: false
+                description: Shows if the challenge is ready to be deployed, if not,
+                  it sets the replicas to 0
+                type: boolean
+              healthcheck:
+                description: Healthcheck checks if the challenge works If empty, healthcheck
+                  is not enabled by default
+                properties:
+                  container:
+                    default: healthcheck
+                    type: string
+                  enabled:
+                    default: false
+                    type: boolean
+                type: object
+              horizontalPodAutoscalerSpec:
                 description: Autoscaling features determine quantity of replicas and
                   CPU utilization If empty, autoscaling is not enabled by default
                 properties:
@@ -49,24 +65,6 @@ spec:
                       one metric value is available.
                     format: int32
                     type: integer
-                  scaleTargetRef:
-                    description: reference to scaled resource; horizontal pod autoscaler
-                      will learn the current resource consumption and will set the
-                      desired number of pods by using its Scale subresource.
-                    properties:
-                      apiVersion:
-                        description: API version of the referent
-                        type: string
-                      kind:
-                        description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                        type: string
-                      name:
-                        description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                        type: string
-                    required:
-                    - kind
-                    - name
-                    type: object
                   targetCPUUtilizationPercentage:
                     description: target average CPU utilization (represented as a
                       percentage of requested CPU) over all the pods; if not specified
@@ -75,23 +73,6 @@ spec:
                     type: integer
                 required:
                 - maxReplicas
-                - scaleTargetRef
-                type: object
-              deployed:
-                default: false
-                description: Shows if the challenge is ready to be deployed, if not,
-                  it sets the replicas to 0
-                type: boolean
-              healthcheck:
-                description: Healthcheck checks if the challenge works If empty, healthcheck
-                  is not enabled by default
-                properties:
-                  container:
-                    default: healthcheck
-                    type: string
-                  enabled:
-                    default: false
-                    type: boolean
                 type: object
               imageTemplate:
                 description: Image used by the deployment Not optional and image should
@@ -418,7 +399,7 @@ spec:
                 type: object
               podTemplate:
                 description: PodTemplate is used to set the paths of sessions and
-                  uploads If empty, volumes won't be used
+                  uploads If empty, volumes won't be used kubebuilder:validation:Optional
                 properties:
                   apiVersion:
                     description: 'APIVersion defines the versioned schema of this

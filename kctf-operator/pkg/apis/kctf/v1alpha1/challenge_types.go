@@ -4,7 +4,6 @@
 package v1alpha1
 
 import (
-	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
@@ -48,6 +47,23 @@ type HealthcheckSpec struct {
 	Container string `json:"container,omitempty"`
 }
 
+// HorizontalPodAutoscalerSpec without ScaleTargetRef
+type HorizontalPodAutoscalerSpec struct {
+	// minReplicas is the lower limit for the number of replicas to which the autoscaler
+	// can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the
+	// alpha feature gate HPAScaleToZero is enabled and at least one Object or External
+	// metric is configured.  Scaling is active as long as at least one metric value is
+	// available.
+	// +optional
+	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
+	// upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
+	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
+	// target average CPU utilization (represented as a percentage of requested CPU) over all the pods;
+	// if not specified the default autoscaling policy will be used.
+	// +optional
+	TargetCPUUtilizationPercentage *int32 `json:"targetCPUUtilizationPercentage,omitempty" protobuf:"varint,4,opt,name=targetCPUUtilizationPercentage"`
+}
+
 // ChallengeSpec defines the desired state of Challenge
 type ChallengeSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -78,17 +94,17 @@ type ChallengeSpec struct {
 	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
 	// +kubebuilder:validation:Optional
-	HorizontalAutoscaling autoscalingv1.HorizontalPodAutoscalerSpec `json:"autoscaling,omitempty"`
+	HorizontalPodAutoscalerSpec *HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerSpec,omitempty"`
 
 	// PodTemplate is used to set the paths of sessions and uploads
 	// If empty, volumes won't be used
-	// +kubebuilder:validation:Optional
-	PodTemplate corev1.PodTemplate `json:"podTemplate,omitempty"`
+	// kubebuilder:validation:Optional
+	PodTemplate *corev1.PodTemplate `json:"podTemplate,omitempty"`
 
 	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
 	// Default value: size 1Gb
 	// +kubebuilder:validation:Optional
-	PersistentVolumeClaims corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
+	PersistentVolumeClaims *corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge

@@ -6,9 +6,7 @@ spec:
   # Add fields here
   imageTemplate: "memcached:1.4.36-alpine"
   deployed: true
+  powDifficultySeconds: 10
   network:
     public: false
     dns: false
-  autoscaling:
-    maxReplicas: 2
-    minReplicas: 2

@@ -10,9 +10,9 @@ import (
 )
 
 // Functions to return the default values
-func PersistentVolumeClaimsDefault(challenge *kctfv1alpha1.Challenge) corev1.PersistentVolumeClaimList {
+func PersistentVolumeClaimsDefault(challenge *kctfv1alpha1.Challenge) *corev1.PersistentVolumeClaimList {
 	stor, _ := resource.ParseQuantity("1Gi")
-	var persistentVolumeClaimsDefault = corev1.PersistentVolumeClaimList{
+	var persistentVolumeClaimsDefault = &corev1.PersistentVolumeClaimList{
 		Items: []corev1.PersistentVolumeClaim{
 			corev1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{
@@ -34,8 +34,8 @@ func PersistentVolumeClaimsDefault(challenge *kctfv1alpha1.Challenge) corev1.Per
 
 // Function to return the default for PodTemplate
 // TODO: implement this
-func PodTemplateDefault() corev1.PodTemplate {
-	var podTemplateDefault = corev1.PodTemplate{
+func PodTemplateDefault() *corev1.PodTemplate {
+	var podTemplateDefault = &corev1.PodTemplate{
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				InitContainers: nil,
@@ -69,13 +69,13 @@ func SetDefaultValues(challenge *kctfv1alpha1.Challenge) {
 
 	// Set default PodTemplate
 	// To verify if the PodTemplate is empty, we check if there aren't any containers
-	if challenge.Spec.PodTemplate.Template.Spec.Containers == nil {
+	if challenge.Spec.PodTemplate == nil {
 		challenge.Spec.PodTemplate = PodTemplateDefault()
 	}
 
 	// Set default PersistentVolumeClaim
 	// To verify if the PersistentVolumeClaim wasn't defined, we check if the volume name is empty
-	if challenge.Spec.PersistentVolumeClaims.Items == nil {
+	if challenge.Spec.PersistentVolumeClaims == nil {
 		challenge.Spec.PersistentVolumeClaims = PersistentVolumeClaimsDefault(challenge)
 	}
 }
