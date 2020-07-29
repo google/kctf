@@ -7,6 +7,7 @@ package challenge
 
 import (
 	"context"
+	"fmt"
 
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,6 +41,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileChallenge{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
+// TODO: discover why deleting the challenge isn't deleting the service, the ingress and the autoscaling
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
@@ -56,9 +58,46 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &kctfv1alpha1.Challenge{},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &kctfv1alpha1.Challenge{},
+	})
+
+	fmt.Printf("TA BRABO")
+
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &autoscalingv1.HorizontalPodAutoscaler{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &kctfv1alpha1.Challenge{},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &kctfv1alpha1.Challenge{},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &netv1beta1.Ingress{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &kctfv1alpha1.Challenge{},
 	})
