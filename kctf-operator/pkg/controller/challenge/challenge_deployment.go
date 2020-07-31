@@ -6,6 +6,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -31,6 +32,7 @@ func (r *ReconcileChallenge) deploymentWithHealthcheck(challenge *kctfv1alpha1.C
 }
 
 // Deployment without Healthcheck
+// TODO: Connect the podTemplate passed and the deployment
 func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
@@ -49,6 +51,9 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: ls,
+					Annotations: map[string]string{
+						"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
+					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
@@ -62,7 +67,46 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 							},
 							ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
 						},
-					}}, // TODO: Complete deployment configurations
+						// TODO: "command" is present in the original deployment file but it's empty, should we add set it as nil?
+						Resources: corev1.ResourceRequirements{
+							Limits: corev1.ResourceList{
+								"cpu": *resource.NewMilliQuantity(900, resource.DecimalSI),
+							},
+							Requests: corev1.ResourceList{
+								"cpu": *resource.NewMilliQuantity(450, resource.DecimalSI),
+							},
+						},
+						// Uncomment when start testing with real challenges
+						/*VolumeMounts: []corev1.VolumeMount{{
+							Name:      "pow",
+							ReadOnly:  true,
+							MountPath: "/kctf/pow",
+						},
+							{
+								Name:      "pow-bypass-pub",
+								ReadOnly:  true,
+								MountPath: "/kctf/pow-bypass",
+							}},*/
+					}},
+					// Uncomment when start testing with real challenges
+					/*Volumes: []corev1.Volume{{
+						Name: "pow",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "pow",
+								},
+							},
+						},
+					},
+						{
+							Name: "pow-bypass-pub",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "pow-bypass-pub",
+								},
+							},
+						}},*/
 				},
 			},
 		},
