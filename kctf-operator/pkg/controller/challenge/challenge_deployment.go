@@ -1,14 +1,17 @@
-// Creates deployment deployment
+// Creates deployment
 
 package challenge
 
 import (
+	"context"
+
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func ContainerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
@@ -120,6 +123,12 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 	return dep
 }
 
+// labelsForChallenge returns the labels for selecting the resources
+// belonging to the given challenge CR name.
+func labelsForChallenge(name string) map[string]string {
+	return map[string]string{"app": "challenge", "challenge_cr": name}
+}
+
 // deploymentForChallenge returns a challenge Deployment object
 func (r *ReconcileChallenge) deploymentForChallenge(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
@@ -129,8 +138,19 @@ func (r *ReconcileChallenge) deploymentForChallenge(challenge *kctfv1alpha1.Chal
 	}
 }
 
-// labelsForChallenge returns the labels for selecting the resources
-// belonging to the given challenge CR name.
-func labelsForChallenge(name string) map[string]string {
-	return map[string]string{"app": "challenge", "challenge_cr": name}
+func (r *ReconcileChallenge) CreateDeployment(challenge *kctfv1alpha1.Challenge,
+	ctx context.Context) (reconcile.Result, error) {
+	dep := r.deploymentForChallenge(challenge)
+	r.log.Info("Creating a new Deployment", "Deployment.Namespace",
+		dep.Namespace, "Deployment.Name", dep.Name)
+	err := r.client.Create(ctx, dep)
+
+	if err != nil {
+		r.log.Error(err, "Failed to create new Deployment", "Deployment.Namespace",
+			dep.Namespace, "Deployment.Name", dep.Name)
+		return reconcile.Result{}, err
+	}
+
+	// Deployment created successfully - return and requeue
+	return reconcile.Result{Requeue: true}, nil
 }
