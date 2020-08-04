@@ -7,7 +7,6 @@ package challenge
 
 import (
 	"context"
-	"fmt"
 
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -59,51 +58,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &kctfv1alpha1.Challenge{},
-	})
+	objs := []runtime.Object{&corev1.Pod{}, &appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
+		&corev1.Service{}, &netv1beta1.Ingress{}}
 
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &kctfv1alpha1.Challenge{},
-	})
-
-	fmt.Printf("TA BRABO")
-
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &autoscalingv1.HorizontalPodAutoscaler{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &kctfv1alpha1.Challenge{},
-	})
-
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &kctfv1alpha1.Challenge{},
-	})
-
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &netv1beta1.Ingress{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &kctfv1alpha1.Challenge{},
-	})
-
-	if err != nil {
-		return err
+	for _, obj := range objs {
+		err = c.Watch(&source.Kind{Type: obj}, &handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &kctfv1alpha1.Challenge{},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -125,6 +90,7 @@ type ReconcileChallenge struct {
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
+
 func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Challenge")
@@ -177,7 +143,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Creates autoscaling object
-	// Checks if maxreplicas exists to see if it's enabled
+	// Checks if an autoscaling was configured
 	// If enabled, it checks if it already exists
 	autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: challenge.Name,
@@ -288,7 +254,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
-	// change says if something in the configurations was different from what was found in the deploymeny
+	// change says if something in the configurations was different from what was found in the deployment
 	change := UpdateConfigurations(challenge, found)
 
 	// If there's a change it must requeue

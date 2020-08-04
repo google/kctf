@@ -51,9 +51,9 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: ls,
-					Annotations: map[string]string{
+					/*Annotations: map[string]string{
 						"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
-					},
+					},*/
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{

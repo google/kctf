@@ -4,7 +4,7 @@ metadata:
   name: mychal
 spec:
   # Add fields here
-  imageTemplate: "memcached:1.4.36-alpine"
+  imageTemplate: "quay.io/aliciafmachado/bash:latest"
   deployed: true
   network:
     public: false
