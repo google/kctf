@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kctf-operator
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -15,9 +16,8 @@ spec:
       serviceAccountName: kctf-operator
       containers:
         - name: kctf-operator
-          # Replace this with the built image name
-          # TODO:  use some sort of CI/CD
-          image: REPLACE_IMAGE
+          # TODO: Replace this with the built image name
+          image: quay.io/aliciafmachado/kctf-operator:v0.0.1
           command:
           - kctf-operator
           imagePullPolicy: Always

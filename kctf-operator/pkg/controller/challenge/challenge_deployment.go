@@ -1,13 +1,17 @@
-// Creates deployment deployment
+// Creates deployment
 
 package challenge
 
 import (
+	"context"
+
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func ContainerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
@@ -31,6 +35,7 @@ func (r *ReconcileChallenge) deploymentWithHealthcheck(challenge *kctfv1alpha1.C
 }
 
 // Deployment without Healthcheck
+// TODO: Connect the podTemplate passed and the deployment
 func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
@@ -49,6 +54,9 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: ls,
+					/*Annotations: map[string]string{
+						"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
+					},*/
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
@@ -62,7 +70,46 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 							},
 							ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
 						},
-					}}, // TODO: Complete deployment configurations
+						// TODO: "command" is present in the original deployment file but it's empty, should we add set it as nil?
+						Resources: corev1.ResourceRequirements{
+							Limits: corev1.ResourceList{
+								"cpu": *resource.NewMilliQuantity(900, resource.DecimalSI),
+							},
+							Requests: corev1.ResourceList{
+								"cpu": *resource.NewMilliQuantity(450, resource.DecimalSI),
+							},
+						},
+						// Uncomment when start testing with real challenges
+						/*VolumeMounts: []corev1.VolumeMount{{
+							Name:      "pow",
+							ReadOnly:  true,
+							MountPath: "/kctf/pow",
+						},
+							{
+								Name:      "pow-bypass-pub",
+								ReadOnly:  true,
+								MountPath: "/kctf/pow-bypass",
+							}},*/
+					}},
+					// Uncomment when start testing with real challenges
+					/*Volumes: []corev1.Volume{{
+						Name: "pow",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "pow",
+								},
+							},
+						},
+					},
+						{
+							Name: "pow-bypass-pub",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "pow-bypass-pub",
+								},
+							},
+						}},*/
 				},
 			},
 		},
@@ -76,6 +123,12 @@ func (r *ReconcileChallenge) deploymentWithoutHealthcheck(challenge *kctfv1alpha
 	return dep
 }
 
+// labelsForChallenge returns the labels for selecting the resources
+// belonging to the given challenge CR name.
+func labelsForChallenge(name string) map[string]string {
+	return map[string]string{"app": "challenge", "challenge_cr": name}
+}
+
 // deploymentForChallenge returns a challenge Deployment object
 func (r *ReconcileChallenge) deploymentForChallenge(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
@@ -85,8 +138,19 @@ func (r *ReconcileChallenge) deploymentForChallenge(challenge *kctfv1alpha1.Chal
 	}
 }
 
-// labelsForChallenge returns the labels for selecting the resources
-// belonging to the given challenge CR name.
-func labelsForChallenge(name string) map[string]string {
-	return map[string]string{"app": "challenge", "challenge_cr": name}
+func (r *ReconcileChallenge) CreateDeployment(challenge *kctfv1alpha1.Challenge,
+	ctx context.Context) (reconcile.Result, error) {
+	dep := r.deploymentForChallenge(challenge)
+	r.log.Info("Creating a new Deployment", "Deployment.Namespace",
+		dep.Namespace, "Deployment.Name", dep.Name)
+	err := r.client.Create(ctx, dep)
+
+	if err != nil {
+		r.log.Error(err, "Failed to create new Deployment", "Deployment.Namespace",
+			dep.Namespace, "Deployment.Name", dep.Name)
+		return reconcile.Result{}, err
+	}
+
+	// Deployment created successfully - return and requeue
+	return reconcile.Result{Requeue: true}, nil
 }

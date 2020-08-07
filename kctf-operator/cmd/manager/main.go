@@ -93,8 +93,9 @@ func main() {
 	}
 
 	// Set default manager options
+	// Default manager watches all namespaces
 	options := manager.Options{
-		Namespace:          namespace,
+		Namespace:          "",
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	}
 
