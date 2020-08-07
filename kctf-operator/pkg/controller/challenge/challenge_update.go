@@ -31,6 +31,7 @@ func UpdatePowDifficultySeconds() bool {
 }
 
 func UpdateNetworkSpecs() bool {
+
 	// Service is created in challenge_controller and here we just ensure that everything is alright
 	// TODO: Do we check ports here then?
 	// TODO: dns
