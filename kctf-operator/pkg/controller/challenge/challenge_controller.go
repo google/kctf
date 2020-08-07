@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	"github.com/google/kctf/pkg/controller/challenge/finalizer"
+	"github.com/google/kctf/pkg/controller/challenge/initializer"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,20 +29,28 @@ import (
 
 const name = "challenge-controller"
 
-//var log = logf.Log.WithName(name)
-
 // Add creates a new Challenge Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	r := newReconciler(mgr)
+	err := add(mgr, r)
+	client := mgr.GetClient()
+
+	if err == nil {
+		// Initializer that creates objects and connect them to the lifetime of the operator
+		// Should be only used when testing the operator in a cluster
+		// since the instances that are created are associated to the deployment of the operator
+		// which only happens when it is ran inside the cluster
+		err = initializer.InitializeOperator(&client)
+	}
+	return err
 }
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileChallenge{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileChallenge{client: mgr.GetClient(), scheme: mgr.GetScheme(), log: logf.Log.WithName(name)}
 }
 
-// TODO: discover why deleting the challenge isn't deleting the service, the ingress and the autoscaling
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
@@ -91,25 +101,14 @@ type ReconcileChallenge struct {
 
 func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
-	r.log = logf.Log.WithName(name)
 
 	reqLogger := r.log.WithValues("Challenge ", request.Name, " with namespace ", request.Namespace)
 	reqLogger.Info("Reconciling Challenge")
 
 	// Fetch the Challenge instance
 	challenge := &kctfv1alpha1.Challenge{}
-	err := r.client.Get(ctx, request.NamespacedName, challenge)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			reqLogger.Info("Challenge resource not found. Ignoring since object must be deleted")
-			return reconcile.Result{}, nil
-		}
-
-		// Error reading the object - requeue the request.
-		reqLogger.Error(err, "Failed to get Challenge")
+	requeue, err := r.fetchChallenge(challenge, request, ctx)
+	if err != nil || requeue {
 		return reconcile.Result{}, err
 	}
 
@@ -183,5 +182,31 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{Requeue: true}, nil
 	}
 
+	// Finalizer which erases the namespace created
+	if finalizer.IsBeingFinalized(challenge) {
+		reqLogger.Info("Challenge being finalized")
+	}
+
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
+	request reconcile.Request, ctx context.Context) (bool, error) {
+	err := r.client.Get(ctx, request.NamespacedName, challenge)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			r.log.Info("Challenge resource not found. Ignoring since object must be deleted")
+			return true, nil
+		}
+
+		// Error reading the object - requeue the request.
+		r.log.Error(err, "Failed to get Challenge")
+		return true, err
+	}
+
+	return false, nil
 }
