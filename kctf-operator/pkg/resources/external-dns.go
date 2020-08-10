@@ -1,4 +1,4 @@
-package initializer
+package resources
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
@@ -81,6 +81,9 @@ func NewExternalDnsDeployment() runtime.Object {
 								},
 							},
 						}},
+						Args: []string{"--log-level=debug", "--source=service", "--source=ingress",
+							"--provider=google", "--domain-filter=$(DOMAIN_NAME)", "--registry=txt",
+							"--txt-owner-id=kctf-cloud-dns"},
 					}},
 				},
 			},

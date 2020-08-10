@@ -9,8 +9,6 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
-	"github.com/google/kctf/pkg/controller/challenge/finalizer"
-	"github.com/google/kctf/pkg/controller/challenge/initializer"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -34,15 +32,6 @@ const name = "challenge-controller"
 func Add(mgr manager.Manager) error {
 	r := newReconciler(mgr)
 	err := add(mgr, r)
-	client := mgr.GetClient()
-
-	if err == nil {
-		// Initializer that creates objects and connect them to the lifetime of the operator
-		// Should be only used when testing the operator in a cluster
-		// since the instances that are created are associated to the deployment of the operator
-		// which only happens when it is ran inside the cluster
-		err = initializer.InitializeOperator(&client)
-	}
 	return err
 }
 
@@ -101,9 +90,13 @@ type ReconcileChallenge struct {
 
 func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
-
 	reqLogger := r.log.WithValues("Challenge ", request.Name, " with namespace ", request.Namespace)
 	reqLogger.Info("Reconciling Challenge")
+
+	// Creates the namespace
+	/*if initializer.IsBeingInitialized(challenge) {
+		return initializer.InitializeChallenge(challenge, client, log, ctx)
+	}*/
 
 	// Fetch the Challenge instance
 	challenge := &kctfv1alpha1.Challenge{}
@@ -182,10 +175,11 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Finalizer which erases the namespace created
+	/*// Finalizer which erases the namespace created
 	if finalizer.IsBeingFinalized(challenge) {
 		reqLogger.Info("Challenge being finalized")
-	}
+		return finalizer.FinalizeChallenge(challenge)
+	}*/
 
 	return reconcile.Result{}, nil
 }

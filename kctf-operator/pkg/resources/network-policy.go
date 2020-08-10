@@ -1,4 +1,4 @@
-package initializer
+package resources
 
 import (
 	networkingv1 "k8s.io/api/networking/v1"
@@ -9,7 +9,8 @@ import (
 func NewNetworkPolicyBlockInternal() runtime.Object {
 	networkPolicy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "block-internal",
+			Name:      "block-internal",
+			Namespace: "kube-system",
 		},
 		Spec: networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{},

@@ -1,4 +1,4 @@
-package initializer
+package resources
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +35,7 @@ func NewApparmorProfiles() runtime.Object {
       deny /sys/firmware/** rwklx,
       deny /sys/kernel/security/** rwklx,
     }`
+
 	configmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "apparmor-profiles",
@@ -42,5 +43,6 @@ func NewApparmorProfiles() runtime.Object {
 		},
 		Data: map[string]string{"ctf-profile": ctfProfile},
 	}
+
 	return configmap
 }
