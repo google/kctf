@@ -194,7 +194,7 @@ else
 	@(kubectl get "ingress/https" && kubectl delete "ingress/https" || true) 2>/dev/null
 endif
 
-.network: .gen/k8s .https | .cluster-config
+.network: .gen/k8s/network .https | .cluster-config
 ifeq ($(PUBLIC), true)
 	kubectl apply -k config/advanced/network
 ifeq ($(DNS), true)
@@ -341,36 +341,36 @@ export DEPLOYMENT_KUSTOMIZATION
 export NETWORK_KUSTOMIZATION
 # This target doesn't live in a cluster specific directory since we need the name to be predictable
 # To make up for it, we FORCE execution every time
-.gen/k8s: ${CLUSTER_GEN}/remote-image ${MAYBE_REMOTE_HEALTHCHECK_IMAGE} .FORCE | .cluster-config
-	mkdir -p $@
+.gen/k8s: .gen/k8s/deployment .gen/k8s/network
 
-	# deployment
-	mkdir -p $@/deployment
+
+.gen/k8s/deployment: ${CLUSTER_GEN}/remote-image ${MAYBE_REMOTE_HEALTHCHECK_IMAGE} .FORCE | .cluster-config
+	mkdir -p $@
 	# Use either deployment or deployment-with-healthcheck as base
-	echo "bases:" >> "$@/deployment/kustomization.yaml"
+	echo "bases:" >> "$@/kustomization.yaml"
 ifeq ($(HEALTHCHECK), true)
-	echo "- ../../../../kctf-conf/base/k8s/deployment-with-healthcheck" >> "$@/deployment/kustomization.yaml"
+	echo "- ../../../../kctf-conf/base/k8s/deployment-with-healthcheck" >> "$@/kustomization.yaml"
 else
-	echo "- ../../../../kctf-conf/base/k8s/deployment" >> "$@/deployment/kustomization.yaml" 
+	echo "- ../../../../kctf-conf/base/k8s/deployment" >> "$@/kustomization.yaml" 
 endif
 
 	# set the image version to the currently deployed for challenge
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	CHAL_IMAGE=($${CHAL_IMAGE//:/ })
-	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: \"$${CHAL_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
+	echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: \"$${CHAL_IMAGE[1]}\"" >> "$@/kustomization.yaml"
 
 	# set the image version to the currently deployed for healthcheck
 ifeq ($(HEALTHCHECK), true)
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	HEALTHCHECK_IMAGE=($${HEALTHCHECK_IMAGE//:/ })
-	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: \"$${HEALTHCHECK_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
+	echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: \"$${HEALTHCHECK_IMAGE[1]}\"" >> "$@/kustomization.yaml"
 endif
 
 	# write the fixed customizations
-	echo "$${DEPLOYMENT_KUSTOMIZATION}" >> "$@/deployment/kustomization.yaml"
+	echo "$${DEPLOYMENT_KUSTOMIZATION}" >> "$@/kustomization.yaml"
 
-	# network
-	mkdir -p $@/network
+.gen/k8s/network: .FORCE | .cluster-config
+	mkdir -p $@
 	# write the fixed customizations
-	echo "$${NETWORK_KUSTOMIZATION}" > "$@/network/kustomization.yaml"
+	echo "$${NETWORK_KUSTOMIZATION}" > "$@/kustomization.yaml"
 	touch $@
