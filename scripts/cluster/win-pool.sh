@@ -83,4 +83,5 @@ gcloud container node-pools create "${POOL_NAME}" \
   --min-nodes="${MIN_NODES}" \
   --max-nodes="${MAX_NODES}" \
   --no-enable-autoupgrade \
+  --workload-metadata=GCE_METADATA \
   --image-type="${IMAGE_TYPE}"
