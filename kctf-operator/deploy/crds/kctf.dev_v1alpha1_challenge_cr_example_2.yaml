@@ -1,7 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mychal2
+
+---
+
 apiVersion: kctf.dev/v1alpha1
 kind: Challenge
 metadata:
   name: mychal2
+  namespace: mychal2
 spec:
   # Add fields here
   imageTemplate: "memcached:1.4.36-alpine"

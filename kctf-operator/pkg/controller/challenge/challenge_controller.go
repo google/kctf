@@ -95,11 +95,6 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	reqLogger := r.log.WithValues("Challenge ", request.Name, " with namespace ", request.Namespace)
 	reqLogger.Info("Reconciling Challenge")
 
-	// Creates the namespace
-	/*if initializer.IsBeingInitialized(challenge) {
-		return initializer.InitializeChallenge(challenge, client, log, ctx)
-	}*/
-
 	// Fetch the Challenge instance
 	challenge := &kctfv1alpha1.Challenge{}
 	requeue, err := r.fetchChallenge(challenge, request, ctx)
@@ -107,89 +102,98 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	// Set default values not configured by kubebuilder
-	SetDefaultValues(challenge)
-
-	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, found)
-
-	// Just enters here if it's a new deployment
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		return r.CreateDeployment(challenge, ctx)
-
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment")
-		return reconcile.Result{}, err
+	if !IsNamespaceAcceptable(request.NamespacedName) {
+		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace",
+			"Create it again with the namespace exactly the same as the name, which means this namespace:",
+			request.NamespacedName.Name)
+		reqLogger.Info("Deleting challenge")
+		r.client.Delete(ctx, challenge)
 	}
 
-	// Creates autoscaling object
-	// Checks if an autoscaling was configured
-	// If enabled, it checks if it already exists
-	autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
-	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, autoscalingFound)
+	if IsNamespaceAcceptable(request.NamespacedName) {
+		// Set default values not configured by kubebuilder
+		SetDefaultValues(challenge)
 
-	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
-		// creates autoscaling if it doesn't exist yet
-		return r.CreateAutoscaling(challenge, ctx)
-	}
+		// Check if the deployment already exists, if not create a new one
+		found := &appsv1.Deployment{}
+		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+			Namespace: challenge.Namespace}, found)
 
-	if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
-		// delete autoscaling
-		return r.DeleteAutoscaling(autoscalingFound, ctx)
-	}
+		// Just enters here if it's a new deployment
+		if err != nil && errors.IsNotFound(err) {
+			// Define a new deployment
+			return r.CreateDeployment(challenge, ctx)
 
-	// Creates the service if it doesn't exist
-	// Check existence of the service:
-	serviceFound := &corev1.Service{}
-	ingressFound := &netv1beta1.Ingress{}
-	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, serviceFound)
-	err_ingress := r.client.Get(ctx, types.NamespacedName{Name: "https",
-		Namespace: challenge.Namespace}, ingressFound)
-
-	// Just enter here if the service doesn't exist yet:
-	if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
-		// Define a new service if the challenge is public
-		return r.CreateServiceAndIngress(challenge, ctx, err_ingress)
-
-		// When service exists and public is changed to false
-	} else if err == nil && challenge.Spec.Network.Public == false {
-		return r.DeleteServiceAndIngress(serviceFound, ingressFound, ctx, err_ingress)
-	}
-
-	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
-	// change says if something in the configurations was different from what was found in the deployment
-	change := UpdateConfigurations(challenge, found)
-
-	// If there's a change it must requeue
-	if change == true {
-		err = r.client.Update(ctx, found)
-		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment",
-				"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+		} else if err != nil {
+			reqLogger.Error(err, "Failed to get Deployment")
 			return reconcile.Result{}, err
 		}
-		// Spec updated - return and requeue
-		return reconcile.Result{Requeue: true}, nil
-	}
 
-	// Finalizer which erases the namespace created
-	if finalizer.IsBeingFinalized(challenge) {
-		reqLogger.Info("Challenge being finalized")
-		return finalizer.CallChallengeFinalizers(r.client, ctx, r.log, challenge)
-	}
+		// Creates autoscaling object
+		// Checks if an autoscaling was configured
+		// If enabled, it checks if it already exists
+		autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
+		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+			Namespace: challenge.Namespace}, autoscalingFound)
 
-	// Add finalizer for this CR
-	if !utils.Contains(challenge.GetFinalizers(), finalizer.ChallengeFinalizerName) {
-		if err := finalizer.AddFinalizer(r.client, ctx, r.log, challenge); err != nil {
-			return reconcile.Result{}, err
+		if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
+			// creates autoscaling if it doesn't exist yet
+			return r.CreateAutoscaling(challenge, ctx)
+		}
+
+		if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
+			// delete autoscaling
+			return r.DeleteAutoscaling(autoscalingFound, ctx)
+		}
+
+		// Creates the service if it doesn't exist
+		// Check existence of the service:
+		serviceFound := &corev1.Service{}
+		ingressFound := &netv1beta1.Ingress{}
+		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+			Namespace: challenge.Namespace}, serviceFound)
+		err_ingress := r.client.Get(ctx, types.NamespacedName{Name: "https",
+			Namespace: challenge.Namespace}, ingressFound)
+
+		// Just enter here if the service doesn't exist yet:
+		if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
+			// Define a new service if the challenge is public
+			return r.CreateServiceAndIngress(challenge, ctx, err_ingress)
+
+			// When service exists and public is changed to false
+		} else if err == nil && challenge.Spec.Network.Public == false {
+			return r.DeleteServiceAndIngress(serviceFound, ingressFound, ctx, err_ingress)
+		}
+
+		// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
+		// change says if something in the configurations was different from what was found in the deployment
+		change := UpdateConfigurations(challenge, found)
+
+		// If there's a change it must requeue
+		if change == true {
+			err = r.client.Update(ctx, found)
+			if err != nil {
+				reqLogger.Error(err, "Failed to update Deployment",
+					"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+				return reconcile.Result{}, err
+			}
+			// Spec updated - return and requeue
+			return reconcile.Result{Requeue: true}, nil
+		}
+
+		// Finalizer which erases the namespace created
+		if finalizer.IsBeingFinalized(challenge) {
+			reqLogger.Info("Challenge being finalized")
+			return finalizer.CallChallengeFinalizers(r.client, ctx, r.log, challenge)
+		}
+
+		// Add finalizer for this CR
+		if !utils.Contains(challenge.GetFinalizers(), finalizer.ChallengeFinalizerName) {
+			if err := finalizer.AddFinalizer(r.client, ctx, r.log, challenge); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
 	}
-
 	return reconcile.Result{}, nil
 }
 
@@ -212,4 +216,13 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 	}
 
 	return false, nil
+}
+
+// Function that returns if the chosen namespace is acceptable or no to prevent errors
+func IsNamespaceAcceptable(namespacedName types.NamespacedName) bool {
+	if namespacedName.Name != namespacedName.Namespace ||
+		namespacedName.Namespace == "default" {
+		return false
+	}
+	return true
 }

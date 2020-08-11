@@ -1,12 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mychal
+
+---
+
 apiVersion: kctf.dev/v1alpha1
 kind: Challenge
 metadata:
   name: mychal
+  namespace: mychal
 spec:
   # Add fields here
   imageTemplate: "quay.io/aliciafmachado/bash:latest"
   deployed: true
   network:
-    public: false
+    public: true
     dns: false
 
