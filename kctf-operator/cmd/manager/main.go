@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/kctf/pkg/apis"
 	"github.com/google/kctf/pkg/controller"
+	"github.com/google/kctf/pkg/resources"
 	"github.com/google/kctf/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -131,6 +132,19 @@ func main() {
 
 	// Add the Metrics Service
 	addMetrics(ctx, cfg)
+
+	log.Info("Creating services that kCTF provide")
+
+	client := mgr.GetClient()
+
+	// Initializer that creates objects and connect them to the lifetime of the operator
+	// Should be only used when testing the operator in a cluster
+	// since the instances that are created are associated to the deployment of the operator
+	// which only happens when it is ran inside the cluster
+	if err := resources.InitializeOperator(&client); err != nil {
+		log.Error(err, "Error initializing initial instances")
+		os.Exit(1)
+	}
 
 	log.Info("Starting the Cmd.")
 

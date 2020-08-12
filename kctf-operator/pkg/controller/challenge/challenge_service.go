@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -73,10 +74,15 @@ func (r *ReconcileChallenge) serviceForChallenge(challenge *kctfv1alpha1.Challen
 func (r *ReconcileChallenge) CreateServiceAndIngress(challenge *kctfv1alpha1.Challenge, ctx context.Context,
 	err_ingress error) (reconcile.Result, error) {
 	serv, ingress := r.serviceForChallenge(challenge)
-	// See if there's any port defined for the service
+	// Create the service
 	r.log.Info("Creating a new Service", "Service.Namespace",
 		serv.Namespace, "Service.Name", serv.Name)
-	err := r.client.Create(ctx, serv)
+
+	// Defines ownership
+	err := controllerutil.SetControllerReference(challenge, serv, r.scheme)
+
+	// Creates the service
+	err = r.client.Create(ctx, serv)
 
 	if err != nil {
 		r.log.Error(err, "Failed to create new Service", "Service.Namespace",
@@ -91,6 +97,11 @@ func (r *ReconcileChallenge) CreateServiceAndIngress(challenge *kctfv1alpha1.Cha
 			// Create ingress in the client
 			r.log.Info("Creating a new Ingress", "Ingress.Namespace", ingress.Namespace,
 				"Ingress.Name", ingress.Name)
+
+			// Defines ownership
+			err := controllerutil.SetControllerReference(challenge, ingress, r.scheme)
+
+			// Creates the ingress
 			err = r.client.Create(ctx, ingress)
 
 			if err != nil {

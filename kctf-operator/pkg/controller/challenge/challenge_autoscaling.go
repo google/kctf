@@ -8,6 +8,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -38,7 +39,12 @@ func (r *ReconcileChallenge) CreateAutoscaling(challenge *kctfv1alpha1.Challenge
 	// creates autoscaling if it doesn't exist yet
 	autoscaling := r.autoscalingForChallenge(challenge)
 	r.log.Info("Creating a Autoscaling")
-	err := r.client.Create(ctx, autoscaling)
+
+	// Creates owner references
+	err := controllerutil.SetControllerReference(challenge, autoscaling, r.scheme)
+
+	// Creates autoscaling
+	err = r.client.Create(ctx, autoscaling)
 
 	if err != nil {
 		r.log.Error(err, "Failed to create Autoscaling")
