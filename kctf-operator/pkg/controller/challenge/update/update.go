@@ -1,5 +1,5 @@
 // File that ensures if all configurations are correctly set
-package challenge
+package update
 
 import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"

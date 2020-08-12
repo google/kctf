@@ -1,6 +1,4 @@
 // This file contains the reconcile function which is called when a CR is applied
-// TODO: Synthesize this file : create a function that is called multiple times
-// since there's a lot of code that is repeated
 // TODO: change deletion and creation of service/ingress/etc to challenge_update
 package challenge
 
@@ -9,7 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
+	"github.com/google/kctf/pkg/controller/challenge/deployment"
 	"github.com/google/kctf/pkg/controller/challenge/finalizer"
+	"github.com/google/kctf/pkg/controller/challenge/service"
+	"github.com/google/kctf/pkg/controller/challenge/set"
+	"github.com/google/kctf/pkg/controller/challenge/update"
 	"github.com/google/kctf/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -112,17 +115,17 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 
 	if IsNamespaceAcceptable(request.NamespacedName) {
 		// Set default values not configured by kubebuilder
-		SetDefaultValues(challenge)
+		set.SetDefaultValues(challenge)
 
 		// Check if the deployment already exists, if not create a new one
-		found := &appsv1.Deployment{}
+		deploymentFound := &appsv1.Deployment{}
 		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, found)
+			Namespace: challenge.Namespace}, deploymentFound)
 
 		// Just enters here if it's a new deployment
 		if err != nil && errors.IsNotFound(err) {
 			// Define a new deployment
-			return r.CreateDeployment(challenge, ctx)
+			return deployment.CreateDeployment(challenge, r.client, r.scheme, r.log, ctx)
 
 		} else if err != nil {
 			reqLogger.Error(err, "Failed to get Deployment")
@@ -138,12 +141,12 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 
 		if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
 			// creates autoscaling if it doesn't exist yet
-			return r.CreateAutoscaling(challenge, ctx)
+			return autoscaling.CreateAutoscaling(challenge, r.client, r.scheme, r.log, ctx)
 		}
 
 		if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
 			// delete autoscaling
-			return r.DeleteAutoscaling(autoscalingFound, ctx)
+			return autoscaling.DeleteAutoscaling(autoscalingFound, r.client, r.scheme, r.log, ctx)
 		}
 
 		// Creates the service if it doesn't exist
@@ -158,23 +161,23 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		// Just enter here if the service doesn't exist yet:
 		if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
 			// Define a new service if the challenge is public
-			return r.CreateServiceAndIngress(challenge, ctx, err_ingress)
+			return service.CreateServiceAndIngress(challenge, r.client, r.scheme, r.log, ctx, err_ingress)
 
 			// When service exists and public is changed to false
 		} else if err == nil && challenge.Spec.Network.Public == false {
-			return r.DeleteServiceAndIngress(serviceFound, ingressFound, ctx, err_ingress)
+			return service.DeleteServiceAndIngress(serviceFound, ingressFound, r.client, r.scheme, r.log, ctx, err_ingress)
 		}
 
 		// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 		// change says if something in the configurations was different from what was found in the deployment
-		change := UpdateConfigurations(challenge, found)
+		change := update.UpdateConfigurations(challenge, deploymentFound)
 
 		// If there's a change it must requeue
 		if change == true {
-			err = r.client.Update(ctx, found)
+			err = r.client.Update(ctx, deploymentFound)
 			if err != nil {
 				reqLogger.Error(err, "Failed to update Deployment",
-					"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+					"Deployment.Namespace", deploymentFound.Namespace, "Deployment.Name", deploymentFound.Name)
 				return reconcile.Result{}, err
 			}
 			// Spec updated - return and requeue
@@ -221,7 +224,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 // Function that returns if the chosen namespace is acceptable or no to prevent errors
 func IsNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 	if namespacedName.Name != namespacedName.Namespace ||
-		namespacedName.Namespace == "default" {
+		namespacedName.Namespace == "default" || namespacedName.Namespace == "kube-system" {
 		return false
 	}
 	return true

@@ -1,5 +1,5 @@
 // File that set values correctly and return default values that weren't specified
-package challenge
+package set
 
 import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
