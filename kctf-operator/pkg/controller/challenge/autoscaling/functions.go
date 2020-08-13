@@ -11,11 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func CreateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
-	log logr.Logger, ctx context.Context) (reconcile.Result, error) {
+	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
 	autoscaling := autoscalingForChallenge(challenge)
 	log.Info("Creating a Autoscaling")
@@ -28,21 +27,21 @@ func CreateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 
 	if err != nil {
 		log.Error(err, "Failed to create Autoscaling")
-		return reconcile.Result{}, err
+		return false, err
 	}
 
-	return reconcile.Result{Requeue: true}, nil
+	return true, nil
 }
 
 func DeleteAutoscaling(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
-	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (reconcile.Result, error) {
+	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	log.Info("Deleting Autoscaling")
 
 	err := client.Delete(ctx, autoscalingFound)
 	if err != nil {
 		log.Error(err, "Failed to delete Autoscaling")
-		return reconcile.Result{}, err
+		return false, err
 	}
 
-	return reconcile.Result{Requeue: true}, nil
+	return true, nil
 }

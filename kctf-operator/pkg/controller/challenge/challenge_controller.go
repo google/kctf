@@ -1,5 +1,4 @@
 // This file contains the reconcile function which is called when a CR is applied
-// TODO: change deletion and creation of service/ingress/etc to challenge_update
 package challenge
 
 import (
@@ -7,10 +6,8 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
-	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
 	"github.com/google/kctf/pkg/controller/challenge/finalizer"
-	"github.com/google/kctf/pkg/controller/challenge/service"
 	"github.com/google/kctf/pkg/controller/challenge/set"
 	"github.com/google/kctf/pkg/controller/challenge/update"
 	"github.com/google/kctf/pkg/utils"
@@ -132,55 +129,15 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			return reconcile.Result{}, err
 		}
 
-		// Creates autoscaling object
-		// Checks if an autoscaling was configured
-		// If enabled, it checks if it already exists
-		autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, autoscalingFound)
-
-		if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
-			// creates autoscaling if it doesn't exist yet
-			return autoscaling.CreateAutoscaling(challenge, r.client, r.scheme, r.log, ctx)
-		}
-
-		if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
-			// delete autoscaling
-			return autoscaling.DeleteAutoscaling(autoscalingFound, r.client, r.scheme, r.log, ctx)
-		}
-
-		// Creates the service if it doesn't exist
-		// Check existence of the service:
-		serviceFound := &corev1.Service{}
-		ingressFound := &netv1beta1.Ingress{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, serviceFound)
-		err_ingress := r.client.Get(ctx, types.NamespacedName{Name: "https",
-			Namespace: challenge.Namespace}, ingressFound)
-
-		// Just enter here if the service doesn't exist yet:
-		if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
-			// Define a new service if the challenge is public
-			return service.CreateServiceAndIngress(challenge, r.client, r.scheme, r.log, ctx, err_ingress)
-
-			// When service exists and public is changed to false
-		} else if err == nil && challenge.Spec.Network.Public == false {
-			return service.DeleteServiceAndIngress(serviceFound, ingressFound, r.client, r.scheme, r.log, ctx, err_ingress)
-		}
-
 		// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 		// change says if something in the configurations was different from what was found in the deployment
-		change := update.UpdateConfigurations(challenge, deploymentFound)
+		requeue, err = update.UpdateConfigurations(challenge, r.client, r.scheme, r.log, ctx)
 
-		// If there's a change it must requeue
-		if change == true {
-			err = r.client.Update(ctx, deploymentFound)
-			if err != nil {
-				reqLogger.Error(err, "Failed to update Deployment",
-					"Deployment.Namespace", deploymentFound.Namespace, "Deployment.Name", deploymentFound.Name)
-				return reconcile.Result{}, err
-			}
-			// Spec updated - return and requeue
+		if err != nil {
+			reqLogger.Error(err, "Failed to update Challenge")
+			return reconcile.Result{}, err
+		} else if requeue == true {
+			reqLogger.Info("Challenge updated successfully")
 			return reconcile.Result{Requeue: true}, nil
 		}
 
