@@ -7,10 +7,8 @@ import (
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
-	"github.com/google/kctf/pkg/controller/challenge/finalizer"
 	"github.com/google/kctf/pkg/controller/challenge/set"
 	"github.com/google/kctf/pkg/controller/challenge/update"
-	"github.com/google/kctf/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -140,19 +138,6 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			reqLogger.Info("Challenge updated successfully")
 			return reconcile.Result{Requeue: true}, nil
 		}
-
-		// Finalizer which erases the namespace created
-		if finalizer.IsBeingFinalized(challenge) {
-			reqLogger.Info("Challenge being finalized")
-			return finalizer.CallChallengeFinalizers(r.client, ctx, r.log, challenge)
-		}
-
-		// Add finalizer for this CR
-		if !utils.Contains(challenge.GetFinalizers(), finalizer.ChallengeFinalizerName) {
-			if err := finalizer.AddFinalizer(r.client, ctx, r.log, challenge); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
 	}
 	return reconcile.Result{}, nil
 }
@@ -171,7 +156,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 		}
 
 		// Error reading the object - requeue the request.
-		r.log.Error(err, "Failed to get Challenge")
+		r.log.Error(err, "Failed to get PersistentVolumeClaim")
 		return true, err
 	}
 

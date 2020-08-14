@@ -17,7 +17,7 @@ import (
 
 func CreateServiceAndIngress(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context, err_ingress error) (bool, error) {
-	serv, ingress := serviceForChallenge(challenge)
+	serv, ingress := ServiceForChallenge(challenge)
 	// Create the service
 	log.Info("Creating a new Service", "Service.Namespace",
 		serv.Namespace, "Service.Name", serv.Name)

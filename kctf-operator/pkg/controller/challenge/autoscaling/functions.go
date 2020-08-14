@@ -16,7 +16,7 @@ import (
 func CreateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
-	autoscaling := autoscalingForChallenge(challenge)
+	autoscaling := AutoscalingForChallenge(challenge)
 	log.Info("Creating a Autoscaling")
 
 	// Creates owner references

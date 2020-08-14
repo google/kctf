@@ -6,12 +6,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // Deployment without Healthcheck
-func deployment(challenge *kctfv1alpha1.Challenge, scheme *runtime.Scheme) *appsv1.Deployment {
+func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
 	var readOnlyRootFilesystem = true
@@ -96,7 +94,5 @@ func deployment(challenge *kctfv1alpha1.Challenge, scheme *runtime.Scheme) *apps
 	if challenge.Spec.PodTemplate != nil {
 		MergeWithPodTemplate(challenge, dep)
 	}
-	// Set Challenge instance as the owner and controller
-	controllerutil.SetControllerReference(challenge, dep, scheme)
 	return dep
 }

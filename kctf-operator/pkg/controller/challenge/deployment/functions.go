@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -44,20 +45,23 @@ func labelsForChallenge(name string) map[string]string {
 }
 
 // deploymentForChallenge returns a challenge Deployment object
-func deploymentForChallenge(challenge *kctfv1alpha1.Challenge,
-	scheme *runtime.Scheme) *appsv1.Deployment {
+func DeploymentForChallenge(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
-		return deploymentWithHealthcheck(challenge, scheme)
+		return deploymentWithHealthcheck(challenge)
 	} else {
-		return deployment(challenge, scheme)
+		return deployment(challenge)
 	}
 }
 
 func CreateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (reconcile.Result, error) {
-	dep := deploymentForChallenge(challenge, scheme)
+	dep := DeploymentForChallenge(challenge)
 	log.Info("Creating a new Deployment", "Deployment.Namespace",
 		dep.Namespace, "Deployment.Name", dep.Name)
+
+	// Set Challenge instance as the owner and controller
+	controllerutil.SetControllerReference(challenge, dep, scheme)
+
 	err := client.Create(ctx, dep)
 
 	if err != nil {

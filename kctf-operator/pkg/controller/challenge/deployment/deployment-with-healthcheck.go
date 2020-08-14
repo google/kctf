@@ -5,14 +5,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // Deployment with Healthcheck
-func deploymentWithHealthcheck(challenge *kctfv1alpha1.Challenge,
-	scheme *runtime.Scheme) *appsv1.Deployment {
-	dep := deployment(challenge, scheme)
+func deploymentWithHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+	dep := deployment(challenge)
 
 	// Get the container with the challenge and add healthcheck configurations
 	dep.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
