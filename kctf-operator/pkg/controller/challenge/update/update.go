@@ -27,7 +27,8 @@ func EqualPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 	}
 
 	for i, _ := range found {
-		if !reflect.DeepEqual(found[i], wanted[i]) {
+		if found[i].Name != wanted[i].Name || found[i].Protocol != wanted[i].Protocol ||
+			found[i].Port != wanted[i].Port || found[i].TargetPort != wanted[i].TargetPort {
 			return false
 		}
 	}
@@ -132,17 +133,15 @@ func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	// Now we check if the service and the ingress are according to the CR:
 	if challenge.Spec.Network.Public {
 		serv, ingress := service.ServiceForChallenge(challenge)
-		// !EqualPorts(serviceFound.Spec.Ports, serv.Spec.Ports)
-		// TODO: fix here; we can solve the initial problem by setting the same cluster ip?
-		// Comparing specs and doing the same as deployment didn't work;
-		if serviceFound.Spec.Ports[0].Port != serviceFound.Spec.Ports[0].Port {
+
+		if !EqualPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
 			CopyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)
 			if err != nil {
 				log.Error(err, "Failed to update service")
 				return false, err
 			}
-			log.Info("Updated service successfully")
+			log.Info("Service updated successfully")
 			return true, nil
 		}
 		// Flags if there was a change in the ingress instance

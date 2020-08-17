@@ -53,7 +53,7 @@ func DeploymentForChallenge(challenge *kctfv1alpha1.Challenge) *appsv1.Deploymen
 	}
 }
 
-func CreateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func CreateDeployment(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (reconcile.Result, error) {
 	dep := DeploymentForChallenge(challenge)
 	log.Info("Creating a new Deployment", "Deployment.Namespace",
@@ -62,7 +62,7 @@ func CreateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 	// Set Challenge instance as the owner and controller
 	controllerutil.SetControllerReference(challenge, dep, scheme)
 
-	err := client.Create(ctx, dep)
+	err := cl.Create(ctx, dep)
 
 	if err != nil {
 		log.Error(err, "Failed to create new Deployment", "Deployment.Namespace",

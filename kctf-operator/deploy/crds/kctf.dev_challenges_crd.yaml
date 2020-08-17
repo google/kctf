@@ -109,7 +109,7 @@ spec:
                       type: object
                     type: array
                   public:
-                    default: true
+                    default: false
                     type: boolean
                 type: object
               persistentVolumeClaim:
@@ -399,7 +399,7 @@ spec:
                 type: object
               podTemplate:
                 description: PodTemplate is used to set the paths of sessions and
-                  uploads If empty, volumes won't be used kubebuilder:validation:Optional
+                  uploads If empty, volumes won't be used
                 properties:
                   apiVersion:
                     description: 'APIVersion defines the versioned schema of this
@@ -1740,7 +1740,6 @@ spec:
                                   type: array
                                   x-kubernetes-list-map-keys:
                                   - containerPort
-                                  - protocol
                                   x-kubernetes-list-type: map
                                 readinessProbe:
                                   description: 'Periodic probe of container service
@@ -4224,7 +4223,6 @@ spec:
                                   type: array
                                   x-kubernetes-list-map-keys:
                                   - containerPort
-                                  - protocol
                                   x-kubernetes-list-type: map
                                 readinessProbe:
                                   description: 'Periodic probe of container service
