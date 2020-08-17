@@ -45,6 +45,7 @@ func UpdateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32
 	var numReplicas int32
 	change := false
 
+	// Inline this?
 	if challenge.Spec.Deployed == false && *currentReplicas != 0 {
 		numReplicas = 0
 		change = true
@@ -104,7 +105,7 @@ func UpdateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 
 func UpdatePowDifficultySeconds(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-	// TODO
+	// TODO: create configmap and apply secrets
 	return false, nil
 }
 

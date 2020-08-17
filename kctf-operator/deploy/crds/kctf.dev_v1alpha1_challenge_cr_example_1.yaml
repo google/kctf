@@ -16,5 +16,19 @@ spec:
   deployed: true
   network:
     public: true
-    dns: false
+    dns: true
+    ports:
+    - protocol: "TCP"
+      port: 3
+      targetPort: 1337
+  podTemplate:
+    template:
+      spec:
+        containers:
+        - name: extra
+          image: "memcached:1.4.36-alpine"
+  horizontalPodAutoscalerSpec:
+    maxReplicas: 2
+    minReplicas: 2
+    targetCPUUtilizationPercentage: 50
 

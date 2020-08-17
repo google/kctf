@@ -28,16 +28,6 @@ func ContainerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
 	return ports
 }
 
-// Adds volume mounts from podtemplate
-// It would be interesting that the user can put some features in the pod template
-// and they are kept in the actual deployment, but a StrategicMerge as in kustomization
-// wasn't found so we would need to define our own logic for merging
-func MergeWithPodTemplate(challenge *kctfv1alpha1.Challenge, deployment *appsv1.Deployment) {
-	deployment.Spec.Template.Spec.Containers[0].VolumeMounts =
-		append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts,
-			challenge.Spec.PodTemplate.Template.Spec.Containers[0].VolumeMounts...)
-}
-
 // labelsForChallenge returns the labels for selecting the resources
 // belonging to the given challenge CR name.
 func labelsForChallenge(name string) map[string]string {
