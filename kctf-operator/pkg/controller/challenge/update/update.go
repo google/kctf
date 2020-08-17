@@ -1,4 +1,5 @@
 // File that ensures if all configurations are correctly set
+// TODO: create errors in case we can't get the instance (error different from not found)
 package update
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
 	"github.com/google/kctf/pkg/controller/challenge/service"
+	"github.com/google/kctf/pkg/controller/challenge/volumes"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +37,7 @@ func EqualPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 	return true
 }
 
+// Copy ports from one service to another
 func CopyPorts(found *corev1.Service, wanted *corev1.Service) {
 	found.Spec.Ports = []corev1.ServicePort{}
 	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
@@ -45,7 +48,7 @@ func UpdateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32
 	var numReplicas int32
 	change := false
 
-	// Inline this?
+	// TODO: Inline this?
 	if challenge.Spec.Deployed == false && *currentReplicas != 0 {
 		numReplicas = 0
 		change = true
@@ -67,7 +70,7 @@ func UpdateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32
 
 func UpdateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-
+	// Flags if there was a change
 	change := false
 
 	deploymentFound := &appsv1.Deployment{}
@@ -122,7 +125,7 @@ func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 		Namespace: challenge.Namespace}, ingressFound)
 
 	// Just enter here if the service doesn't exist yet:
-	if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
+	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
 		// Define a new service if the challenge is public
 		return service.CreateServiceAndIngress(challenge, client, scheme, log, ctx, err_ingress)
 
@@ -183,9 +186,32 @@ func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	return false, nil
 }
 
-func UpdatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func UpdatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-	// TODO
+	// Check if all persistent volume claims are correctly set and update them if necessary
+	// TODO: Go through all persistent volume claims
+	// Problem: How do we know which ones should be deleted? How do we get all resources from a namespace in go?
+	return false, nil
+}
+
+// For each persistent volume claim, we update it
+func UpdatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVolumeClaim *corev1.PersistentVolumeClaim,
+	client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
+	persistentVolumeClaimFound := &corev1.PersistentVolumeClaim{}
+	err := client.Get(ctx, types.NamespacedName{Name: persistentVolumeClaim.Name,
+		Namespace: persistentVolumeClaim.Namespace}, persistentVolumeClaimFound)
+
+	if errors.IsNotFound(err) {
+		// Create PersistentVolumeClaim
+		return volumes.CreatePersistentVolumeClaim(challenge, client, scheme, log, ctx)
+	}
+
+	// If there wasn't an error to get the pvc and it is existent
+	if err == nil {
+		// Compare the persistentVolumeClaims
+		// TODO
+	}
+
 	return false, nil
 }
 
@@ -198,7 +224,7 @@ func UpdateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
 		Namespace: challenge.Namespace}, autoscalingFound)
 
-	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) &&
+	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && errors.IsNotFound(err) &&
 		challenge.Spec.Deployed == true {
 		// creates autoscaling if it doesn't exist yet
 		return autoscaling.CreateAutoscaling(challenge, client, scheme, log, ctx)
@@ -230,8 +256,8 @@ func UpdateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, s
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// We check if there's an error in each update
 	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
-		log logr.Logger, ctx context.Context) (bool, error){UpdateNetworkSpecs, UpdateAutoscaling, UpdateDeployment,
-		UpdatePersistentVolumeClaim, UpdatePowDifficultySeconds}
+		log logr.Logger, ctx context.Context) (bool, error){UpdatePersistentVolumeClaims,
+		UpdatePowDifficultySeconds, UpdateDeployment, UpdateNetworkSpecs, UpdateAutoscaling}
 
 	for _, updateFunction := range updateFunctions {
 		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)
