@@ -106,6 +106,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			request.NamespacedName.Name)
 		reqLogger.Info("Deleting challenge")
 		r.client.Delete(ctx, challenge)
+		return reconcile.Result{}, nil
 	}
 
 	// Set default values not configured by kubebuilder
