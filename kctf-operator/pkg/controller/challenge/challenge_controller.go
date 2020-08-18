@@ -1,7 +1,4 @@
 // This file contains the reconcile function which is called when a CR is applied
-// TODO: Synthesize this file : create a function that is called multiple times
-// since there's a lot of code that is repeated
-// TODO: change deletion and creation of service/ingress/etc to challenge_update
 package challenge
 
 import (
@@ -9,8 +6,9 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
-	"github.com/google/kctf/pkg/controller/challenge/finalizer"
-	"github.com/google/kctf/pkg/utils"
+	"github.com/google/kctf/pkg/controller/challenge/deployment"
+	"github.com/google/kctf/pkg/controller/challenge/set"
+	"github.com/google/kctf/pkg/controller/challenge/update"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -108,92 +106,39 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			request.NamespacedName.Name)
 		reqLogger.Info("Deleting challenge")
 		r.client.Delete(ctx, challenge)
+		return reconcile.Result{}, nil
 	}
 
-	if IsNamespaceAcceptable(request.NamespacedName) {
-		// Set default values not configured by kubebuilder
-		SetDefaultValues(challenge)
+	// Set default values not configured by kubebuilder
+	set.DefaultValues(challenge)
 
-		// Check if the deployment already exists, if not create a new one
-		found := &appsv1.Deployment{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, found)
+	// Check if the deployment already exists, if not create a new one
+	deploymentFound := &appsv1.Deployment{}
+	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, deploymentFound)
 
-		// Just enters here if it's a new deployment
-		if err != nil && errors.IsNotFound(err) {
-			// Define a new deployment
-			return r.CreateDeployment(challenge, ctx)
+	// Just enters here if it's a new deployment
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		return deployment.Create(challenge, r.client, r.scheme, r.log, ctx)
 
-		} else if err != nil {
-			reqLogger.Error(err, "Failed to get Deployment")
-			return reconcile.Result{}, err
-		}
-
-		// Creates autoscaling object
-		// Checks if an autoscaling was configured
-		// If enabled, it checks if it already exists
-		autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, autoscalingFound)
-
-		if challenge.Spec.HorizontalPodAutoscalerSpec != nil && err != nil && errors.IsNotFound(err) {
-			// creates autoscaling if it doesn't exist yet
-			return r.CreateAutoscaling(challenge, ctx)
-		}
-
-		if challenge.Spec.HorizontalPodAutoscalerSpec == nil && err == nil {
-			// delete autoscaling
-			return r.DeleteAutoscaling(autoscalingFound, ctx)
-		}
-
-		// Creates the service if it doesn't exist
-		// Check existence of the service:
-		serviceFound := &corev1.Service{}
-		ingressFound := &netv1beta1.Ingress{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, serviceFound)
-		err_ingress := r.client.Get(ctx, types.NamespacedName{Name: "https",
-			Namespace: challenge.Namespace}, ingressFound)
-
-		// Just enter here if the service doesn't exist yet:
-		if err != nil && errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
-			// Define a new service if the challenge is public
-			return r.CreateServiceAndIngress(challenge, ctx, err_ingress)
-
-			// When service exists and public is changed to false
-		} else if err == nil && challenge.Spec.Network.Public == false {
-			return r.DeleteServiceAndIngress(serviceFound, ingressFound, ctx, err_ingress)
-		}
-
-		// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
-		// change says if something in the configurations was different from what was found in the deployment
-		change := UpdateConfigurations(challenge, found)
-
-		// If there's a change it must requeue
-		if change == true {
-			err = r.client.Update(ctx, found)
-			if err != nil {
-				reqLogger.Error(err, "Failed to update Deployment",
-					"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-				return reconcile.Result{}, err
-			}
-			// Spec updated - return and requeue
-			return reconcile.Result{Requeue: true}, nil
-		}
-
-		// Finalizer which erases the namespace created
-		if finalizer.IsBeingFinalized(challenge) {
-			reqLogger.Info("Challenge being finalized")
-			return finalizer.CallChallengeFinalizers(r.client, ctx, r.log, challenge)
-		}
-
-		// Add finalizer for this CR
-		if !utils.Contains(challenge.GetFinalizers(), finalizer.ChallengeFinalizerName) {
-			if err := finalizer.AddFinalizer(r.client, ctx, r.log, challenge); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
+	} else if err != nil {
+		reqLogger.Error(err, "Failed to get Deployment")
+		return reconcile.Result{}, err
 	}
+
+	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
+	// change says if something in the configurations was different from what was found in the deployment
+	requeue, err = update.Configurations(challenge, r.client, r.scheme, r.log, ctx)
+
+	if err != nil {
+		reqLogger.Error(err, "Failed to update Challenge")
+		return reconcile.Result{}, err
+	} else if requeue == true {
+		reqLogger.Info("Challenge updated successfully")
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -211,7 +156,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 		}
 
 		// Error reading the object - requeue the request.
-		r.log.Error(err, "Failed to get Challenge")
+		r.log.Error(err, "Failed to get PersistentVolumeClaim")
 		return true, err
 	}
 
@@ -221,7 +166,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 // Function that returns if the chosen namespace is acceptable or no to prevent errors
 func IsNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 	if namespacedName.Name != namespacedName.Namespace ||
-		namespacedName.Namespace == "default" {
+		namespacedName.Namespace == "default" || namespacedName.Namespace == "kube-system" {
 		return false
 	}
 	return true

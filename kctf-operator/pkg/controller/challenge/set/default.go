@@ -1,5 +1,5 @@
 // File that set values correctly and return default values that weren't specified
-package challenge
+package set
 
 import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
@@ -8,7 +8,7 @@ import (
 )
 
 // Function to set the pod template
-func SetPodTemplate(challenge *kctfv1alpha1.Challenge) {
+func setPodTemplate(challenge *kctfv1alpha1.Challenge) {
 	// Loop to change things path of the podtemplate
 	for i, _ := range challenge.Spec.PodTemplate.Template.Spec.Containers {
 		container := &challenge.Spec.PodTemplate.Template.Spec.Containers[i]
@@ -23,7 +23,7 @@ func SetPodTemplate(challenge *kctfv1alpha1.Challenge) {
 }
 
 // Function to set the persistent volume claim
-func SetPersistentVolumeClaims(challenge *kctfv1alpha1.Challenge) {
+func setPersistentVolumeClaims(challenge *kctfv1alpha1.Challenge) {
 	storageClassName := "manual"
 
 	for i, _ := range challenge.Spec.PersistentVolumeClaims.Items {
@@ -41,7 +41,7 @@ func SetPersistentVolumeClaims(challenge *kctfv1alpha1.Challenge) {
 }
 
 // Function to return the default ports
-func PortsDefault() []kctfv1alpha1.PortSpec {
+func portsDefault() []kctfv1alpha1.PortSpec {
 	var portsDefault = []kctfv1alpha1.PortSpec{
 		kctfv1alpha1.PortSpec{
 			// Keeping the same name as in previous network file
@@ -55,19 +55,19 @@ func PortsDefault() []kctfv1alpha1.PortSpec {
 }
 
 // Function to check if all is set to default
-func SetDefaultValues(challenge *kctfv1alpha1.Challenge) {
+func DefaultValues(challenge *kctfv1alpha1.Challenge) {
 	// Sets default ports
 	if challenge.Spec.Network.Ports == nil {
-		challenge.Spec.Network.Ports = PortsDefault()
+		challenge.Spec.Network.Ports = portsDefault()
 	}
 
 	// Sets PodTemplate
 	if challenge.Spec.PodTemplate != nil {
-		SetPodTemplate(challenge)
+		setPodTemplate(challenge)
 	}
 
 	// Configure the PersistentVolumeClaim since we don't expect user to pass everything
 	if challenge.Spec.PersistentVolumeClaims != nil {
-		SetPersistentVolumeClaims(challenge)
+		setPersistentVolumeClaims(challenge)
 	}
 }

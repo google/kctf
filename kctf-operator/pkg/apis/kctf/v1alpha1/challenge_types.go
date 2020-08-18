@@ -26,7 +26,7 @@ type PortSpec struct {
 // Network specifications for the service
 type NetworkSpec struct {
 
-	// +kubebuilder:default:=true
+	// +kubebuilder:default:=false
 	Public bool `json:"public,omitempty"`
 
 	// +kubebuilder:default:=false
@@ -83,27 +83,27 @@ type ChallengeSpec struct {
 	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
 
 	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
-	// +kubebuilder:validation:Optional
+	// +optional
 	Network NetworkSpec `json:"network,omitempty"`
 
 	// Healthcheck checks if the challenge works
 	// If empty, healthcheck is not enabled by default
-	// +kubebuilder:validation:Optional
+	// +optional
 	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
 
 	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
-	// +kubebuilder:validation:Optional
+	// +optional
 	HorizontalPodAutoscalerSpec *HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerSpec,omitempty"`
 
-	// PodTemplate is used to set the paths of sessions and uploads
-	// If empty, volumes won't be used
-	// kubebuilder:validation:Optional
-	PodTemplate *corev1.PodTemplate `json:"podTemplate,omitempty"`
+	// PodTemplate is used to set the template for the deployment's pod,
+	// so that an author can add volumeMounts and other extra features
+	// +optional
+	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 
 	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
 	// Default value: size 1Gb
-	// +kubebuilder:validation:Optional
+	// +optional
 	PersistentVolumeClaims *corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
 }
 
