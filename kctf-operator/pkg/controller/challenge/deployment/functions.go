@@ -35,17 +35,17 @@ func labelsForChallenge(name string) map[string]string {
 }
 
 // deploymentForChallenge returns a challenge Deployment object
-func DeploymentForChallenge(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+func Generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
-		return deploymentWithHealthcheck(challenge)
+		return withHealthcheck(challenge)
 	} else {
 		return deployment(challenge)
 	}
 }
 
-func CreateDeployment(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func Create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (reconcile.Result, error) {
-	dep := DeploymentForChallenge(challenge)
+	dep := Generate(challenge)
 	log.Info("Creating a new Deployment", "Deployment.Namespace",
 		dep.Namespace, "Deployment.Name", dep.Name)
 

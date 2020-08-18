@@ -23,7 +23,7 @@ import (
 )
 
 // Check if the arrays of ports are the same
-func EqualPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
+func equalPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 	if len(found) != len(wanted) {
 		return false
 	}
@@ -38,12 +38,12 @@ func EqualPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 }
 
 // Copy ports from one service to another
-func CopyPorts(found *corev1.Service, wanted *corev1.Service) {
+func copyPorts(found *corev1.Service, wanted *corev1.Service) {
 	found.Spec.Ports = []corev1.ServicePort{}
 	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
 }
 
-func UpdateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32) bool {
+func updateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32) bool {
 	// Updates the number of replicas according to being deployed or not and considering the autoscaling
 	var numReplicas int32
 	change := false
@@ -68,7 +68,7 @@ func UpdateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32
 	return false
 }
 
-func UpdateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Flags if there was a change
 	change := false
@@ -83,14 +83,14 @@ func UpdateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 	}
 
 	// Checks if the deployment is correctly set
-	if dep := deployment.DeploymentForChallenge(challenge); !reflect.DeepEqual(deploymentFound.Spec.Template.Spec,
+	if dep := deployment.Generate(challenge); !reflect.DeepEqual(deploymentFound.Spec.Template.Spec,
 		dep.Spec.Template.Spec) {
 		change = true
 		deploymentFound.Spec.Template.Spec = dep.Spec.Template.Spec
 	}
 
 	// Ensure if the challenge is ready and, if not, set replicas to 0
-	change = (change || UpdateNumReplicas(challenge, deploymentFound.Spec.Replicas))
+	change = (change || updateNumReplicas(challenge, deploymentFound.Spec.Replicas))
 
 	// Updates deployment with client
 	if change == true {
@@ -106,13 +106,13 @@ func UpdateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 	return false, nil
 }
 
-func UpdatePowDifficultySeconds(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func updatePowDifficultySeconds(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// TODO: create configmap and apply secrets
 	return false, nil
 }
 
-func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Service is created in challenge_controller and here we just ensure that everything is alright
 	// Creates the service if it doesn't exist
@@ -127,19 +127,19 @@ func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	// Just enter here if the service doesn't exist yet:
 	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
 		// Define a new service if the challenge is public
-		return service.CreateServiceAndIngress(challenge, client, scheme, log, ctx, err_ingress)
+		return service.Create(challenge, client, scheme, log, ctx, err_ingress)
 
 		// When service exists and public is changed to false
 	} else if err == nil && challenge.Spec.Network.Public == false {
-		return service.DeleteServiceAndIngress(serviceFound, ingressFound, client, scheme, log, ctx, err_ingress)
+		return service.Delete(serviceFound, ingressFound, client, scheme, log, ctx, err_ingress)
 	}
 
 	// Now we check if the service and the ingress are according to the CR:
 	if challenge.Spec.Network.Public {
-		serv, ingress := service.ServiceForChallenge(challenge)
+		serv, ingress := service.Generate(challenge)
 
-		if !EqualPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
-			CopyPorts(serviceFound, serv)
+		if !equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
+			copyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)
 			if err != nil {
 				log.Error(err, "Failed to update service")
@@ -186,7 +186,7 @@ func UpdateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	return false, nil
 }
 
-func UpdatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func updatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Check if all persistent volume claims are correctly set and update them if necessary
 	// TODO: Go through all persistent volume claims
@@ -195,7 +195,7 @@ func UpdatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.C
 }
 
 // For each persistent volume claim, we update it
-func UpdatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVolumeClaim *corev1.PersistentVolumeClaim,
+func updatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVolumeClaim *corev1.PersistentVolumeClaim,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	persistentVolumeClaimFound := &corev1.PersistentVolumeClaim{}
 	err := client.Get(ctx, types.NamespacedName{Name: persistentVolumeClaim.Name,
@@ -203,7 +203,7 @@ func UpdatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVo
 
 	if errors.IsNotFound(err) {
 		// Create PersistentVolumeClaim
-		return volumes.CreatePersistentVolumeClaim(challenge, client, scheme, log, ctx)
+		return volumes.Create(challenge, client, scheme, log, ctx)
 	}
 
 	// If there wasn't an error to get the pvc and it is existent
@@ -215,7 +215,7 @@ func UpdatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVo
 	return false, nil
 }
 
-func UpdateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Creates autoscaling object
 	// Checks if an autoscaling was configured
@@ -227,16 +227,16 @@ func UpdateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && errors.IsNotFound(err) &&
 		challenge.Spec.Deployed == true {
 		// creates autoscaling if it doesn't exist yet
-		return autoscaling.CreateAutoscaling(challenge, client, scheme, log, ctx)
+		return autoscaling.Create(challenge, client, scheme, log, ctx)
 	}
 
 	if (challenge.Spec.HorizontalPodAutoscalerSpec == nil || challenge.Spec.Deployed == false) && err == nil {
 		// delete autoscaling
-		return autoscaling.DeleteAutoscaling(autoscalingFound, client, scheme, log, ctx)
+		return autoscaling.Delete(autoscalingFound, client, scheme, log, ctx)
 	}
 
 	if err == nil {
-		if autoscaling := autoscaling.AutoscalingForChallenge(challenge); !reflect.DeepEqual(autoscalingFound.Spec,
+		if autoscaling := autoscaling.Generate(challenge); !reflect.DeepEqual(autoscalingFound.Spec,
 			autoscaling.Spec) {
 			autoscalingFound.Spec = autoscaling.Spec
 			err = client.Update(ctx, autoscalingFound)
@@ -252,12 +252,12 @@ func UpdateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 	return false, nil
 }
 
-func UpdateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func Configurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// We check if there's an error in each update
 	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
-		log logr.Logger, ctx context.Context) (bool, error){UpdatePersistentVolumeClaims,
-		UpdatePowDifficultySeconds, UpdateDeployment, UpdateNetworkSpecs, UpdateAutoscaling}
+		log logr.Logger, ctx context.Context) (bool, error){updatePersistentVolumeClaims,
+		updatePowDifficultySeconds, updateDeployment, updateNetworkSpecs, updateAutoscaling}
 
 	for _, updateFunction := range updateFunctions {
 		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)

@@ -108,37 +108,36 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		r.client.Delete(ctx, challenge)
 	}
 
-	if IsNamespaceAcceptable(request.NamespacedName) {
-		// Set default values not configured by kubebuilder
-		set.SetDefaultValues(challenge)
+	// Set default values not configured by kubebuilder
+	set.DefaultValues(challenge)
 
-		// Check if the deployment already exists, if not create a new one
-		deploymentFound := &appsv1.Deployment{}
-		err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-			Namespace: challenge.Namespace}, deploymentFound)
+	// Check if the deployment already exists, if not create a new one
+	deploymentFound := &appsv1.Deployment{}
+	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, deploymentFound)
 
-		// Just enters here if it's a new deployment
-		if err != nil && errors.IsNotFound(err) {
-			// Define a new deployment
-			return deployment.CreateDeployment(challenge, r.client, r.scheme, r.log, ctx)
+	// Just enters here if it's a new deployment
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		return deployment.Create(challenge, r.client, r.scheme, r.log, ctx)
 
-		} else if err != nil {
-			reqLogger.Error(err, "Failed to get Deployment")
-			return reconcile.Result{}, err
-		}
-
-		// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
-		// change says if something in the configurations was different from what was found in the deployment
-		requeue, err = update.UpdateConfigurations(challenge, r.client, r.scheme, r.log, ctx)
-
-		if err != nil {
-			reqLogger.Error(err, "Failed to update Challenge")
-			return reconcile.Result{}, err
-		} else if requeue == true {
-			reqLogger.Info("Challenge updated successfully")
-			return reconcile.Result{Requeue: true}, nil
-		}
+	} else if err != nil {
+		reqLogger.Error(err, "Failed to get Deployment")
+		return reconcile.Result{}, err
 	}
+
+	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
+	// change says if something in the configurations was different from what was found in the deployment
+	requeue, err = update.Configurations(challenge, r.client, r.scheme, r.log, ctx)
+
+	if err != nil {
+		reqLogger.Error(err, "Failed to update Challenge")
+		return reconcile.Result{}, err
+	} else if requeue == true {
+		reqLogger.Info("Challenge updated successfully")
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	return reconcile.Result{}, nil
 }
 

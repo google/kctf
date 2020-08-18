@@ -8,7 +8,7 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func ServiceForChallenge(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
+func Generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
 	// Service object
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

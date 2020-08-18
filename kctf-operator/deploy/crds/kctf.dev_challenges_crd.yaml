@@ -398,8 +398,8 @@ spec:
                 - items
                 type: object
               podTemplate:
-                description: PodTemplate is used to set the paths of sessions and
-                  uploads If empty, volumes won't be used
+                description: PodTemplate is used to set the template for the deployment's
+                  pod, so that an author can add volumeMounts and other extra features
                 properties:
                   apiVersion:
                     description: 'APIVersion defines the versioned schema of this

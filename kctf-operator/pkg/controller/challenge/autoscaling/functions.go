@@ -13,10 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func CreateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
-	autoscaling := AutoscalingForChallenge(challenge)
+	autoscaling := Generate(challenge)
 	log.Info("Creating a Autoscaling")
 
 	// Creates owner references
@@ -33,7 +33,7 @@ func CreateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 	return true, nil
 }
 
-func DeleteAutoscaling(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
+func Delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
 	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	log.Info("Deleting Autoscaling")
 

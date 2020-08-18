@@ -96,8 +96,8 @@ type ChallengeSpec struct {
 	// +optional
 	HorizontalPodAutoscalerSpec *HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerSpec,omitempty"`
 
-	// PodTemplate is used to set the paths of sessions and uploads
-	// If empty, volumes won't be used
+	// PodTemplate is used to set the template for the deployment's pod,
+	// so that an author can add volumeMounts and other extra features
 	// +optional
 	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 

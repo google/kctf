@@ -9,7 +9,7 @@ import (
 )
 
 // Deployment with Healthcheck
-func deploymentWithHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+func withHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	dep := deployment(challenge)
 
 	idx_challenge := find_idx("challenge", dep.Spec.Template.Spec.Containers)

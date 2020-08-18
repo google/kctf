@@ -15,9 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func CreateServiceAndIngress(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context, err_ingress error) (bool, error) {
-	serv, ingress := ServiceForChallenge(challenge)
+	serv, ingress := Generate(challenge)
 	// Create the service
 	log.Info("Creating a new Service", "Service.Namespace",
 		serv.Namespace, "Service.Name", serv.Name)
@@ -64,7 +64,7 @@ func CreateServiceAndIngress(challenge *kctfv1alpha1.Challenge, client client.Cl
 	return true, nil
 }
 
-func DeleteServiceAndIngress(serviceFound *corev1.Service, ingressFound *netv1beta1.Ingress,
+func Delete(serviceFound *corev1.Service, ingressFound *netv1beta1.Ingress,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger,
 	ctx context.Context, err_ingress error) (bool, error) {
 	log.Info("Deleting the Service", "Service.Namespace", serviceFound.Namespace,

@@ -10,13 +10,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CreatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// TODO: Calls creation of persistent volume claim and persistent volume
 	return false, nil
 }
 
-func DeletePersistentVolumeClaim(persistentVolumeClaimFound *corev1.PersistentVolumeClaim,
+func Delete(persistentVolumeClaimFound *corev1.PersistentVolumeClaim,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger,
 	ctx context.Context) (bool, error) {
 	// TODO: Calls deletion of persistent volume claim and persistent volume
