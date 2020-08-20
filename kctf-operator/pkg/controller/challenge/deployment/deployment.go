@@ -22,6 +22,10 @@ func find_idx(name string, containers []corev1.Container) int {
 func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
+	if challenge.Spec.Replicas != nil {
+		replicas = *challenge.Spec.Replicas
+	}
+
 	var readOnlyRootFilesystem = true
 
 	deployment := &appsv1.Deployment{
@@ -65,7 +69,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	// Set container ports based on the ports that were passed
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = ContainerPorts(challenge)
 	// Set other container's configurations
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.ImageTemplate
+	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
 	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{
 		Capabilities: &corev1.Capabilities{
 			Add: []corev1.Capability{

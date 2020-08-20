@@ -35,9 +35,9 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	}
 
 	// Create ingress, if there's any https
-	if err_ingress != nil && errors.IsNotFound(err_ingress) {
+	if errors.IsNotFound(err_ingress) && ingress.Spec.Backend != nil {
 		// If there's a port HTTPS
-		if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == true {
+		if challenge.Spec.Network.Dns == true && challenge.Spec.Network.DomainName != "" {
 			// Create ingress in the client
 			log.Info("Creating a new Ingress", "Ingress Namespace", ingress.Namespace,
 				"Ingress Name", ingress.Name)
@@ -53,11 +53,19 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 					"Ingress Name", ingress.Name)
 				return false, err
 			}
-		}
+		} else {
+			// If there was some inconsistency with dns or domain name
+			if challenge.Spec.Network.Dns == false {
+				log.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.",
+					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
+			}
 
-		if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == false {
-			log.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.",
-				"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
+			if challenge.Spec.Network.DomainName == "" {
+				log.Info("Failed to create Ingress instance, domain name wasn't set. Challenge won't be reconciled here.",
+					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
+			}
+
+			return false, nil
 		}
 	}
 

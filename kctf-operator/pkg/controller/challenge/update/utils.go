@@ -51,6 +51,9 @@ func updateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32
 	if challenge.Spec.Deployed == true && *currentReplicas == 0 &&
 		challenge.Spec.HorizontalPodAutoscalerSpec == nil {
 		numReplicas = 1
+		if challenge.Spec.Replicas != nil {
+			numReplicas = *challenge.Spec.Replicas
+		}
 		change = true
 	}
 

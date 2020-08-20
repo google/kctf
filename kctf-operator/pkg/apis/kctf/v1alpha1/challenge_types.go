@@ -32,6 +32,9 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=false
 	Dns bool `json:"dns,omitempty"`
 
+	// +optional
+	DomainName string `json:"domainName,omitempty"`
+
 	// By default, one port is set with default values
 	// +optional
 	Ports []PortSpec `json:"ports,omitempty"`
@@ -71,12 +74,16 @@ type ChallengeSpec struct {
 
 	// Image used by the deployment
 	// Not optional and image should be passed by user (by now)
-	ImageTemplate string `json:"imageTemplate"`
+	Image string `json:"image"`
 
 	// Shows if the challenge is ready to be deployed, if not,
 	// it sets the replicas to 0
 	// +kubebuilder:default:=false
 	Deployed bool `json:"deployed,omitempty"`
+
+	// The desired quantity of replicas if horizontal pod autoscaler is disabled
+	// +kubebuilder:default:=1
+	Replicas *int32 `json:"replicas,omitempty"`
 
 	// The quantity of seconds of the proof of work
 	// +kubebuilder:default:=0
@@ -102,7 +109,6 @@ type ChallengeSpec struct {
 	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 
 	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
-	// Default value: size 1Gb
 	// +optional
 	Claims []string `json:"claims,omitempty"`
 }
@@ -113,9 +119,13 @@ type ChallengeStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// +kubebuilder:validation:Optional
-	Status string `json:"challengeStatus"`
-	// TODO: implement status for the challenges like READY and etc..
+	// Says if the challenge is up to date or being updated
+	// +optional
+	Status string `json:"status"`
+
+	// Shows healthcheck returns
+	// +optional
+	Health string `json:"health"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

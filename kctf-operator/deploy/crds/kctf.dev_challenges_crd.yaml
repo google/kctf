@@ -32,9 +32,8 @@ spec:
             description: ChallengeSpec defines the desired state of Challenge
             properties:
               claims:
-                description: 'PersistentVolumeClaim are used to determine how much
-                  resources the author requires for its challenge Default value: size
-                  1Gb'
+                description: PersistentVolumeClaim are used to determine how much
+                  resources the author requires for its challenge
                 items:
                   type: string
                 type: array
@@ -81,7 +80,7 @@ spec:
                 required:
                 - maxReplicas
                 type: object
-              imageTemplate:
+              image:
                 description: Image used by the deployment Not optional and image should
                   be passed by user (by now)
                 type: string
@@ -92,6 +91,8 @@ spec:
                   dns:
                     default: false
                     type: boolean
+                  domainName:
+                    type: string
                   ports:
                     description: By default, one port is set with default values
                     items:
@@ -6315,13 +6316,23 @@ spec:
                 description: The quantity of seconds of the proof of work
                 format: int32
                 type: integer
+              replicas:
+                default: 1
+                description: The desired quantity of replicas if horizontal pod autoscaler
+                  is disabled
+                format: int32
+                type: integer
             required:
-            - imageTemplate
+            - image
             type: object
           status:
             description: ChallengeStatus defines the observed state of Challenge
             properties:
-              challengeStatus:
+              health:
+                description: Shows healthcheck returns
+                type: string
+              status:
+                description: Says if the challenge is up to date or being updated
                 type: string
             type: object
         type: object

@@ -17,7 +17,7 @@ func persistentVolume(persistentVolumeClaim *corev1.PersistentVolumeClaim,
 		Spec: corev1.PersistentVolumeSpec{
 			PersistentVolumeSource: corev1.PersistentVolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
-					Path: "mnt/disks/gcs/" + challenge.Namespace + "/" +
+					Path: "/mnt/disks/gcs/" + challenge.Namespace + "/" +
 						challenge.Name + "/" + persistentVolumeClaim.Spec.VolumeName,
 				},
 			},
