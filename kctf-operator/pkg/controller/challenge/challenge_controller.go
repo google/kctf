@@ -101,9 +101,8 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	if !isNamespaceAcceptable(request.NamespacedName) {
-		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace",
-			"Create it again with the namespace exactly the same as the name, which means this namespace:",
-			request.NamespacedName.Name)
+		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace.",
+			request.Name, " with namespace ", request.Namespace)
 		reqLogger.Info("Deleting challenge")
 		r.client.Delete(ctx, challenge)
 		return reconcile.Result{}, nil
@@ -135,7 +134,8 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		reqLogger.Error(err, "Failed to update Challenge")
 		return reconcile.Result{}, err
 	} else if requeue == true {
-		reqLogger.Info("Challenge updated successfully")
+		reqLogger.Info("Challenge updated successfully", "Name: ",
+			request.Name, " with namespace ", request.Namespace)
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -151,12 +151,13 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			r.log.Info("Challenge resource not found. Ignoring since object must be deleted")
+			r.log.Info("Challenge resource not found. Ignoring since object must be deleted", "Name: ",
+				request.Name, " with namespace ", request.Namespace)
 			return true, nil
 		}
 
 		// Error reading the object - requeue the request.
-		r.log.Error(err, "Failed to get PersistentVolumeClaim")
+		r.log.Error(err, "Failed to get Challenge")
 		return true, err
 	}
 

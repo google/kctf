@@ -4,6 +4,7 @@ package update
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -32,7 +33,8 @@ func updateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 		Namespace: challenge.Namespace}, deploymentFound)
 
 	if err != nil {
-		log.Error(err, "Couldn't get the deployment")
+		log.Error(err, "Couldn't get the deployment", "Challenge Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
 
@@ -50,10 +52,12 @@ func updateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 	if change == true {
 		err = client.Update(ctx, deploymentFound)
 		if err != nil {
-			log.Error(err, "Failed to update deployment")
+			log.Error(err, "Failed to update deployment", "Challenge Name: ",
+				challenge.Name, " with namespace ", challenge.Namespace)
 			return false, err
 		}
-		log.Info("Deployment updated succesfully")
+		log.Info("Deployment updated succesfully", "Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
 		return true, nil
 	}
 
@@ -95,10 +99,12 @@ func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 			copyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)
 			if err != nil {
-				log.Error(err, "Failed to update service")
+				log.Error(err, "Failed to update service", "Service Name: ",
+					serviceFound.Name, " with namespace ", serviceFound.Namespace)
 				return false, err
 			}
-			log.Info("Service updated successfully")
+			log.Info("Service updated successfully", "Name: ",
+				challenge.Name, " with namespace ", challenge.Namespace)
 			return true, nil
 		}
 		// Flags if there was a change in the ingress instance
@@ -128,10 +134,12 @@ func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 
 		if change_ingress == true {
 			if err != nil {
-				log.Error(err, "Failed to update ingress")
+				log.Error(err, "Failed to update ingress", "Ingress Name: ",
+					ingressFound.Name, " with namespace ", ingressFound.Namespace)
 				return false, err
 			}
-			log.Info("Updated ingress successfully")
+			log.Info("Updated ingress successfully", "Ingress Name: ",
+				ingressFound.Name, " with namespace ", ingressFound.Namespace)
 			return true, nil
 		}
 	}
@@ -156,19 +164,22 @@ func updatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.C
 
 	err := cl.List(ctx, persistentVolumeClaimsFound, listOption)
 	if err != nil {
-		log.Error(err, "Failed to list persistent volume claims")
+		log.Error(err, "Failed to list persistent volume claims", "Challenge Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
 
 	// First we create a map with the names of the persistent volume claims that already exist
 	namesFound := mapNameIdx(persistentVolumeClaimsFound)
+	fmt.Println(namesFound)
 
 	// For comparing two persistentVolumeClaims, we will use DeepEqual
-	if challenge.Spec.PersistentVolumeClaims != nil {
-		for i, claim := range challenge.Spec.Claims {
-			value, present := namesFound[claim]
+	if challenge.Spec.Claims != nil {
+		for _, claim := range challenge.Spec.Claims {
+			fmt.Println(claim)
+			_, present := namesFound[claim]
 			if present == true {
-				delete(namesFound, item.Name)
+				delete(namesFound, claim)
 			} else {
 				// Creates the object
 				change, err = volumes.Create(challenge, claim,
@@ -176,17 +187,21 @@ func updatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.C
 				if err != nil {
 					return false, err
 				}
+				log.Info("PersistentVolumeClaim and PersistentVolume created successfully",
+					"Name: ", claim, "Namespace:", challenge.Namespace)
 			}
 		}
 	}
 
 	// Then we delete the persistent volume claims that remained
-	for _, idx := range namesFound {
+	for name, idx := range namesFound {
 		change, err = volumes.Delete(&persistentVolumeClaimsFound.Items[idx],
 			cl, scheme, log, ctx)
 		if err != nil {
 			return false, err
 		}
+		log.Info("PersistentVolumeClaim and PersistentVolume deleted successfully",
+			"Name: ", name, "Namespace:", challenge.Namespace)
 	}
 
 	return change, err
@@ -218,10 +233,12 @@ func updateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, 
 			autoscalingFound.Spec = autoscaling.Spec
 			err = client.Update(ctx, autoscalingFound)
 			if err != nil {
-				log.Error(err, "Failed to update autoscaling")
+				log.Error(err, "Failed to update autoscaling", "Autoscaling name: ",
+					autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
 				return false, err
 			}
-			log.Info("Updated autoscaling successfully")
+			log.Info("Updated autoscaling successfully", "Autoscaling name: ",
+				autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
 			return true, nil
 		}
 	}

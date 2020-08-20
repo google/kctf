@@ -39,8 +39,8 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		// If there's a port HTTPS
 		if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == true {
 			// Create ingress in the client
-			log.Info("Creating a new Ingress", "Ingress.Namespace", ingress.Namespace,
-				"Ingress.Name", ingress.Name)
+			log.Info("Creating a new Ingress", "Ingress Namespace", ingress.Namespace,
+				"Ingress Name", ingress.Name)
 
 			// Defines ownership
 			err := controllerutil.SetControllerReference(challenge, ingress, scheme)
@@ -49,14 +49,15 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 			err = client.Create(ctx, ingress)
 
 			if err != nil {
-				log.Error(err, "Failed to create new Ingress", "Ingress.Namespace", ingress.Namespace,
-					"Ingress.Name", ingress.Name)
+				log.Error(err, "Failed to create new Ingress", "Ingress Namespace", ingress.Namespace,
+					"Ingress Name", ingress.Name)
 				return false, err
 			}
 		}
 
 		if ingress.Spec.Backend != nil && challenge.Spec.Network.Dns == false {
-			log.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.")
+			log.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.",
+				"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
 		}
 	}
 

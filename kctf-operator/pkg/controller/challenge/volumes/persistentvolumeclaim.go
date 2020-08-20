@@ -17,7 +17,7 @@ func persistentVolumeClaim(claim string,
 	// returns persistent volume correspondent to persistentvolumeclaim
 	persistentVolumeClaim := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      challenge.Name + "-" + claim,
+			Name:      claim,
 			Namespace: challenge.Namespace,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
@@ -25,7 +25,7 @@ func persistentVolumeClaim(claim string,
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				"ReadWriteMany",
 			},
-			VolumeName: challenge.Name + "-" + claim,
+			VolumeName: claim,
 			Resources: corev1.ResourceRequirements{
 				Requests: resources,
 			},

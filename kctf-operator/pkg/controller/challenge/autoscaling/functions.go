@@ -17,7 +17,8 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
 	autoscaling := Generate(challenge)
-	log.Info("Creating a Autoscaling")
+	log.Info("Creating a Autoscaling", "Autoscaling name: ",
+		autoscaling.Name, " with namespace ", autoscaling.Namespace)
 
 	// Creates owner references
 	err := controllerutil.SetControllerReference(challenge, autoscaling, scheme)
@@ -26,7 +27,8 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	err = client.Create(ctx, autoscaling)
 
 	if err != nil {
-		log.Error(err, "Failed to create Autoscaling")
+		log.Error(err, "Failed to create Autoscaling", "Autoscaling name: ",
+			autoscaling.Name, " with namespace ", autoscaling.Namespace)
 		return false, err
 	}
 
@@ -35,11 +37,13 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 
 func Delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
 	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
-	log.Info("Deleting Autoscaling")
+	log.Info("Deleting Autoscaling", "Autoscaling name: ",
+		autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
 
 	err := client.Delete(ctx, autoscalingFound)
 	if err != nil {
-		log.Error(err, "Failed to delete Autoscaling")
+		log.Error(err, "Failed to delete Autoscaling", "Autoscaling name: ",
+			autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
 		return false, err
 	}
 
