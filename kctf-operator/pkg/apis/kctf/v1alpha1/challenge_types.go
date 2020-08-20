@@ -10,13 +10,13 @@ import (
 )
 
 type PortSpec struct {
-	//+kubebuilder:validation:Optional
+	//+optional
 	Name string `json:"name"`
 
 	// TargetPort is not optional
 	TargetPort intstr.IntOrString `json:"targetPort"`
 
-	//+kubebuilder:validation:Optional
+	//+optional
 	Port int32 `json:"port"`
 
 	// Protocol is not optional
@@ -33,7 +33,7 @@ type NetworkSpec struct {
 	Dns bool `json:"dns,omitempty"`
 
 	// By default, one port is set with default values
-	// +kubebuilder:validation:Optional
+	// +optional
 	Ports []PortSpec `json:"ports,omitempty"`
 }
 
@@ -104,7 +104,7 @@ type ChallengeSpec struct {
 	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
 	// Default value: size 1Gb
 	// +optional
-	PersistentVolumeClaims *corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
+	Claims []string `json:"claims,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge

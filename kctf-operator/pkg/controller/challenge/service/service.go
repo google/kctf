@@ -47,6 +47,7 @@ func Generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 				Name:       port.Name,
 				Port:       port.Port,
 				TargetPort: port.TargetPort,
+				Protocol:   "TCP",
 			}
 			service.Spec.Ports = append(service.Spec.Ports, servicePort)
 		} else {

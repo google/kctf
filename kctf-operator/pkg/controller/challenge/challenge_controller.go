@@ -100,7 +100,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	if !IsNamespaceAcceptable(request.NamespacedName) {
+	if !isNamespaceAcceptable(request.NamespacedName) {
 		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace",
 			"Create it again with the namespace exactly the same as the name, which means this namespace:",
 			request.NamespacedName.Name)
@@ -110,7 +110,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Set default values not configured by kubebuilder
-	set.DefaultValues(challenge)
+	set.DefaultValues(challenge, r.scheme)
 
 	// Check if the deployment already exists, if not create a new one
 	deploymentFound := &appsv1.Deployment{}
@@ -164,7 +164,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 }
 
 // Function that returns if the chosen namespace is acceptable or no to prevent errors
-func IsNamespaceAcceptable(namespacedName types.NamespacedName) bool {
+func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 	if namespacedName.Name != namespacedName.Namespace ||
 		namespacedName.Namespace == "default" || namespacedName.Namespace == "kube-system" {
 		return false

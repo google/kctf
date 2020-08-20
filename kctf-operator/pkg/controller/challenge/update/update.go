@@ -22,52 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Check if the arrays of ports are the same
-func equalPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
-	if len(found) != len(wanted) {
-		return false
-	}
-
-	for i, _ := range found {
-		if found[i].Name != wanted[i].Name || found[i].Protocol != wanted[i].Protocol ||
-			found[i].Port != wanted[i].Port || found[i].TargetPort != wanted[i].TargetPort {
-			return false
-		}
-	}
-	return true
-}
-
-// Copy ports from one service to another
-func copyPorts(found *corev1.Service, wanted *corev1.Service) {
-	found.Spec.Ports = []corev1.ServicePort{}
-	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
-}
-
-func updateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32) bool {
-	// Updates the number of replicas according to being deployed or not and considering the autoscaling
-	var numReplicas int32
-	change := false
-
-	// TODO: Inline this?
-	if challenge.Spec.Deployed == false && *currentReplicas != 0 {
-		numReplicas = 0
-		change = true
-	}
-
-	if challenge.Spec.Deployed == true && *currentReplicas == 0 &&
-		challenge.Spec.HorizontalPodAutoscalerSpec == nil {
-		numReplicas = 1
-		change = true
-	}
-
-	if change == true {
-		*currentReplicas = numReplicas
-		return true
-	}
-
-	return false
-}
-
 func updateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Flags if there was a change
@@ -137,7 +91,6 @@ func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	// Now we check if the service and the ingress are according to the CR:
 	if challenge.Spec.Network.Public {
 		serv, ingress := service.Generate(challenge)
-
 		if !equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
 			copyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)
@@ -186,33 +139,57 @@ func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 	return false, nil
 }
 
+// TODO: should the whole block be done at once and check the error only in the end
+// or should we check in each interation with the client
 func updatePersistentVolumeClaims(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Check if all persistent volume claims are correctly set and update them if necessary
-	// TODO: Go through all persistent volume claims
-	// Problem: How do we know which ones should be deleted? How do we get all resources from a namespace in go?
-	return false, nil
-}
+	// We get all persistentVolumeClaims in the same namespace as the challenge
+	persistentVolumeClaimsFound := &corev1.PersistentVolumeClaimList{}
+	change := false
 
-// For each persistent volume claim, we update it
-func updatePersistentVolumeClaim(challenge *kctfv1alpha1.Challenge, persistentVolumeClaim *corev1.PersistentVolumeClaim,
-	client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
-	persistentVolumeClaimFound := &corev1.PersistentVolumeClaim{}
-	err := client.Get(ctx, types.NamespacedName{Name: persistentVolumeClaim.Name,
-		Namespace: persistentVolumeClaim.Namespace}, persistentVolumeClaimFound)
-
-	if errors.IsNotFound(err) {
-		// Create PersistentVolumeClaim
-		return volumes.Create(challenge, client, scheme, log, ctx)
+	// List all persistent volume claims in the namespace of the challenge
+	var listOption client.ListOption
+	listOption = &client.ListOptions{
+		Namespace: challenge.Namespace,
 	}
 
-	// If there wasn't an error to get the pvc and it is existent
-	if err == nil {
-		// Compare the persistentVolumeClaims
-		// TODO
+	err := cl.List(ctx, persistentVolumeClaimsFound, listOption)
+	if err != nil {
+		log.Error(err, "Failed to list persistent volume claims")
+		return false, err
 	}
 
-	return false, nil
+	// First we create a map with the names of the persistent volume claims that already exist
+	namesFound := mapNameIdx(persistentVolumeClaimsFound)
+
+	// For comparing two persistentVolumeClaims, we will use DeepEqual
+	if challenge.Spec.PersistentVolumeClaims != nil {
+		for i, claim := range challenge.Spec.Claims {
+			value, present := namesFound[claim]
+			if present == true {
+				delete(namesFound, item.Name)
+			} else {
+				// Creates the object
+				change, err = volumes.Create(challenge, claim,
+					cl, scheme, log, ctx)
+				if err != nil {
+					return false, err
+				}
+			}
+		}
+	}
+
+	// Then we delete the persistent volume claims that remained
+	for _, idx := range namesFound {
+		change, err = volumes.Delete(&persistentVolumeClaimsFound.Items[idx],
+			cl, scheme, log, ctx)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return change, err
 }
 
 func updateAutoscaling(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
