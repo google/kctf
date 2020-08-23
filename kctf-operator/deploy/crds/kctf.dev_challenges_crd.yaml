@@ -6314,7 +6314,6 @@ spec:
               powDifficultySeconds:
                 default: 0
                 description: The quantity of seconds of the proof of work
-                format: int32
                 type: integer
               replicas:
                 default: 1

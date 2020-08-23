@@ -87,7 +87,7 @@ type ChallengeSpec struct {
 
 	// The quantity of seconds of the proof of work
 	// +kubebuilder:default:=0
-	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
+	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
 
 	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
 	// +optional

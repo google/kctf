@@ -25,7 +25,7 @@ func Generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 	// Ingress object
 	ingress := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        challenge.Name,
+			Name:        "https",
 			Namespace:   challenge.Namespace,
 			Labels:      map[string]string{"app": challenge.Name},
 			Annotations: map[string]string{"networking.gke.io/managed-certificates": "kctf-certificate"},
@@ -51,7 +51,7 @@ func Generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 			}
 
 			servicePort := corev1.ServicePort{
-				Port:       port.Port,
+				Port:       80,
 				TargetPort: port.TargetPort,
 				Protocol:   "TCP",
 			}
@@ -81,5 +81,11 @@ func Generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 		}
 	}
 
+	// Add annotation in the case it's a web challenge
+	if ingress.Spec.Backend != nil && challenge.Spec.Network.DomainName != "" &&
+		challenge.Spec.Network.Dns == true {
+		service.ObjectMeta.Annotations["external-dns.alpha.kubernetes.io/hostname"] =
+			challenge.Name + "-tcp." + challenge.Spec.Network.DomainName
+	}
 	return service, ingress
 }

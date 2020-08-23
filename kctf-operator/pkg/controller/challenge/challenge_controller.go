@@ -139,6 +139,9 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{Requeue: true}, nil
 	}
 
+	challenge.Status.Status = "success"
+	err = r.client.Status().Update(context.TODO(), challenge)
+
 	return reconcile.Result{}, nil
 }
 

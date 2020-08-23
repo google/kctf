@@ -11,6 +11,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
+	"github.com/google/kctf/pkg/controller/challenge/pow"
 	"github.com/google/kctf/pkg/controller/challenge/service"
 	"github.com/google/kctf/pkg/controller/challenge/volumes"
 	appsv1 "k8s.io/api/apps/v1"
@@ -66,7 +67,30 @@ func updateDeployment(challenge *kctfv1alpha1.Challenge, client client.Client, s
 
 func updatePowDifficultySeconds(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-	// TODO: create configmap and apply secrets
+	configmapFound := &corev1.ConfigMap{}
+	err := cl.Get(ctx, types.NamespacedName{Name: "pow",
+		Namespace: challenge.Namespace}, configmapFound)
+	if err != nil {
+		log.Error(err, "Couldn't get the ConfigMap of Proof of work", "Configmap Name: ",
+			"pow", " with namespace ", challenge.Namespace)
+		return false, err
+	}
+
+	// Checks if the confimap is correctly set
+	if configmap := pow.Generate(challenge); !reflect.DeepEqual(configmapFound.Data,
+		configmap.Data) {
+		configmapFound.Data = configmap.Data
+		err = cl.Update(ctx, configmapFound)
+		if err != nil {
+			log.Error(err, "Failed to update ConfigMap for Proof of work", "ConfigMap Name: ",
+				"pow", " with namespace ", challenge.Namespace)
+			return false, err
+		}
+		log.Info("ConfigMap for Proof of Work updated succesfully", "Name: ",
+			"pow", " with namespace ", challenge.Namespace)
+		return true, nil
+	}
+
 	return false, nil
 }
 
@@ -110,7 +134,7 @@ func updateNetworkSpecs(challenge *kctfv1alpha1.Challenge, client client.Client,
 		// Flags if there was a change in the ingress instance
 		change_ingress := false
 
-		// TODO: check dns and domain name here
+		// TODO: check dns
 
 		// If ingress should be created:
 		if errors.IsNotFound(err_ingress) && ingress.Spec.Backend != nil {
