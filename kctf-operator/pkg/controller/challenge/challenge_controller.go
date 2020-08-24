@@ -8,6 +8,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
+	"github.com/google/kctf/pkg/controller/challenge/dns"
 	"github.com/google/kctf/pkg/controller/challenge/pow"
 	"github.com/google/kctf/pkg/controller/challenge/service"
 	"github.com/google/kctf/pkg/controller/challenge/set"
@@ -63,7 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
 	objs := []runtime.Object{&corev1.Pod{}, &appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
 		&corev1.Service{}, &netv1beta1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
-		&corev1.ConfigMap{}}
+		&corev1.ConfigMap{}, &corev1.Secret{}}
 
 	for _, obj := range objs {
 		err = c.Watch(&source.Kind{Type: obj}, &handler.EnqueueRequestForOwner{
@@ -166,9 +167,11 @@ func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// We check if there's an error in each update
+	// TODO: add secrets.Update
 	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 		log logr.Logger, ctx context.Context) (bool, error){volumes.Update,
-		pow.Update, deployment.Update, service.Update, autoscaling.Update, status.Update}
+		pow.Update, deployment.Update, service.Update, dns.Update,
+		autoscaling.Update, status.Update}
 
 	for _, updateFunction := range updateFunctions {
 		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)

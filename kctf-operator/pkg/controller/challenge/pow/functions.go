@@ -15,7 +15,6 @@ import (
 )
 
 // Create the configmaps
-// TODO: Do we create the secrets here?
 func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates pow if it doesn't exist yet
@@ -24,10 +23,10 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		configmap.Name, " with namespace ", configmap.Namespace)
 
 	// Creates owner references
-	err := controllerutil.SetControllerReference(challenge, configmap, scheme)
+	controllerutil.SetControllerReference(challenge, configmap, scheme)
 
 	// Creates configmap
-	err = client.Create(ctx, configmap)
+	err := client.Create(ctx, configmap)
 
 	if err != nil {
 		log.Error(err, "Failed to create ConfigMap for Proof of work", "ConfigMap name: ",

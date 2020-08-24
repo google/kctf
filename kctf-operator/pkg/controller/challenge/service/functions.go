@@ -46,10 +46,10 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		serv.Namespace, "Service.Name", serv.Name)
 
 	// Defines ownership
-	err := controllerutil.SetControllerReference(challenge, serv, scheme)
+	controllerutil.SetControllerReference(challenge, serv, scheme)
 
 	// Creates the service
-	err = client.Create(ctx, serv)
+	err := client.Create(ctx, serv)
 
 	if err != nil {
 		log.Error(err, "Failed to create new Service", "Service.Namespace",
@@ -66,7 +66,7 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 				"Ingress Name", ingress.Name)
 
 			// Defines ownership
-			err := controllerutil.SetControllerReference(challenge, ingress, scheme)
+			controllerutil.SetControllerReference(challenge, ingress, scheme)
 
 			// Creates the ingress
 			err = client.Create(ctx, ingress)
