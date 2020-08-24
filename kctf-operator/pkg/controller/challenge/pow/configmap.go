@@ -9,7 +9,7 @@ import (
 )
 
 // Generates the configmap that contains the how difficult should be the proof of work
-func Generate(challenge *kctfv1alpha1.Challenge) *corev1.ConfigMap {
+func generate(challenge *kctfv1alpha1.Challenge) *corev1.ConfigMap {
 	data := map[string]string{
 		// TODO: Should it be like this? This is how it is in the configmap created
 		"pow.conf": strconv.Itoa(challenge.Spec.PowDifficultySeconds) + "\n",

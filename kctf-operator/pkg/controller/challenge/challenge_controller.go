@@ -6,9 +6,13 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
+	"github.com/google/kctf/pkg/controller/challenge/pow"
+	"github.com/google/kctf/pkg/controller/challenge/service"
 	"github.com/google/kctf/pkg/controller/challenge/set"
-	"github.com/google/kctf/pkg/controller/challenge/update"
+	"github.com/google/kctf/pkg/controller/challenge/status"
+	"github.com/google/kctf/pkg/controller/challenge/volumes"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -58,7 +62,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
 	objs := []runtime.Object{&corev1.Pod{}, &appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
-		&corev1.Service{}, &netv1beta1.Ingress{}}
+		&corev1.Service{}, &netv1beta1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
+		&corev1.ConfigMap{}}
 
 	for _, obj := range objs {
 		err = c.Watch(&source.Kind{Type: obj}, &handler.EnqueueRequestForOwner{
@@ -111,24 +116,9 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	// Set default values not configured by kubebuilder
 	set.DefaultValues(challenge, r.scheme)
 
-	// Check if the deployment already exists, if not create a new one
-	deploymentFound := &appsv1.Deployment{}
-	err = r.client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, deploymentFound)
-
-	// Just enters here if it's a new deployment
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		return deployment.Create(challenge, r.client, r.scheme, r.log, ctx)
-
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment")
-		return reconcile.Result{}, err
-	}
-
 	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 	// change says if something in the configurations was different from what was found in the deployment
-	requeue, err = update.Configurations(challenge, r.client, r.scheme, r.log, ctx)
+	requeue, err = updateConfigurations(challenge, r.client, r.scheme, r.log, ctx)
 
 	if err != nil {
 		reqLogger.Error(err, "Failed to update Challenge")
@@ -138,9 +128,6 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 			request.Name, " with namespace ", request.Namespace)
 		return reconcile.Result{Requeue: true}, nil
 	}
-
-	challenge.Status.Status = "success"
-	err = r.client.Status().Update(context.TODO(), challenge)
 
 	return reconcile.Result{}, nil
 }
@@ -174,4 +161,21 @@ func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 		return false
 	}
 	return true
+}
+
+func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	// We check if there's an error in each update
+	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+		log logr.Logger, ctx context.Context) (bool, error){volumes.Update,
+		pow.Update, deployment.Update, service.Update, autoscaling.Update, status.Update}
+
+	for _, updateFunction := range updateFunctions {
+		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)
+		if err != nil {
+			return requeue, err
+		}
+	}
+
+	return false, nil
 }

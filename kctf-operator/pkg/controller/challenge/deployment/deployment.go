@@ -67,7 +67,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		},*/
 	}
 	// Set container ports based on the ports that were passed
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = ContainerPorts(challenge)
+	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
 	// Set other container's configurations
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
 	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{

@@ -4,19 +4,22 @@ package autoscaling
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
-	autoscaling := Generate(challenge)
+	autoscaling := generate(challenge)
 	log.Info("Creating a Autoscaling", "Autoscaling name: ",
 		autoscaling.Name, " with namespace ", autoscaling.Namespace)
 
@@ -35,7 +38,7 @@ func Create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	return true, nil
 }
 
-func Delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
+func delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client client.Client,
 	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	log.Info("Deleting Autoscaling", "Autoscaling name: ",
 		autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
@@ -48,4 +51,43 @@ func Delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client clie
 	}
 
 	return true, nil
+}
+
+func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	// Creates autoscaling object
+	// Checks if an autoscaling was configured
+	// If enabled, it checks if it already exists
+	autoscalingFound := &autoscalingv1.HorizontalPodAutoscaler{}
+	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, autoscalingFound)
+
+	if challenge.Spec.HorizontalPodAutoscalerSpec != nil && errors.IsNotFound(err) &&
+		challenge.Spec.Deployed == true {
+		// creates autoscaling if it doesn't exist yet
+		return create(challenge, client, scheme, log, ctx)
+	}
+
+	if (challenge.Spec.HorizontalPodAutoscalerSpec == nil || challenge.Spec.Deployed == false) && err == nil {
+		// delete autoscaling
+		return delete(autoscalingFound, client, scheme, log, ctx)
+	}
+
+	if err == nil {
+		if autoscaling := generate(challenge); !reflect.DeepEqual(autoscalingFound.Spec,
+			autoscaling.Spec) {
+			autoscalingFound.Spec = autoscaling.Spec
+			err = client.Update(ctx, autoscalingFound)
+			if err != nil {
+				log.Error(err, "Failed to update autoscaling", "Autoscaling name: ",
+					autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
+				return false, err
+			}
+			log.Info("Updated autoscaling successfully", "Autoscaling name: ",
+				autoscalingFound.Name, " with namespace ", autoscalingFound.Namespace)
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

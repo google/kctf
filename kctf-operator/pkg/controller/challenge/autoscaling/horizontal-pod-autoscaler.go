@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Generate(challenge *kctfv1alpha1.Challenge) *autoscalingv1.HorizontalPodAutoscaler {
+func generate(challenge *kctfv1alpha1.Challenge) *autoscalingv1.HorizontalPodAutoscaler {
 	// We create the autoscaling object
 	autoscaling := &autoscalingv1.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{

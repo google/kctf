@@ -12,8 +12,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// Function that maps names of the persistent volume claims in the list to their index
+func mapNameIdx(persistentVolumeClaimsFound *corev1.PersistentVolumeClaimList) map[string]int {
+	m := make(map[string]int)
+
+	for idx, item := range persistentVolumeClaimsFound.Items {
+		m[item.Name] = idx
+	}
+
+	return m
+}
+
 // Calls creation of persistent volume claim and persistent volume
-func Create(challenge *kctfv1alpha1.Challenge, claim string,
+func create(challenge *kctfv1alpha1.Challenge, claim string,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	pvc := persistentVolumeClaim(claim, challenge)
 
@@ -43,7 +54,10 @@ func Create(challenge *kctfv1alpha1.Challenge, claim string,
 	return true, nil
 }
 
-func Delete(persistentVolumeClaim *corev1.PersistentVolumeClaim,
+// Name delete was changed to avoid being the same name as the function delete used to delete an element in
+// the map
+// This function delete the persistentVolumeClaim and the persistentVolume associated
+func deleteVolumes(persistentVolumeClaim *corev1.PersistentVolumeClaim,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger,
 	ctx context.Context) (bool, error) {
 	// Calls deletion of persistent volume claim
@@ -75,4 +89,61 @@ func Delete(persistentVolumeClaim *corev1.PersistentVolumeClaim,
 	}
 
 	return true, nil
+}
+
+// Function that updates the persistent volume claim list and the persistent volumes
+func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	// Check if all persistent volume claims are correctly set and update them if necessary
+	// We get all persistentVolumeClaims in the same namespace as the challenge
+	persistentVolumeClaimsFound := &corev1.PersistentVolumeClaimList{}
+	change := false
+
+	// List all persistent volume claims in the namespace of the challenge
+	var listOption client.ListOption
+	listOption = &client.ListOptions{
+		Namespace: challenge.Namespace,
+	}
+
+	err := cl.List(ctx, persistentVolumeClaimsFound, listOption)
+	if err != nil {
+		log.Error(err, "Failed to list persistent volume claims", "Challenge Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return false, err
+	}
+
+	// First we create a map with the names of the persistent volume claims that already exist
+	namesFound := mapNameIdx(persistentVolumeClaimsFound)
+
+	// For comparing two persistentVolumeClaims, we will use DeepEqual
+	if challenge.Spec.Claims != nil {
+		for _, claim := range challenge.Spec.Claims {
+			_, present := namesFound[claim]
+			if present == true {
+				delete(namesFound, claim)
+			} else {
+				// Creates the object
+				change, err = create(challenge, claim,
+					cl, scheme, log, ctx)
+				if err != nil {
+					return false, err
+				}
+				log.Info("PersistentVolumeClaim and PersistentVolume created successfully",
+					"Name: ", claim, "Namespace:", challenge.Namespace)
+			}
+		}
+	}
+
+	// Then we delete the persistent volume claims that remained
+	for name, idx := range namesFound {
+		change, err = deleteVolumes(&persistentVolumeClaimsFound.Items[idx],
+			cl, scheme, log, ctx)
+		if err != nil {
+			return false, err
+		}
+		log.Info("PersistentVolumeClaim and PersistentVolume deleted successfully",
+			"Name: ", name, "Namespace:", challenge.Namespace)
+	}
+
+	return change, err
 }
