@@ -88,7 +88,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	/*volumeMounts := []corev1.VolumeMount{{
+	volumeMounts := []corev1.VolumeMount{{
 		Name:      "pow",
 		ReadOnly:  true,
 		MountPath: "/kctf/pow",
@@ -121,7 +121,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 			},
 		}}
 
-	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)*/
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)
 
 	return deployment
 }

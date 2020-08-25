@@ -17,6 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isServiceEqual(serviceFound *corev1.Service, serv *corev1.Service) bool {
+	return equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports)
+}
+
+func isIngressEqual(ingressFound *netv1beta1.Ingress, ingress *netv1beta1.Ingress) bool {
+	return reflect.DeepEqual(ingressFound.Spec, ingress.Spec)
+}
+
 // Check if the arrays of ports are the same
 func equalPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 	if len(found) != len(wanted) {
@@ -150,12 +158,12 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	// Now we check if the service and the ingress are according to the CR:
 	if challenge.Spec.Network.Public {
 		serv, ingress := generate(challenge)
-		if !equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
+		if !isServiceEqual(serviceFound, serv) {
 			copyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)
 			if err != nil {
 				log.Error(err, "Failed to update service", "Service Name: ",
-					serviceFound.Name, " with namespace ", serviceFound.Namespace)
+					serv.Name, " with namespace ", serv.Namespace)
 				return false, err
 			}
 			log.Info("Service updated successfully", "Name: ",
@@ -165,8 +173,6 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		// Flags if there was a change in the ingress instance
 		change_ingress := false
 
-		// TODO: check dns
-
 		// If ingress should be created:
 		if errors.IsNotFound(err_ingress) && ingress.Spec.Backend != nil {
 			// create ingress
@@ -175,7 +181,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		}
 
 		// Cases when the ingress should be deleted or merely updated
-		if err_ingress == nil && !reflect.DeepEqual(ingressFound.Spec, ingress.Spec) {
+		if err_ingress == nil && !isIngressEqual(ingressFound, ingress) {
 			change_ingress = true
 			if ingressFound.Spec.Backend != nil && ingress.Spec.Backend == nil {
 				// Deletes ingress
@@ -190,11 +196,11 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		if change_ingress == true {
 			if err != nil {
 				log.Error(err, "Failed to update ingress", "Ingress Name: ",
-					ingressFound.Name, " with namespace ", ingressFound.Namespace)
+					ingress.Name, " with namespace ", ingress.Namespace)
 				return false, err
 			}
 			log.Info("Updated ingress successfully", "Ingress Name: ",
-				ingressFound.Name, " with namespace ", ingressFound.Namespace)
+				ingress.Name, " with namespace ", ingress.Namespace)
 			return true, nil
 		}
 	}

@@ -12,23 +12,15 @@ metadata:
   namespace: mychal
 spec:
   # Add fields here
-  imageTemplate: "quay.io/aliciafmachado/bash:latest"
+  image: "quay.io/aliciafmachado/bash:latest"
   deployed: true
   network:
     public: true
     dns: true
+    domainName: example.com
     ports:
     - protocol: "TCP"
       port: 3
       targetPort: 1337
-  podTemplate:
-    template:
-      spec:
-        containers:
-        - name: extra
-          image: "memcached:1.4.36-alpine"
-  horizontalPodAutoscalerSpec:
-    maxReplicas: 2
-    minReplicas: 2
-    targetCPUUtilizationPercentage: 50
-
+    - protocol: "HTTPS"
+      targetPort: 1338

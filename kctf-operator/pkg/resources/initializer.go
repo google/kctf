@@ -16,9 +16,6 @@ var log logr.Logger = logf.Log.WithName("cmd")
 func InitializeOperator(client *client.Client) error {
 	// Creates the objects that enable the DNS, external DNS and etc
 
-	// Generate keys
-	generateKeys()
-
 	objectFunctions := []func() runtime.Object{NewApparmorProfiles, NewAllowDns, NewServiceAccountGcsFuseSa,
 		NewServiceAccountExternalDnsSa, NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
 		NewExternalDnsDeployment, NewDaemonSetCtf, NewDaemonSetGcsFuse, NewNetworkPolicyBlockInternal,

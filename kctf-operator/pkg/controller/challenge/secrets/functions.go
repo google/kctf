@@ -14,6 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isEqual(secretFound *corev1.Secret, secret *corev1.Secret) bool {
+	return reflect.DeepEqual(secretFound.Data, secret.Data)
+}
+
 // Create the secrets
 func create(secretName string, challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
@@ -87,7 +91,7 @@ func updateSecret(secretName string, challenge *kctfv1alpha1.Challenge,
 		return false, err
 	}
 
-	if !reflect.DeepEqual(secretFound.Data, secret.Data) {
+	if !isEqual(secretFound, secret) {
 		secretFound.Data = secret.Data
 		err = cl.Update(ctx, secretFound)
 		if err != nil {

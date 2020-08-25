@@ -84,8 +84,9 @@ func generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 	// Add annotation in the case it's a web challenge
 	if ingress.Spec.Backend != nil && challenge.Spec.Network.DomainName != "" &&
 		challenge.Spec.Network.Dns == true {
-		service.ObjectMeta.Annotations["external-dns.alpha.kubernetes.io/hostname"] =
-			challenge.Name + "-tcp." + challenge.Spec.Network.DomainName
+		service.ObjectMeta.Annotations =
+			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name +
+				"-tcp." + challenge.Spec.Network.DomainName}
 	}
 	return service, ingress
 }

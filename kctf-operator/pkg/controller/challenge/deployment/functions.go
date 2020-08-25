@@ -17,6 +17,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isEqual(deploymentFound *appsv1.Deployment,
+	deployment *appsv1.Deployment) bool {
+	return reflect.DeepEqual(deploymentFound.Spec.Template.Spec,
+		deployment.Spec.Template.Spec)
+}
+
 func numReplicas(challenge *kctfv1alpha1.Challenge) int32 {
 	if challenge.Spec.Deployed == false {
 		return 0
@@ -116,8 +122,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	}
 
 	// Checks if the deployment is correctly set
-	if dep := generate(challenge); !reflect.DeepEqual(deploymentFound.Spec.Template.Spec,
-		dep.Spec.Template.Spec) {
+	if dep := generate(challenge); !isEqual(deploymentFound, dep) {
 		change = true
 		deploymentFound.Spec.Template.Spec = dep.Spec.Template.Spec
 	}

@@ -115,16 +115,14 @@ type ChallengeSpec struct {
 
 // ChallengeStatus defines the observed state of Challenge
 type ChallengeStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
 	// Says if the challenge is up to date or being updated
-	// +optional
+	// +kubebuilder:default:="up-to-date"
 	Status string `json:"status"`
 
 	// Shows healthcheck returns
-	// +optional
+	// +kubebuilder:default:="disabled"
 	Health string `json:"health"`
 }
 
@@ -133,6 +131,10 @@ type ChallengeStatus struct {
 // Challenge is the Schema for the challenges API
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=challenges,scope=Namespaced
+// +kubebuilder:printcolumn:name="Health",type=string,JSONPath=`.status.health`
+// +kubebuilder:printcolumn:name="Status", type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Deployed",type=boolean,JSONPath=`.spec.deployed`
+// +kubebuilder:printcolumn:name="Public",type=boolean,JSONPath=`.spec.network.public`
 type Challenge struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

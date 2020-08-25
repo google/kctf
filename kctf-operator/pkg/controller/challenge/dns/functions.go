@@ -14,6 +14,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isEqual(certificateFound *netgkev1beta1.ManagedCertificate,
+	certificate *netgkev1beta1.ManagedCertificate) bool {
+	return certificateFound.Spec.Domains[0] == certificate.Spec.Domains[0]
+}
+
 func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
@@ -80,7 +85,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 
 			// If there is, we update it if necessary
 			if err == nil {
-				if certificate := generate(challenge); certificateFound.Spec.Domains[0] != certificate.Spec.Domains[0] {
+				if certificate := generate(challenge); !isEqual(certificateFound, certificate) {
 					certificateFound.Spec.Domains[0] = certificate.Spec.Domains[0]
 					err = client.Update(ctx, certificateFound)
 					if err != nil {

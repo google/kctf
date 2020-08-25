@@ -12,7 +12,7 @@ metadata:
   namespace: mychal2
 spec:
   # Add fields here
-  imageTemplate: "memcached:1.4.36-alpine"
+  image: "memcached:1.4.36-alpine"
   deployed: true
   powDifficultySeconds: 10
   network:

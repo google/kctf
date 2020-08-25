@@ -14,6 +14,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isEqual(configmapFound *corev1.ConfigMap, configmap *corev1.ConfigMap) bool {
+	return reflect.DeepEqual(configmapFound.Data,
+		configmap.Data)
+}
+
 // Create the configmaps
 func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
@@ -55,8 +60,7 @@ func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime
 	}
 
 	// Checks if the confimap is correctly set
-	if configmap := generate(challenge); !reflect.DeepEqual(configmapFound.Data,
-		configmap.Data) {
+	if configmap := generate(challenge); !isEqual(configmapFound, configmap) {
 		configmapFound.Data = configmap.Data
 		err = cl.Update(ctx, configmapFound)
 		if err != nil {

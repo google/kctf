@@ -16,6 +16,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func isEqual(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler,
+	autoscaling *autoscalingv1.HorizontalPodAutoscaler) bool {
+	return reflect.DeepEqual(autoscalingFound.Spec, autoscaling.Spec)
+}
+
 func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
@@ -74,8 +79,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	}
 
 	if err == nil {
-		if autoscaling := generate(challenge); !reflect.DeepEqual(autoscalingFound.Spec,
-			autoscaling.Spec) {
+		if autoscaling := generate(challenge); !isEqual(autoscalingFound, autoscaling) {
 			autoscalingFound.Spec = autoscaling.Spec
 			err = client.Update(ctx, autoscalingFound)
 			if err != nil {

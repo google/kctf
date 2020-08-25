@@ -1,47 +1,56 @@
 package resources
 
 import (
-	"io/ioutil"
-	"os/exec"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func extractKey(address string) []byte {
-	// Where we will store the key
-	key, err := ioutil.ReadFile(address)
+var privateKey *ecdsa.PrivateKey = generateKey()
+
+func generateKey() *ecdsa.PrivateKey {
+	// Generate the public key
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+
+	// Check error
 	if err != nil {
-		log.Error(err, "Failed opening the key file")
+		log.Error(err, "Failed to generate private key")
 	}
 
-	return key
+	return privateKey
 }
 
-func generateKeys() {
-	// Generate the keys
-	// Generate first pow-bypass-key.pem
-	cmd := exec.Command("openssl", "ecparam", "-name", "prime256v1",
-		"-genkey", "-noout", "-out", "pow-bypass-key.pem")
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Error(err, "cmd.Run() failed\n")
+func secret(name string, nameMap string, private bool) *corev1.Secret {
+	var err error
+	var der []byte
+	var block pem.Block
+
+	// We take the right key
+	if private == true {
+		der, err = x509.MarshalPKCS8PrivateKey(privateKey)
+		block.Type = "EC PRIVATE KEY"
+	} else {
+		der, err = x509.MarshalPKIXPublicKey(privateKey.Public())
+		block.Type = "PUBLIC KEY"
 	}
 
-	// Then generate first pow-bypass-key-pub.pem
-	cmd = exec.Command("openssl", "ec", "-in", "pow-bypass-key.pem",
-		"-pubout", "-out", "pow-bypass-key-pub.pem")
-	_, err = cmd.CombinedOutput()
+	// Check error
 	if err != nil {
-		log.Error(err, "cmd.Run() failed\n")
+		log.Error(err, "Couldn't get DER form")
 	}
-}
 
-func secret(name string, nameMap string) *corev1.Secret {
-	// We extract the key
-	key := extractKey(nameMap)
-	data := map[string][]byte{nameMap: key}
+	block.Bytes = der
+
+	// Transform in bytes
+	pem := pem.EncodeToMemory(&block)
+
+	data := map[string][]byte{nameMap: pem}
 	// Then we create the secret
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,9 +64,9 @@ func secret(name string, nameMap string) *corev1.Secret {
 }
 
 func NewSecretPowBypass() runtime.Object {
-	return secret("pow-bypass", "pow-bypass-key.pem")
+	return secret("pow-bypass", "pow-bypass-key.pem", true)
 }
 
 func NewSecretPowBypassPub() runtime.Object {
-	return secret("pow-bypass-pub", "pow-bypass-key-pub.pem")
+	return secret("pow-bypass-pub", "pow-bypass-key-pub.pem", false)
 }
