@@ -10,6 +10,7 @@ import (
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
 	"github.com/google/kctf/pkg/controller/challenge/dns"
 	"github.com/google/kctf/pkg/controller/challenge/pow"
+	"github.com/google/kctf/pkg/controller/challenge/secrets"
 	"github.com/google/kctf/pkg/controller/challenge/service"
 	"github.com/google/kctf/pkg/controller/challenge/set"
 	"github.com/google/kctf/pkg/controller/challenge/status"
@@ -167,10 +168,9 @@ func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// We check if there's an error in each update
-	// TODO: add secrets.Update
 	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 		log logr.Logger, ctx context.Context) (bool, error){volumes.Update,
-		pow.Update, deployment.Update, service.Update, dns.Update,
+		pow.Update, secrets.Update, deployment.Update, service.Update, dns.Update,
 		autoscaling.Update, status.Update}
 
 	for _, updateFunction := range updateFunctions {

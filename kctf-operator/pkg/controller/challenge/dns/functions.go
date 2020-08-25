@@ -62,7 +62,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		Namespace: challenge.Namespace}, ingressFound)
 
 	// First we check if there's any ingress (web challenge)
-	if err_ingress != nil {
+	if err_ingress == nil {
 		// Then we check dns and domain name
 		if challenge.Spec.Network.Dns == false {
 			log.Info("Can't create certificate for web challenge, since DNS is disabled.")
