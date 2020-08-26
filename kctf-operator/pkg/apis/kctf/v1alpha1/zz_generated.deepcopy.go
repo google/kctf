@@ -90,8 +90,8 @@ func (in *ChallengeSpec) DeepCopyInto(out *ChallengeSpec) {
 		*out = new(v1.PodTemplate)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Claims != nil {
-		in, out := &in.Claims, &out.Claims
+	if in.PersistentVolumeClaims != nil {
+		in, out := &in.PersistentVolumeClaims, &out.PersistentVolumeClaims
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

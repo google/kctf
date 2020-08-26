@@ -116,8 +116,8 @@ func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime
 	namesFound := mapNameIdx(persistentVolumeClaimsFound)
 
 	// For comparing two persistentVolumeClaims, we will use DeepEqual
-	if challenge.Spec.Claims != nil {
-		for _, claim := range challenge.Spec.Claims {
+	if challenge.Spec.PersistentVolumeClaims != nil {
+		for _, claim := range challenge.Spec.PersistentVolumeClaims {
 			_, present := namesFound[claim]
 			if present == true {
 				delete(namesFound, claim)

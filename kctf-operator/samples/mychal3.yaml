@@ -30,5 +30,5 @@ spec:
         - name: sessions
           persistentVolumeClaim:
             claimName: mychal3-sessions
-  claims:
+  persistentVolumeClaims:
     - mychal3-sessions

@@ -108,9 +108,9 @@ type ChallengeSpec struct {
 	// +optional
 	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 
-	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
+	// Names of the desired PersistentVolumeClaims
 	// +optional
-	Claims []string `json:"claims,omitempty"`
+	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
