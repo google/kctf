@@ -16,7 +16,7 @@ FROM ubuntu:20.04
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends debootstrap \
     && rm -rf /var/lib/apt/lists/* \
-    && debootstrap --include python3 --variant minbase focal /chroot \
+    && debootstrap --include python3.8 --variant minbase focal /chroot \
     && echo nameserver 8.8.8.8 > /chroot/etc/resolv.conf \
     && chroot /chroot /usr/sbin/useradd --no-create-home -u 1000 user \
     && apt-get remove --purge -y debootstrap $(apt-mark showauto)

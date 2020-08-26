@@ -16,7 +16,7 @@ FROM gcr.io/kctf-docker/kctf-nsjail-bin:latest AS bin
 FROM ubuntu:20.04
 
 RUN apt-get update \
-    && apt-get install -yq --no-install-recommends uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates \
+    && apt-get install -yq --no-install-recommends python3.8 uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
