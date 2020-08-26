@@ -22,6 +22,10 @@ func find_idx(name string, containers []corev1.Container) int {
 func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
+	if challenge.Spec.Replicas != nil {
+		replicas = *challenge.Spec.Replicas
+	}
+
 	var readOnlyRootFilesystem = true
 
 	deployment := &appsv1.Deployment{
@@ -58,14 +62,14 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	// Changes what need to be changed in the Template and in the container challenge
 	deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
 		Labels: ls,
-		/*Annotations: map[string]string{
+		Annotations: map[string]string{
 			"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
-		},*/
+		},
 	}
 	// Set container ports based on the ports that were passed
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = ContainerPorts(challenge)
+	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
 	// Set other container's configurations
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.ImageTemplate
+	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
 	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{
 		Capabilities: &corev1.Capabilities{
 			Add: []corev1.Capability{
@@ -84,7 +88,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	/*volumeMounts := []corev1.VolumeMount{{
+	volumeMounts := []corev1.VolumeMount{{
 		Name:      "pow",
 		ReadOnly:  true,
 		MountPath: "/kctf/pow",
@@ -117,7 +121,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 			},
 		}}
 
-	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)*/
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)
 
 	return deployment
 }

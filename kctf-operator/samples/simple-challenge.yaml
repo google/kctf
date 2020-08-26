@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-challenge
+
+---
+
+apiVersion: kctf.dev/v1alpha1
+kind: Challenge
+metadata:
+  name: simple-challenge
+  namespace: simple-challenge
+spec:
+  imageTemplate: "quay.io/aliciafmachado/bash:latest"
+  deployed: false

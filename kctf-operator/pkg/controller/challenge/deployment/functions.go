@@ -4,18 +4,55 @@ package deployment
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func ContainerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
+func isEqual(deploymentFound *appsv1.Deployment,
+	deployment *appsv1.Deployment) bool {
+	return reflect.DeepEqual(deploymentFound.Spec.Template.Spec,
+		deployment.Spec.Template.Spec)
+}
+
+func numReplicas(challenge *kctfv1alpha1.Challenge) int32 {
+	if challenge.Spec.Deployed == false {
+		return 0
+	}
+
+	if challenge.Spec.HorizontalPodAutoscalerSpec != nil {
+		return -1
+	}
+
+	if challenge.Spec.Replicas != nil {
+		return *challenge.Spec.Replicas
+	}
+
+	return 1
+}
+
+func updateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32) bool {
+	// Updates the number of replicas according to being deployed or not and considering the autoscaling
+	replicas := numReplicas(challenge)
+
+	// replicas = -1 means autoscaling is enabled and deployed is true
+	if replicas != *currentReplicas && replicas != -1 {
+		*currentReplicas = replicas
+		return true
+	}
+
+	return false
+}
+
+func containerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
 	ports := []corev1.ContainerPort{}
 
 	for _, port := range challenge.Spec.Network.Ports {
@@ -35,7 +72,7 @@ func labelsForChallenge(name string) map[string]string {
 }
 
 // deploymentForChallenge returns a challenge Deployment object
-func Generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+func generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
 		return withHealthcheck(challenge)
 	} else {
@@ -43,9 +80,9 @@ func Generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	}
 }
 
-func Create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
-	log logr.Logger, ctx context.Context) (reconcile.Result, error) {
-	dep := Generate(challenge)
+func create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	dep := generate(challenge)
 	log.Info("Creating a new Deployment", "Deployment.Namespace",
 		dep.Namespace, "Deployment.Name", dep.Name)
 
@@ -57,9 +94,56 @@ func Create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime
 	if err != nil {
 		log.Error(err, "Failed to create new Deployment", "Deployment.Namespace",
 			dep.Namespace, "Deployment.Name", dep.Name)
-		return reconcile.Result{}, err
+		return false, err
 	}
 
 	// Deployment created successfully - return and requeue
-	return reconcile.Result{Requeue: true}, nil
+	return true, nil
+}
+
+func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	// Flags if there was a change
+	change := false
+
+	deploymentFound := &appsv1.Deployment{}
+	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, deploymentFound)
+
+	// Just enters here if it's a new deployment
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		return create(challenge, client, scheme, log, ctx)
+
+	} else if err != nil {
+		log.Error(err, "Couldn't get the deployment", "Challenge Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return false, err
+	}
+
+	// Checks if the deployment is correctly set
+	if dep := generate(challenge); !isEqual(deploymentFound, dep) {
+		change = true
+		deploymentFound.Spec.Template.Spec = dep.Spec.Template.Spec
+	}
+
+	// Ensure if the challenge is ready and, if not, set replicas to 0
+	changedReplicas := updateNumReplicas(challenge, deploymentFound.Spec.Replicas)
+
+	change = change || changedReplicas
+
+	// Updates deployment with client
+	if change == true {
+		err = client.Update(ctx, deploymentFound)
+		if err != nil {
+			log.Error(err, "Failed to update deployment", "Challenge Name: ",
+				challenge.Name, " with namespace ", challenge.Namespace)
+			return false, err
+		}
+		log.Info("Deployment updated succesfully", "Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return true, nil
+	}
+
+	return false, nil
 }

@@ -10,13 +10,13 @@ import (
 )
 
 type PortSpec struct {
-	//+kubebuilder:validation:Optional
+	//+optional
 	Name string `json:"name"`
 
 	// TargetPort is not optional
 	TargetPort intstr.IntOrString `json:"targetPort"`
 
-	//+kubebuilder:validation:Optional
+	//+optional
 	Port int32 `json:"port"`
 
 	// Protocol is not optional
@@ -32,8 +32,11 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=false
 	Dns bool `json:"dns,omitempty"`
 
+	// +optional
+	DomainName string `json:"domainName,omitempty"`
+
 	// By default, one port is set with default values
-	// +kubebuilder:validation:Optional
+	// +optional
 	Ports []PortSpec `json:"ports,omitempty"`
 }
 
@@ -71,16 +74,20 @@ type ChallengeSpec struct {
 
 	// Image used by the deployment
 	// Not optional and image should be passed by user (by now)
-	ImageTemplate string `json:"imageTemplate"`
+	Image string `json:"image"`
 
 	// Shows if the challenge is ready to be deployed, if not,
 	// it sets the replicas to 0
 	// +kubebuilder:default:=false
 	Deployed bool `json:"deployed,omitempty"`
 
+	// The desired quantity of replicas if horizontal pod autoscaler is disabled
+	// +kubebuilder:default:=1
+	Replicas *int32 `json:"replicas,omitempty"`
+
 	// The quantity of seconds of the proof of work
 	// +kubebuilder:default:=0
-	PowDifficultySeconds int32 `json:"powDifficultySeconds,omitempty"`
+	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
 
 	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
 	// +optional
@@ -101,21 +108,22 @@ type ChallengeSpec struct {
 	// +optional
 	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 
-	// PersistentVolumeClaim are used to determine how much resources the author requires for its challenge
-	// Default value: size 1Gb
+	// Names of the desired PersistentVolumeClaims
 	// +optional
-	PersistentVolumeClaims *corev1.PersistentVolumeClaimList `json:"persistentVolumeClaim,omitempty"`
+	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
 type ChallengeStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// Says if the challenge is up to date or being updated
+	// +kubebuilder:default:="up-to-date"
+	Status string `json:"status"`
 
-	// +kubebuilder:validation:Optional
-	Status string `json:"challengeStatus"`
-	// TODO: implement status for the challenges like READY and etc..
+	// Shows healthcheck returns
+	// +kubebuilder:default:="disabled"
+	Health string `json:"health"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -123,6 +131,10 @@ type ChallengeStatus struct {
 // Challenge is the Schema for the challenges API
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=challenges,scope=Namespaced
+// +kubebuilder:printcolumn:name="Health",type=string,JSONPath=`.status.health`
+// +kubebuilder:printcolumn:name="Status", type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Deployed",type=boolean,JSONPath=`.spec.deployed`
+// +kubebuilder:printcolumn:name="Public",type=boolean,JSONPath=`.spec.network.public`
 type Challenge struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
