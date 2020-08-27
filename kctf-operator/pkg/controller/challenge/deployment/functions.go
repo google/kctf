@@ -23,35 +23,6 @@ func isEqual(deploymentFound *appsv1.Deployment,
 		deployment.Spec.Template.Spec)
 }
 
-func numReplicas(challenge *kctfv1alpha1.Challenge) int32 {
-	if challenge.Spec.Deployed == false {
-		return 0
-	}
-
-	if challenge.Spec.HorizontalPodAutoscalerSpec != nil {
-		return -1
-	}
-
-	if challenge.Spec.Replicas != nil {
-		return *challenge.Spec.Replicas
-	}
-
-	return 1
-}
-
-func updateNumReplicas(challenge *kctfv1alpha1.Challenge, currentReplicas *int32) bool {
-	// Updates the number of replicas according to being deployed or not and considering the autoscaling
-	replicas := numReplicas(challenge)
-
-	// replicas = -1 means autoscaling is enabled and deployed is true
-	if replicas != *currentReplicas && replicas != -1 {
-		*currentReplicas = replicas
-		return true
-	}
-
-	return false
-}
-
 func containerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
 	ports := []corev1.ContainerPort{}
 
@@ -128,9 +99,12 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	}
 
 	// Ensure if the challenge is ready and, if not, set replicas to 0
-	changedReplicas := updateNumReplicas(challenge, deploymentFound.Spec.Replicas)
+	changedReplicas := updateNumReplicas(deploymentFound.Spec.Replicas, challenge)
+	// Ensure that the images of the challenge and of the healthcheck are the same as the ones in the CR
+	changedImage := updateImages(deploymentFound, challenge)
 
-	change = change || changedReplicas
+	// Checks if there was a change in the deployment
+	change = change || changedReplicas || changedImage
 
 	// Updates deployment with client
 	if change == true {

@@ -47,18 +47,19 @@ spec:
               deployed:
                 default: false
                 description: Shows if the challenge is ready to be deployed, if not,
-                  it sets the replicas to 0
+                  it sets the replicas to 0 and disables services/ingress
                 type: boolean
               healthcheck:
                 description: Healthcheck checks if the challenge works If empty, healthcheck
                   is not enabled by default
                 properties:
-                  container:
-                    default: healthcheck
-                    type: string
                   enabled:
                     default: false
                     type: boolean
+                  image:
+                    default: healthcheck
+                    description: Image for the healthcheck container
+                    type: string
                 type: object
               horizontalPodAutoscalerSpec:
                 description: Autoscaling features determine quantity of replicas and
@@ -88,8 +89,8 @@ spec:
                 - maxReplicas
                 type: object
               image:
-                description: Image used by the deployment Not optional and image should
-                  be passed by user (by now)
+                default: challenge
+                description: Image used by the deployment
                 type: string
               network:
                 description: 'The network specifications: if it''s public or not,
@@ -98,15 +99,15 @@ spec:
                   dns:
                     default: false
                     type: boolean
-                  domainName:
-                    type: string
                   ports:
                     description: By default, one port is set with default values
                     items:
                       properties:
                         name:
+                          description: Name of the port
                           type: string
                         port:
+                          description: Port
                           format: int32
                           type: integer
                         protocol:
@@ -6333,8 +6334,6 @@ spec:
                   is disabled
                 format: int32
                 type: integer
-            required:
-            - image
             type: object
           status:
             description: ChallengeStatus defines the observed state of Challenge
@@ -6350,9 +6349,6 @@ spec:
                   tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
                   Says if the challenge is up to date or being updated'
                 type: string
-            required:
-            - health
-            - status
             type: object
         type: object
     served: true

@@ -64,7 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
-	objs := []runtime.Object{&corev1.Pod{}, &appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
+	objs := []runtime.Object{&appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
 		&corev1.Service{}, &netv1beta1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
 		&corev1.ConfigMap{}, &corev1.Secret{}}
 

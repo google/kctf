@@ -49,7 +49,7 @@ func withHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		idx_healthcheck = len(dep.Spec.Template.Spec.Containers) - 1
 	}
 
-	dep.Spec.Template.Spec.Containers[idx_healthcheck].Image = "healthcheck"
+	dep.Spec.Template.Spec.Containers[idx_healthcheck].Image = challenge.Spec.Healthcheck.Image
 	dep.Spec.Template.Spec.Containers[idx_healthcheck].Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			"cpu": *resource.NewMilliQuantity(1000, resource.DecimalSI),

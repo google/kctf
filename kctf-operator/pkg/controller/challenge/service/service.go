@@ -10,7 +10,7 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
+func generate(domainName string, challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
 	// Service object
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -32,7 +32,7 @@ func generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 		},
 		Spec: netv1beta1.IngressSpec{
 			Rules: []netv1beta1.IngressRule{{
-				Host: challenge.Name + "-http." + challenge.Spec.Network.DomainName,
+				Host: challenge.Name + "-http." + domainName,
 			}},
 		},
 	}
@@ -82,11 +82,11 @@ func generate(challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.I
 	}
 
 	// Add annotation in the case it's a web challenge
-	if ingress.Spec.Backend != nil && challenge.Spec.Network.DomainName != "" &&
+	if ingress.Spec.Backend != nil && domainName != "" &&
 		challenge.Spec.Network.Dns == true {
 		service.ObjectMeta.Annotations =
 			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name +
-				"-tcp." + challenge.Spec.Network.DomainName}
+				"-tcp." + domainName}
 	}
 	return service, ingress
 }
