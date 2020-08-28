@@ -55,7 +55,7 @@ for dir in ${CHAL_DIR}/*; do
   
   PUBLIC=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.network.public}})
   
-  if [ ! $(PUBLIC) = "true" ]; then
+  if [ ! ${PUBLIC} = "true" ]; then
     continue
   fi
 
