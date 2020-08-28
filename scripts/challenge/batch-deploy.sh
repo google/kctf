@@ -22,20 +22,11 @@ echo 'config loaded'
 echo "CLUSTER_NAME: ${CLUSTER_NAME}"
 
 for dir in ${CHAL_DIR}/*; do
-  if [ ! -f "${dir}/config/chal.conf" ]; then
+  if [ ! -f "${dir}/challenge.yaml" ]; then
     continue
   fi
-  source "${dir}/config/chal.conf"
 
   CHALLENGE_NAME=$(basename "${dir}")
-
-  if [ ! "${DEPLOY}" = "true" ]; then
-    echo
-    echo "= Deleting all resources for ${CHALLENGE_NAME} ="
-    echo
-    make -C ${dir} stop
-    continue
-  fi
 
   echo
   echo "= Deploying challenge ${CHALLENGE_NAME} ="
@@ -50,20 +41,23 @@ echo "ctrl+c if you don't care"
 echo
 
 for dir in ${CHAL_DIR}/*; do
-  if [ ! -f "${dir}/config/chal.conf" ]; then
-    continue
-  fi
-  source "${dir}/config/chal.conf"
-
-  if [ ! "${DEPLOY}" = "true" ]; then
-    continue
-  fi
-
-  if [ ! "${PUBLIC}" = "true" ]; then
-    continue
-  fi
-
   CHALLENGE_NAME=$(basename "${dir}")
+
+  if [ ! -f "${dir}/challenge.yaml" ]; then
+    continue
+  fi
+
+  DEPLOYED=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.deployed}})
+  
+  if [ ! ${DEPLOYED} = "true" ]; then
+    continue
+  fi
+  
+  PUBLIC=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.network.public}})
+  
+  if [ ! $(PUBLIC) = "true" ]; then
+    continue
+  fi
 
   LB_IP=$(make -s -C "${dir}" ip)
   echo "${CHALLENGE_NAME}: ${LB_IP}"

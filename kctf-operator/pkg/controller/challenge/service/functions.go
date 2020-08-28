@@ -151,17 +151,19 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	domainName := utils.GetDomainName(challenge, client, log, ctx)
 
 	// Just enter here if the service doesn't exist yet:
-	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
+	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true &&
+		challenge.Spec.Deployed == true {
 		// Define a new service if the challenge is public
 		return create(challenge, client, scheme, log, ctx, err_ingress)
 
 		// When service exists and public is changed to false
-	} else if err == nil && challenge.Spec.Network.Public == false {
+	} else if err == nil && (challenge.Spec.Network.Public == false ||
+		challenge.Spec.Deployed == false) {
 		return delete(serviceFound, ingressFound, client, scheme, log, ctx, err_ingress)
 	}
 
 	// Now we check if the service and the ingress are according to the CR:
-	if challenge.Spec.Network.Public {
+	if challenge.Spec.Network.Public && challenge.Spec.Deployed == true {
 		serv, ingress := generate(domainName, challenge)
 		if !isServiceEqual(serviceFound, serv) {
 			copyPorts(serviceFound, serv)
