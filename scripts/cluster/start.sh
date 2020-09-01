@@ -58,7 +58,7 @@ if [ -z "${GCS_GSA_EMAIL}" ]; then
 fi
 
 # Creating CRD, rbac and operator
-kubectl create -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
+kubectl apply -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/rbac.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/operator.yaml"
 

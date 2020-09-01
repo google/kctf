@@ -34,32 +34,3 @@ for dir in ${CHAL_DIR}/*; do
 
   make -C "${dir}" start
 done
-
-echo
-echo '= challenges deployed, waiting for load balancers ='
-echo "ctrl+c if you don't care"
-echo
-
-for dir in ${CHAL_DIR}/*; do
-  CHALLENGE_NAME=$(basename "${dir}")
-
-  if [ ! -f "${dir}/challenge.yaml" ]; then
-    continue
-  fi
-
-  DEPLOYED=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.deployed}})
-  
-  if [ ! ${DEPLOYED} = "true" ]; then
-    continue
-  fi
-  
-  PUBLIC=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.network.public}})
-  
-  if [ ! ${PUBLIC} = "true" ]; then
-    continue
-  fi
-
-  LB_IP=$(make -s -C "${dir}" ip)
-  echo "${CHALLENGE_NAME}: ${LB_IP}"
-
-done
