@@ -32,14 +32,17 @@ export PROJECT:=CONFIGMISSING
 export CLUSTER_NAME:=CONFIGMISSING
 export ZONE:=CONFIGMISSING
 
+-include $(HOME)/.config/kctf/cluster.conf
+KUBECONFIG=$(HOME)/.config/kctf/kube.conf
+export KUBECONFIG
+
 export CHALLENGE_NAME:=$(shell basename ${CURDIR})
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
 export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
-HEALTHCHECK=
-MAYBE_REMOTE_HEALTHCHECK_IMAGE=
-MAYBE_HEALTHCHECK=
+MAYBE_REMOTE_HEALTHCHECK_IMAGE=${CLUSTER_GEN}/remote-healthcheck-image
+MAYBE_HEALTHCHECK=${CLUSTER_GEN}/healthcheck-image-pushed ${CLUSTER_GEN}/remote-healthcheck-image
 
 docker: .gen/challenge-image
 
@@ -136,39 +139,26 @@ clean:
 	rm -R challenge/.gen/* || true
 	rm -R healthcheck/.gen/* || true
 
-# TODO confirm that the dots are correct!
-.deploy: .challenge .gen/k8s .deployment .cluster-config
+.deploy: .challenge .deployment .cluster-config
 
-.challenge:
+.challenge: .cluster-config
 	# Applies the yaml for the challenge
-	kubectl apply -f config/challenge.yaml
-	# Updates healthcheck images if necessary
-	HEALTHCHECK=$(kubectl get -o template challenge/${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --template={{.spec.healthcheck.enabled}})
-	
-	ifeq ($(HEALTHCHECK), true)
-		MAYBE_REMOTE_HEALTHCHECK_IMAGE=${CLUSTER_GEN}/remote-healthcheck-image
-		MAYBE_HEALTHCHECK=${CLUSTER_GEN}/healthcheck-image-pushed ${CLUSTER_GEN}/remote-healthcheck-image
-	endif
+	kubectl apply -f challenge.yaml
 
-.deployment: ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
+.deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
 	# update the challenge container if the image changed
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
 	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
 	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
-	  # TODO: check if this way of passing the images is ok
-	  #kubectl set image "deployment/${CHALLENGE_NAME}" "challenge=$${PUSHED_IMAGE}"
-	  kubectl patch challenge bash --namespace=bash --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":"$${PUSHED_IMAGE}"}]'
+	  kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":'"$${PUSHED_IMAGE}"'}]'
 	fi
-ifeq ($(HEALTHCHECK), true)
+	
 	# update the healthcheck container if the image changed
 	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
 	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
-	  # TODO: check if this way of passing the images is ok
-	  #kubectl set image "deployment/${CHALLENGE_NAME}" "healthcheck=$${PUSHED_HEALTHCHECK_IMAGE}"
-	  kubectl patch challenge bash --namespace=bash --type='json' -p='[{"op":"replace", "path": "/spec/healthcheck/image", "value":"$${PUSHED_HEALTHCHECK_IMAGE}"}]'
+	  kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/healthcheck/image", "value":'"$${PUSHED_HEALTHCHECK_IMAGE}"'}]'
 	fi
-endif
 
 .gen/challenge-image: challenge/.gen/docker-image
 	NEW_ID=$$(cat challenge/.gen/docker-image)
@@ -268,23 +258,13 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
 # This target doesn't live in a cluster specific directory since we need the name to be predictable
 # To make up for it, we FORCE execution every time
 .gen/k8s: ${CLUSTER_GEN}/remote-image ${MAYBE_REMOTE_HEALTHCHECK_IMAGE} | .cluster-config
-	mkdir -p $@
-	# TODO: which mkdirs should i keep?
 	# deployment
 	mkdir -p $@/deployment
 
 	# set the image version to the currently deployed for challenge
-	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
-	CHAL_IMAGE=($${CHAL_IMAGE//:/ })
-	#echo -e "\nimages:\n- name: challenge\n  newName: $${CHAL_IMAGE[0]}\n  newTag: \"$${CHAL_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
-	# TODO: check if this way of passing the images is ok
-	kubectl patch challenge bash --namespace=bash --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":"$${CHAL_IMAGE[0]}:$${CHAL_IMAGE[1]}"}]'
-
+	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)" # I tried this and don't work
+	kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":'"$${CHAL_IMAGE}"'}]'
+	
 	# set the image version to the currently deployed for healthcheck
-ifeq ($(HEALTHCHECK), true)
 	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
-	HEALTHCHECK_IMAGE=($${HEALTHCHECK_IMAGE//:/ })
-	#echo -e "- name: healthcheck\n  newName: $${HEALTHCHECK_IMAGE[0]}\n  newTag: \"$${HEALTHCHECK_IMAGE[1]}\"" >> "$@/deployment/kustomization.yaml"
-	# TODO: check if this way of passing the images is ok
-	kubectl patch challenge bash --namespace=bash --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":"$${HEALTHCHECK_IMAGE[0]}:$$$${HEALTHCHECK_IMAGE[1]}"}]'
-endif
+	kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/healthcheck/image", "value":'"$${HEALTHCHECK_IMAGE}"'}]'
