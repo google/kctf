@@ -93,6 +93,7 @@ type ChallengeSpec struct {
 
 	// Healthcheck checks if the challenge works
 	// If empty, healthcheck is not enabled by default
+	// +kubebuilder:validation:Required
 	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
 
 	// Autoscaling features determine quantity of replicas and CPU utilization
@@ -113,7 +114,7 @@ type ChallengeStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// Says if the challenge is up to date or being updated
 	// +kubebuilder:default:="up-to-date"
-	Status string `json:"status"`
+	Status corev1.PodPhase `json:"status"`
 
 	// Shows healthcheck returns
 	// +kubebuilder:default:="disabled"

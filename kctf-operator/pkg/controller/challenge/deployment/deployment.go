@@ -2,25 +2,15 @@ package deployment
 
 import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Find index of the container with a specific name in a list of containers
-func find_idx(name string, containers []corev1.Container) int {
-	for i, container := range containers {
-		if container.Name == name {
-			return i
-		}
-	}
-	return -1
-}
-
 // Deployment without Healthcheck
 func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
-	ls := labelsForChallenge(challenge.Name)
 	var replicas int32 = 1
 	if challenge.Spec.Replicas != nil {
 		replicas = *challenge.Spec.Replicas
@@ -32,11 +22,12 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
 			Namespace: challenge.Namespace,
+			Labels:    map[string]string{"app": challenge.Name},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
+				MatchLabels: map[string]string{"app": challenge.Name},
 			},
 		},
 	}
@@ -46,7 +37,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	}
 
 	// Find the index of container challenge if existent:
-	idx_challenge := find_idx("challenge", deployment.Spec.Template.Spec.Containers)
+	idx_challenge := utils.Find_idx("challenge", deployment.Spec.Template.Spec.Containers)
 
 	// if idx_challenge is -1, it means that pod template doesn't contain a container called challenge
 	if idx_challenge == -1 {
@@ -61,7 +52,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 
 	// Changes what need to be changed in the Template and in the container challenge
 	deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
-		Labels: ls,
+		Labels: map[string]string{"app": challenge.Name},
 		Annotations: map[string]string{
 			"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
 		},

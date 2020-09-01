@@ -36,12 +36,6 @@ func containerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
 	return ports
 }
 
-// labelsForChallenge returns the labels for selecting the resources
-// belonging to the given challenge CR name.
-func labelsForChallenge(name string) map[string]string {
-	return map[string]string{"app": "challenge", "challenge_cr": name}
-}
-
 // deploymentForChallenge returns a challenge Deployment object
 func generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {

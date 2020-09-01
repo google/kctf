@@ -6334,6 +6334,8 @@ spec:
                   is disabled
                 format: int32
                 type: integer
+            required:
+            - healthcheck
             type: object
           status:
             description: ChallengeStatus defines the observed state of Challenge

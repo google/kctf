@@ -16,9 +16,11 @@ func generate(domainName string, challenge *kctfv1alpha1.Challenge) (*corev1.Ser
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
 			Namespace: challenge.Namespace,
+			Labels:    map[string]string{"app": challenge.Name},
 		},
 		Spec: corev1.ServiceSpec{
-			Type: "LoadBalancer",
+			Selector: map[string]string{"app": challenge.Name},
+			Type:     "LoadBalancer",
 		},
 	}
 
