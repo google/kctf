@@ -15,6 +15,7 @@ import (
 	"github.com/google/kctf/pkg/controller/challenge/set"
 	"github.com/google/kctf/pkg/controller/challenge/status"
 	"github.com/google/kctf/pkg/controller/challenge/volumes"
+	"github.com/prometheus/common/log"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -63,7 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
-	objs := []runtime.Object{&corev1.Pod{}, &appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
+	objs := []runtime.Object{&appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
 		&corev1.Service{}, &netv1beta1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
 		&corev1.ConfigMap{}, &corev1.Secret{}}
 
@@ -107,12 +108,18 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
+	// Checks if namespace is acceptable and if not, it deletes the challenge
 	if !isNamespaceAcceptable(request.NamespacedName) {
 		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace.",
 			request.Name, " with namespace ", request.Namespace)
 		reqLogger.Info("Deleting challenge")
-		r.client.Delete(ctx, challenge)
-		return reconcile.Result{}, nil
+		err = r.client.Delete(ctx, challenge)
+		if err != nil {
+			status.Update(false, err, challenge, r.client,
+				r.log, ctx)
+			log.Error(err, "Failed to delete challenge")
+		}
+		return reconcile.Result{}, err
 	}
 
 	// Set default values not configured by kubebuilder
@@ -121,6 +128,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	// Ensure that the configurations in the CR are followed - Checks done everytime the CR is updated
 	// change says if something in the configurations was different from what was found in the deployment
 	requeue, err = updateConfigurations(challenge, r.client, r.scheme, r.log, ctx)
+	status.Update(requeue, err, challenge, r.client, r.log, ctx)
 
 	if err != nil {
 		reqLogger.Error(err, "Failed to update Challenge")
@@ -171,7 +179,7 @@ func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, s
 	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 		log logr.Logger, ctx context.Context) (bool, error){volumes.Update,
 		pow.Update, secrets.Update, deployment.Update, service.Update, dns.Update,
-		autoscaling.Update, status.Update}
+		autoscaling.Update}
 
 	for _, updateFunction := range updateFunctions {
 		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)

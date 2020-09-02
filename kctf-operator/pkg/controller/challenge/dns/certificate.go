@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func generate(challenge *kctfv1alpha1.Challenge) *netgkev1beta1.ManagedCertificate {
+func generate(domainName string, challenge *kctfv1alpha1.Challenge) *netgkev1beta1.ManagedCertificate {
 	certificate := &netgkev1beta1.ManagedCertificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kctf-certificate",
@@ -14,7 +14,7 @@ func generate(challenge *kctfv1alpha1.Challenge) *netgkev1beta1.ManagedCertifica
 		},
 		Spec: netgkev1beta1.ManagedCertificateSpec{
 			Domains: []string{
-				challenge.Name + "." + challenge.Spec.Network.DomainName,
+				challenge.Name + "." + domainName,
 			},
 		},
 	}

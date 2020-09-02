@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,8 @@ func copyPorts(found *corev1.Service, wanted *corev1.Service) {
 
 func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context, err_ingress error) (bool, error) {
-	serv, ingress := generate(challenge)
+	domainName := utils.GetDomainName(challenge, client, log, ctx)
+	serv, ingress := generate(domainName, challenge)
 	// Create the service
 	log.Info("Creating a new Service", "Service.Namespace",
 		serv.Namespace, "Service.Name", serv.Name)
@@ -68,7 +70,7 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	// Create ingress, if there's any https
 	if errors.IsNotFound(err_ingress) && ingress.Spec.Backend != nil {
 		// If there's a port HTTPS
-		if challenge.Spec.Network.Dns == true && challenge.Spec.Network.DomainName != "" {
+		if challenge.Spec.Network.Dns == true && domainName != "" {
 			// Create ingress in the client
 			log.Info("Creating a new Ingress", "Ingress Namespace", ingress.Namespace,
 				"Ingress Name", ingress.Name)
@@ -91,7 +93,7 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
 			}
 
-			if challenge.Spec.Network.DomainName == "" {
+			if domainName == "" {
 				log.Info("Failed to create Ingress instance, domain name wasn't set. Challenge won't be reconciled here.",
 					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
 			}
@@ -145,19 +147,24 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	err_ingress := client.Get(ctx, types.NamespacedName{Name: "https",
 		Namespace: challenge.Namespace}, ingressFound)
 
+	// Get the domainName
+	domainName := utils.GetDomainName(challenge, client, log, ctx)
+
 	// Just enter here if the service doesn't exist yet:
-	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true {
+	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true &&
+		challenge.Spec.Deployed == true {
 		// Define a new service if the challenge is public
 		return create(challenge, client, scheme, log, ctx, err_ingress)
 
 		// When service exists and public is changed to false
-	} else if err == nil && challenge.Spec.Network.Public == false {
+	} else if err == nil && (challenge.Spec.Network.Public == false ||
+		challenge.Spec.Deployed == false) {
 		return delete(serviceFound, ingressFound, client, scheme, log, ctx, err_ingress)
 	}
 
 	// Now we check if the service and the ingress are according to the CR:
-	if challenge.Spec.Network.Public {
-		serv, ingress := generate(challenge)
+	if challenge.Spec.Network.Public && challenge.Spec.Deployed == true {
+		serv, ingress := generate(domainName, challenge)
 		if !isServiceEqual(serviceFound, serv) {
 			copyPorts(serviceFound, serv)
 			err = client.Update(ctx, serviceFound)

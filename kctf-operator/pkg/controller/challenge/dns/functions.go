@@ -6,6 +6,7 @@ import (
 	netgkev1beta1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1beta1"
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,10 +20,10 @@ func isEqual(certificateFound *netgkev1beta1.ManagedCertificate,
 	return certificateFound.Spec.Domains[0] == certificate.Spec.Domains[0]
 }
 
-func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
-	certificate := generate(challenge)
+	certificate := generate(domainName, challenge)
 	log.Info("Creating a Certificate", "Certificate name: ",
 		certificate.Name, " with namespace ", certificate.Namespace)
 
@@ -66,6 +67,9 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	err_ingress := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
 		Namespace: challenge.Namespace}, ingressFound)
 
+	// We get the configmap that contains the domain name and get it
+	domainName := utils.GetDomainName(challenge, client, log, ctx)
+
 	// First we check if there's any ingress (web challenge)
 	if err_ingress == nil {
 		// Then we check dns and domain name
@@ -73,19 +77,19 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 			log.Info("Can't create certificate for web challenge, since DNS is disabled.")
 		}
 
-		if challenge.Spec.Network.DomainName == "" {
+		if domainName == "" {
 			log.Info("Can't create certificate for web challenge, since DomainName is empty.")
 		}
 
 		// If there's no certificate, we create one
-		if challenge.Spec.Network.Dns == true && challenge.Spec.Network.DomainName != "" {
+		if challenge.Spec.Network.Dns == true && domainName != "" {
 			if errors.IsNotFound(err) {
-				return create(challenge, client, scheme, log, ctx)
+				return create(domainName, challenge, client, scheme, log, ctx)
 			}
 
 			// If there is, we update it if necessary
 			if err == nil {
-				if certificate := generate(challenge); !isEqual(certificateFound, certificate) {
+				if certificate := generate(domainName, challenge); !isEqual(certificateFound, certificate) {
 					certificateFound.Spec.Domains[0] = certificate.Spec.Domains[0]
 					err = client.Update(ctx, certificateFound)
 					if err != nil {
@@ -103,7 +107,7 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 
 	// If there's no ingress or dns/domainName is disabled/empty and there's a certificate, we delete it
 	if err == nil && (errors.IsNotFound(err_ingress) ||
-		challenge.Spec.Network.Dns == false || challenge.Spec.Network.DomainName == "") {
+		challenge.Spec.Network.Dns == false || domainName == "") {
 		return delete(certificateFound, client, scheme, log, ctx)
 	}
 

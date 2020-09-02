@@ -57,9 +57,13 @@ if [ -z "${GCS_GSA_EMAIL}" ]; then
   done
 fi
 
+# Creating CRD, rbac and operator
+kubectl apply -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
+kubectl apply -f "${DIR}/kctf-operator/deploy/rbac.yaml"
+kubectl apply -f "${DIR}/kctf-operator/deploy/operator.yaml"
+
 GCS_KSA_NAME="gcsfuse-sa"
 
-kubectl create serviceaccount --namespace kube-system ${GCS_KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
 gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL}
 kubectl annotate serviceaccount --namespace kube-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite
 
@@ -76,11 +80,6 @@ fi
 
 kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl apply -f "${DIR}/config/daemon-gcsfuse.yaml"
-kubectl apply -f "${DIR}/config/apparmor.yaml"
-kubectl apply -f "${DIR}/config/daemon.yaml"
-kubectl apply -f "${DIR}/config/network-policy.yaml"
-kubectl apply -f "${DIR}/config/allow-dns.yaml"
 kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
 
 # Cloud DNS
@@ -106,12 +105,10 @@ then
 
   DNS_KSA_NAME="external-dns-sa"
 
-  kubectl create serviceaccount --namespace kube-system ${DNS_KSA_NAME} --dry-run=client -o yaml | kubectl apply -f -
   gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${DNS_KSA_NAME}]" ${DNS_GSA_EMAIL}
   kubectl annotate serviceaccount --namespace kube-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite
 
   gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin
 
   kubectl create configmap --namespace kube-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --dry-run=client -o yaml | kubectl apply -f -
-  kubectl apply -f "${DIR}/config/external-dns.yaml"
 fi

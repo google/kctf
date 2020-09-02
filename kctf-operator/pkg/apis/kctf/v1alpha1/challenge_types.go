@@ -1,6 +1,6 @@
 // This file is responsible for generating CRD (Custom Resource Definition)
 // kubebuilder might be used to set: default values, optional fields and etc
-// +kubebuilder:validation:Required
+// +kubebuilder:validation:Optional
 package v1alpha1
 
 import (
@@ -10,16 +10,18 @@ import (
 )
 
 type PortSpec struct {
-	//+optional
+	// Name of the port
 	Name string `json:"name"`
 
 	// TargetPort is not optional
+	// +kubebuilder:validation:Required
 	TargetPort intstr.IntOrString `json:"targetPort"`
 
-	//+optional
+	// Port
 	Port int32 `json:"port"`
 
 	// Protocol is not optional
+	// +kubebuilder:validation:Required
 	Protocol corev1.Protocol `json:"protocol"`
 }
 
@@ -32,11 +34,7 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=false
 	Dns bool `json:"dns,omitempty"`
 
-	// +optional
-	DomainName string `json:"domainName,omitempty"`
-
 	// By default, one port is set with default values
-	// +optional
 	Ports []PortSpec `json:"ports,omitempty"`
 }
 
@@ -46,8 +44,9 @@ type HealthcheckSpec struct {
 	// +kubebuilder:default:=false
 	Enabled bool `json:"enabled,omitempty"`
 
+	// Image for the healthcheck container
 	// +kubebuilder:default:="healthcheck"
-	Container string `json:"container,omitempty"`
+	Image string `json:"image,omitempty"`
 }
 
 // HorizontalPodAutoscalerSpec without ScaleTargetRef
@@ -60,10 +59,10 @@ type HorizontalPodAutoscalerSpec struct {
 	// +optional
 	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
 	// upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
+	// +kubebuilder:validation:Required
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
 	// target average CPU utilization (represented as a percentage of requested CPU) over all the pods;
 	// if not specified the default autoscaling policy will be used.
-	// +optional
 	TargetCPUUtilizationPercentage *int32 `json:"targetCPUUtilizationPercentage,omitempty" protobuf:"varint,4,opt,name=targetCPUUtilizationPercentage"`
 }
 
@@ -73,11 +72,11 @@ type ChallengeSpec struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// Image used by the deployment
-	// Not optional and image should be passed by user (by now)
+	// +kubebuilder:default:="challenge"
 	Image string `json:"image"`
 
 	// Shows if the challenge is ready to be deployed, if not,
-	// it sets the replicas to 0
+	// it sets the replicas to 0 and disables services/ingress
 	// +kubebuilder:default:=false
 	Deployed bool `json:"deployed,omitempty"`
 
@@ -90,26 +89,22 @@ type ChallengeSpec struct {
 	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
 
 	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
-	// +optional
 	Network NetworkSpec `json:"network,omitempty"`
 
 	// Healthcheck checks if the challenge works
 	// If empty, healthcheck is not enabled by default
-	// +optional
+	// +kubebuilder:validation:Required
 	Healthcheck HealthcheckSpec `json:"healthcheck,omitempty"`
 
 	// Autoscaling features determine quantity of replicas and CPU utilization
 	// If empty, autoscaling is not enabled by default
-	// +optional
 	HorizontalPodAutoscalerSpec *HorizontalPodAutoscalerSpec `json:"horizontalPodAutoscalerSpec,omitempty"`
 
 	// PodTemplate is used to set the template for the deployment's pod,
 	// so that an author can add volumeMounts and other extra features
-	// +optional
 	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
 
 	// Names of the desired PersistentVolumeClaims
-	// +optional
 	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
 }
 
@@ -119,7 +114,7 @@ type ChallengeStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// Says if the challenge is up to date or being updated
 	// +kubebuilder:default:="up-to-date"
-	Status string `json:"status"`
+	Status corev1.PodPhase `json:"status"`
 
 	// Shows healthcheck returns
 	// +kubebuilder:default:="disabled"

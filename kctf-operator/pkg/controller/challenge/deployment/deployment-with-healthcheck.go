@@ -2,6 +2,7 @@ package deployment
 
 import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
@@ -12,8 +13,8 @@ import (
 func withHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	dep := deployment(challenge)
 
-	idx_challenge := find_idx("challenge", dep.Spec.Template.Spec.Containers)
-	idx_healthcheck := find_idx("healthcheck", dep.Spec.Template.Spec.Containers)
+	idx_challenge := utils.IndexOfContainer("challenge", dep.Spec.Template.Spec.Containers)
+	idx_healthcheck := utils.IndexOfContainer("healthcheck", dep.Spec.Template.Spec.Containers)
 
 	// Get the container with the challenge and add healthcheck configurations
 	dep.Spec.Template.Spec.Containers[idx_challenge].LivenessProbe = &corev1.Probe{
@@ -49,7 +50,7 @@ func withHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		idx_healthcheck = len(dep.Spec.Template.Spec.Containers) - 1
 	}
 
-	dep.Spec.Template.Spec.Containers[idx_healthcheck].Image = "healthcheck"
+	dep.Spec.Template.Spec.Containers[idx_healthcheck].Image = challenge.Spec.Healthcheck.Image
 	dep.Spec.Template.Spec.Containers[idx_healthcheck].Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			"cpu": *resource.NewMilliQuantity(1000, resource.DecimalSI),

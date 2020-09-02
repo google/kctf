@@ -14,10 +14,11 @@ spec:
   # Add fields here
   image: "quay.io/aliciafmachado/bash:latest"
   deployed: true
+  healthcheck:
+    enabled: false
   network:
     public: true
     dns: true
-    domainName: example.com
     ports:
     - protocol: "TCP"
       port: 3
