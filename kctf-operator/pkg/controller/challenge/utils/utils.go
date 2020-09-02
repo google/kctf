@@ -32,7 +32,7 @@ func GetDomainName(challenge *kctfv1alpha1.Challenge, client client.Client,
 }
 
 // Find index of the container with a specific name in a list of containers
-func Find_idx(name string, containers []corev1.Container) int {
+func IndexOfContainer(name string, containers []corev1.Container) int {
 	for i, container := range containers {
 		if container.Name == name {
 			return i

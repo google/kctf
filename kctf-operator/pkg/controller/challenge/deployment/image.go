@@ -9,8 +9,8 @@ import (
 func updateImages(deploymentFound *appsv1.Deployment, challenge *kctfv1alpha1.Challenge) bool {
 	// Check if the image was changed and change it if necessary
 	change := false
-	idx_challenge := utils.Find_idx("challenge", deploymentFound.Spec.Template.Spec.Containers)
-	idx_healthcheck := utils.Find_idx("healthcheck", deploymentFound.Spec.Template.Spec.Containers)
+	idx_challenge := utils.IndexOfContainer("challenge", deploymentFound.Spec.Template.Spec.Containers)
+	idx_healthcheck := utils.IndexOfContainer("healthcheck", deploymentFound.Spec.Template.Spec.Containers)
 
 	if deploymentFound.Spec.Template.Spec.Containers[idx_challenge].Image != challenge.Spec.Image {
 		deploymentFound.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image

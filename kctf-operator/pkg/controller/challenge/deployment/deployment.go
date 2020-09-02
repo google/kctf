@@ -37,7 +37,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	}
 
 	// Find the index of container challenge if existent:
-	idx_challenge := utils.Find_idx("challenge", deployment.Spec.Template.Spec.Containers)
+	idx_challenge := utils.IndexOfContainer("challenge", deployment.Spec.Template.Spec.Containers)
 
 	// if idx_challenge is -1, it means that pod template doesn't contain a container called challenge
 	if idx_challenge == -1 {

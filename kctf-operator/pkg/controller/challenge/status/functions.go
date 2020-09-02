@@ -24,8 +24,8 @@ func Update(requeue bool, err error, challenge *kctfv1alpha1.Challenge, cl clien
 	if err_list == nil {
 		// First we find the right pod
 		for _, pod := range pods.Items {
-			idx_challenge := utils.Find_idx("challenge", pod.Spec.Containers)
-			idx_healthcheck := utils.Find_idx("healthcheck", pod.Spec.Containers)
+			idx_challenge := utils.IndexOfContainer("challenge", pod.Spec.Containers)
+			idx_healthcheck := utils.IndexOfContainer("healthcheck", pod.Spec.Containers)
 
 			// This variable tells if the container is right one considering the healthcheck only
 			right_healthcheck := !challenge.Spec.Healthcheck.Enabled

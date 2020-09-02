@@ -13,8 +13,8 @@ import (
 func withHealthcheck(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	dep := deployment(challenge)
 
-	idx_challenge := utils.Find_idx("challenge", dep.Spec.Template.Spec.Containers)
-	idx_healthcheck := utils.Find_idx("healthcheck", dep.Spec.Template.Spec.Containers)
+	idx_challenge := utils.IndexOfContainer("challenge", dep.Spec.Template.Spec.Containers)
+	idx_healthcheck := utils.IndexOfContainer("healthcheck", dep.Spec.Template.Spec.Containers)
 
 	// Get the container with the challenge and add healthcheck configurations
 	dep.Spec.Template.Spec.Containers[idx_challenge].LivenessProbe = &corev1.Probe{
