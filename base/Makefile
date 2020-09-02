@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .cluster-config .challenge
+.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .cluster-config .challenge .FORCE
 
 SHELL := bash
 .ONESHELL:
@@ -169,14 +169,14 @@ clean:
 	  echo "$${NEW_ID}" > $@;
 	fi
 
-challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image
+challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
 	$(MAKE) -C challenge .gen/docker-image
 
-.gen/kind-kubeconfig:
+.gen/kind-kubeconfig: .FORCE
 	@command -v kind || (echo "error: kind not installed. Visit https://kind.sigs.k8s.io/" && false)
 	kind get kubeconfig > $@
 
-.gen/d4w-kubeconfig:
+.gen/d4w-kubeconfig: .FORCE
 	@command -v docker.exe || (echo "error: docker for windows not installed." && false)
 	rm -f $@
 	docker.exe context export default --kubeconfig $@
@@ -206,7 +206,7 @@ ${CLUSTER_GEN}/image-pushed: .gen/challenge-image | .cluster-config
 	  echo "$${NEW_ID}" > $@;
 	fi
 
-healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image
+healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
 	$(MAKE) -C healthcheck .gen/docker-image
 
 ${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-config
@@ -225,17 +225,17 @@ ${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-confi
 	fi
 	echo -n "$${IMAGE_TAG}" > $@
 
-../kctf-conf/base/nsjail-docker/.gen/docker-image:
+../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
-../kctf-conf/base/healthcheck-docker/.gen/docker-image:
+../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
-${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-pushed
+${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-pushed .FORCE
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
 	(kubectl get deployment/${CHALLENGE_NAME} -o jsonpath='{.spec.template.spec.containers[?(@.name == "challenge")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}") > $@
 
-${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
+${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed .FORCE
 	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
 	REMOTE_TAG=$$(kubectl get deployment/${CHALLENGE_NAME} -o jsonpath='{.spec.template.spec.containers[?(@.name == "healthcheck")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}")
 	# if we previously deployed without a healthcheck, the output might be empty
@@ -254,6 +254,8 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
 	kubectl create namespace "${CHALLENGE_NAME}" --dry-run=client -oyaml | kubectl apply -f - >&2
 	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" >&2
 	mkdir -p ${CLUSTER_GEN} >&2
+	
+.FORCE:
 
 # This target doesn't live in a cluster specific directory since we need the name to be predictable
 # To make up for it, we FORCE execution every time
