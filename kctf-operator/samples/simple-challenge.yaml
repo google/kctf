@@ -11,5 +11,7 @@ metadata:
   name: simple-challenge
   namespace: simple-challenge
 spec:
-  imageTemplate: "quay.io/aliciafmachado/bash:latest"
+  image: "quay.io/aliciafmachado/bash:latest"
   deployed: false
+  healthcheck:
+    enabled: false
