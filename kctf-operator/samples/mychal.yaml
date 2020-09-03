@@ -25,3 +25,6 @@ spec:
       targetPort: 1337
     - protocol: "HTTPS"
       targetPort: 1338
+  horizontalPodAutoscalerSpec:
+    minReplicas: 1
+    maxReplicas: 2
