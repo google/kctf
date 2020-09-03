@@ -6,7 +6,7 @@ The kctf-operator is responsible for deploying the Kubernetes configurations in 
 keeps everything up-to-date accordingly to the configuration we put in the Custom Resource specific to the challenge.
 
 This operator is created automatically in the scripts when you run `start.sh`. 
-In case you want to run it alone, go directly to Testing locally or Deploying the operator. They correspond, respectivelly, to local testing and cluster testing.
+In case you want to run it alone, go directly to [Testing locally](#https://github.com/google/kctf/blob/beta/docs/kctf-operator.md#testing-locally) or [Deploying the operator](https://github.com/google/kctf/blob/beta/docs/kctf-operator.md#deploying-the-operator). They correspond, respectively, to local testing and cluster testing.
 
 This code was implemented using operator-sdk 0.18, so ensure you have it installed. 
 If you want to know more about what you can do using operator-sdk, you can access: https://v0-18-x.sdk.operatorframework.io/docs/golang/quickstart/.
@@ -14,7 +14,7 @@ If you want to know more about what you can do using operator-sdk, you can acces
 ## Changing the code
 
 About the structure of the code, inside the folder deploy, we have `operator.yaml`, 
-`rbac.yaml` and q folder called `crds`. The first one is the yaml file of the operator, 
+`rbac.yaml` and a folder called `crds`. The first one is the yaml file of the operator, 
 which creates its deployment. The second one is the necessary permissions that the operator need to run. 
 Finally, the third one is where the CRDs are stored when you generate them.
 
