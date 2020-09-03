@@ -12,7 +12,7 @@ metadata:
   namespace: mychal3
 spec:
   # Add fields here
-  image: "quay.io/aliciafmachado/bash:latest"
+  image: "memcached:1.4.36-alpine"
   deployed: true
   powDifficultySeconds: 10
   healthcheck:

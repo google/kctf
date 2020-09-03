@@ -11,7 +11,7 @@ metadata:
   name: simple-challenge
   namespace: simple-challenge
 spec:
-  image: "quay.io/aliciafmachado/bash:latest"
+  image: "memcached:1.4.36-alpine"
   deployed: false
   healthcheck:
     enabled: false
