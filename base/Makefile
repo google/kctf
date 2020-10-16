@@ -311,6 +311,16 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
 	fi
 	echo -n "$${REMOTE_TAG}" > $@
 
+define DEFAULT_SERVICE_ACCOUNT
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  name: default
+endef
+
+export DEFAULT_SERVICE_ACCOUNT
+
 .cluster-config:
 	@if [ "${PROJECT}" = "CONFIGMISSING" ]; then
 	@  echo 'error: cluster config not loaded. Run kctf-config-create or kctf-config-load'
@@ -319,7 +329,7 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
 	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
 	kubectl config set-context --current --namespace="${CHALLENGE_NAME}" >&2
 	kubectl create namespace "${CHALLENGE_NAME}" --dry-run=client -oyaml | kubectl apply -f - >&2
-	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" >&2
+	echo "$${DEFAULT_SERVICE_ACCOUNT}" | kubectl apply -f -
 	mkdir -p ${CLUSTER_GEN} >&2
 
 .FORCE:
