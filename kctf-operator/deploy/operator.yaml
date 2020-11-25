@@ -17,7 +17,7 @@ spec:
       containers:
         - name: kctf-operator
           # TODO: Replace this with the built image name
-          image: gcr.io/kctf-docker/kctf-operator:v0.0.1
+          image: gcr.io/kctf-docker/kctf-operator:v0.0.2
           command:
           - kctf-operator
           imagePullPolicy: Always
@@ -32,3 +32,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "kctf-operator"
+          readinessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/initialized
+            initialDelaySeconds: 5
+            periodSeconds: 5
