@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"os"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -45,6 +46,13 @@ func InitializeOperator(client *client.Client) error {
 			log.Info("Created object.", "Name:", names[i])
 		}
 	}
+
+	f, err := os.Create("/tmp/initialized")
+	if err != nil {
+		log.Error(err, "Could not create file for ReadinessProbe")
+		return err
+	}
+	f.Close()
 
 	return nil
 }

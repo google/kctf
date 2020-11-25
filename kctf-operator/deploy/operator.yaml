@@ -32,3 +32,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "kctf-operator"
+          readinessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/initialized
+            initialDelaySeconds: 5
+            periodSeconds: 5
