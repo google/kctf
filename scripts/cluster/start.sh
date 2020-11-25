@@ -67,7 +67,6 @@ kubectl wait --for=condition=available --namespace kube-system --timeout=5m depl
 
 GCS_KSA_NAME="gcsfuse-sa"
 
-
 gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kube-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL}
 kubectl annotate serviceaccount --namespace kube-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite
 
