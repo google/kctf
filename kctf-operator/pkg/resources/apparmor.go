@@ -7,7 +7,7 @@ import (
 )
 
 func NewApparmorProfiles() runtime.Object {
-	ctfProfile := `|-
+	ctfProfile := `
     #include <tunables/global>
     profile ctf-profile flags=(attach_disconnected,mediate_deleted) {
       #include <abstractions/base>
