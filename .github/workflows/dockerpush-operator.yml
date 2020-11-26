@@ -1,20 +1,26 @@
-name: Push docker base image cache to GCR cache
+name: Push operator image to GCR
 
 on:
   push:
     # Only trigger for nsjail-docker changes
     paths: 
-      - 'config/docker/**'
-      - 'kctf-operator/**'
-      - '.github/workflows/dockerpush.yml'
+      - 'kctf-operator/*'
+      - 'kctf-operator/build/**'
+      - 'kctf-operator/cmd/**'
+      - 'kctf-operator/pkg/**'
+      - 'kctf-operator/version/**'
+      - '.github/workflows/dockerpush-operator.yml'
 
   pull_request:
     # Only trigger for nsjail-docker changes
     # This will only run tests, it won't create a package
     paths: 
-      - 'config/docker/**'
-      - 'kctf-operator/**'
-      - '.github/workflows/dockerpush.yml'
+      - 'kctf-operator/*'
+      - 'kctf-operator/build/**'
+      - 'kctf-operator/cmd/**'
+      - 'kctf-operator/pkg/**'
+      - 'kctf-operator/version/**'
+      - '.github/workflows/dockerpush-operator.yml'
 
 jobs:
   # Run tests.
@@ -27,10 +33,10 @@ jobs:
 
       - name: Run tests
         run: |
-          cd config/docker
-          docker build . --file nsjail.Dockerfile
-          docker build . --file chroot.Dockerfile
-          docker build . --file pwntools.Dockerfile
+          cd kctf-operator
+          curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
+          chmod u+x operator-sdk
+          ./operator-sdk build operator
 
   push:
     # Ensure test job passes before pushing image.
@@ -44,16 +50,10 @@ jobs:
 
       - name: Build images
         run: |
-          pushd config/docker
-          docker build . --file nsjail.Dockerfile --tag nsjail
-          docker build . --file chroot.Dockerfile --tag chroot
-          docker build . --file pwntools.Dockerfile --tag pwntools
-          popd
-          pushd kctf-operator
+          cd kctf-operator
           curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
           chmod u+x operator-sdk
           ./operator-sdk build operator
-          popd
 
       - name: Log into GitHub registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
@@ -75,15 +75,6 @@ jobs:
           REFERENCE="${{ github.ref }}"
           IMAGE_REPO="docker.pkg.github.com/${{ github.repository }}"
           IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}"
-
-          scripts/dev/docker.sh nsjail $IMAGE_REPO/kctf-nsjail-bin $REFERENCE $PUSH
-          scripts/dev/docker.sh nsjail $IMAGE_GCR/kctf-nsjail-bin $REFERENCE $PUSH
-
-          scripts/dev/docker.sh chroot $IMAGE_REPO/kctf-nsjail-chroot $REFERENCE $PUSH
-          scripts/dev/docker.sh chroot $IMAGE_GCR/kctf-nsjail-chroot $REFERENCE $PUSH
-
-          scripts/dev/docker.sh pwntools $IMAGE_REPO/kctf-pwntools $REFERENCE $PUSH
-          scripts/dev/docker.sh pwntools $IMAGE_GCR/kctf-pwntools $REFERENCE $PUSH
 
           scripts/dev/docker.sh operator $IMAGE_REPO/kctf-operator $REFERENCE $PUSH
           scripts/dev/docker.sh operator $IMAGE_GCR/kctf-operator $REFERENCE $PUSH

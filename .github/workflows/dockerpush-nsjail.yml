@@ -1,0 +1,68 @@
+name: Push nsjail image to GCR
+
+on:
+  push:
+    # Only trigger for nsjail-docker changes
+    paths: 
+      - 'config/docker/nsjail/**'
+      - '.github/workflows/dockerpush-nsjail.yml'
+
+  pull_request:
+    # Only trigger for nsjail-docker changes
+    # This will only run tests, it won't create a package
+    paths: 
+      - 'config/docker/nsjail/**'
+      - '.github/workflows/dockerpush-nsjail.yml'
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          cd config/docker/nsjail
+          docker build .
+
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build images
+        run: |
+          cd config/docker/nsjail
+          docker build . --tag nsjail
+
+      - name: Log into GitHub registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Setup gcloud CLI
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '270.0.0'
+          service_account_email: ${{ secrets.GCR_EMAIL }}
+          service_account_key: ${{ secrets.GCR_KEY }}
+
+      - name: Configure docker to use the gcloud command-line tool as a credential helper
+        run: |
+          gcloud auth configure-docker
+
+      - name: Push images
+        run: |
+          PUSH="true"
+          REFERENCE="${{ github.ref }}"
+          IMAGE_REPO="docker.pkg.github.com/${{ github.repository }}"
+          IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}"
+
+          scripts/dev/docker.sh nsjail $IMAGE_REPO/kctf-nsjail-bin $REFERENCE $PUSH
+          scripts/dev/docker.sh nsjail $IMAGE_GCR/kctf-nsjail-bin $REFERENCE $PUSH
