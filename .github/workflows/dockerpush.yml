@@ -5,6 +5,7 @@ on:
     # Only trigger for nsjail-docker changes
     paths: 
       - 'config/docker/**'
+      - 'kctf-operator/**'
       - '.github/workflows/dockerpush.yml'
 
   pull_request:
@@ -12,6 +13,7 @@ on:
     # This will only run tests, it won't create a package
     paths: 
       - 'config/docker/**'
+      - 'kctf-operator/**'
       - '.github/workflows/dockerpush.yml'
 
 jobs:
