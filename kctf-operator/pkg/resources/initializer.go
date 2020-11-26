@@ -38,9 +38,13 @@ func InitializeOperator(client *client.Client) error {
 		if err != nil {
 			if errors.IsAlreadyExists(err) {
 				log.Info("This object already exists.", "Name: ", names[i])
-			} else {
+				// Try to update the resource instead
+				err = (*client).Update(context.Background(), obj)
+			}
+			if err != nil {
 				log.Error(err, names[i])
 				log.Info(names[i])
+				return err
 			}
 		} else {
 			log.Info("Created object.", "Name:", names[i])
