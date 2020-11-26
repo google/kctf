@@ -7,8 +7,6 @@ on:
       - 'config/docker/**'
       - 'kctf-operator/**'
       - '.github/workflows/dockerpush.yml'
-    paths-ignore:
-      - 'kctf-operator/deploy/**'
 
   pull_request:
     # Only trigger for nsjail-docker changes
@@ -17,8 +15,6 @@ on:
       - 'config/docker/**'
       - 'kctf-operator/**'
       - '.github/workflows/dockerpush.yml'
-    paths-ignore:
-      - 'kctf-operator/deploy/**'
 
 jobs:
   # Run tests.
