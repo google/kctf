@@ -1,0 +1,198 @@
+name: Update docker images
+
+on:
+  push:
+    paths-ignore: 
+      - 'docs/**' 
+      - '*.md'
+  pull_request:
+    paths-ignore: 
+      - 'docs/**' 
+      - '*.md'
+
+env:
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+  GKE_ZONE: us-east1-c
+  GKE_CLUSTER: github-ci
+  GKE_REGISTRY: us.gcr.io
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    outputs:
+      operator-modified: ${{ steps.set-modified.outputs.operator-modified }}
+      nsjail-modified: ${{ steps.set-modified.outputs.nsjail-modified }}
+      chroot-modified: ${{ steps.set-modified.outputs.chroot-modified }}
+      pwntools-modified: ${{ steps.set-modified.outputs.pwntools-modified }}
+      operator-digest: ${{ steps.push.outputs.operator-digest }}
+      nsjail-digest: ${{ steps.push.outputs.nsjail-digest }}
+      chroot-digest: ${{ steps.push.outputs.chroot-digest }}
+      pwntools-digest: ${{ steps.push.outputs.pwntools-digest }}
+    strategy:
+      matrix:
+        image: ["operator", "nsjail", "chroot", "pwntools"]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: 0
+
+    - id: modified
+      name: Check for modified paths
+      run: |
+        if [ "${{ matrix.image }}" == "operator" ]; then
+          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
+        else
+          PATHS=(".github/workflows/update-images.yaml" "config/docker/${{ matrix.image }}/**")
+        fi
+
+        BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
+        if [ -z "${BASE_SHA}" ]; then
+          # we couldn't find any existing robot commit, just rebuild everything
+          echo "::set-output name=modified::true"
+          exit 0
+        fi
+        CHANGED_FILES="$(git diff --name-only ${BASE_SHA} ${{ github.sha }})"
+
+        while IFS= read -r changed_file; do
+          for watched_path in "${PATHS[@]}"; do
+            if [[ $changed_file == $watched_path ]]; then
+              echo "::set-output name=modified::true"
+              exit 0
+            fi
+          done
+        done <<< "${CHANGED_FILES}"
+
+    - id: set-modified
+      name: Set modified
+      run: |
+        echo "::set-output name=${{ matrix.image }}-modified::${{ steps.modified.outputs.modified }}"
+
+
+    - name: Build image
+      if: steps.modified.outputs.modified
+      run: |
+        if [ "${{ matrix.image }}" == "operator" ]; then
+          cd kctf-operator
+          curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
+          chmod u+x operator-sdk
+          sudo mv operator-sdk /usr/local/bin/
+          /usr/local/bin/operator-sdk build "${{ matrix.image }}"
+        else
+          cd "config/docker/${{ matrix.image }}"
+          docker build . --tag "${{ matrix.image }}"
+        fi
+
+    - name: Setup gcloud CLI
+      if: steps.modified.outputs.modified
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_email: ${{ secrets.GCR_EMAIL }}
+        service_account_key: ${{ secrets.GCR_KEY }}
+
+    - name: Configure docker to use the gcloud command-line tool as a credential helper
+      if: steps.modified.outputs.modified
+      run: |
+        gcloud auth configure-docker
+
+    - id: push
+      name: Push images
+      if: steps.modified.outputs.modified
+      run: |
+        IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/kctf-${{ matrix.image }}"
+        docker tag "${{ matrix.image }}" "$IMAGE_GCR"
+        DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
+        echo "::set-output name=${{ matrix.image }}-digest::${DIGEST}"
+
+  update-image-and-commit:
+    runs-on: ubuntu-latest
+    needs:
+    - build-docker
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Update nsjail
+      if: needs.build-docker.outputs.nsjail-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/kctf-nsjail@${{ needs.build-docker.outputs.nsjail-digest }}"
+        sed -i "s#FROM .* AS bin#FROM ${IMAGE} AS bin#" base/nsjail-docker/Dockerfile
+
+    - name: Update chroot
+      if: needs.build-docker.outputs.chroot-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/kctf-chroot@${{ needs.build-docker.outputs.chroot-digest }}"
+        sed -i "s#FROM .* AS chroot#FROM ${IMAGE} AS chroot#" base/nsjail-docker/Dockerfile
+
+    - name: Update pwntools
+      if: needs.build-docker.outputs.pwntools-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/kctf-pwntools@${{ needs.build-docker.outputs.pwntools-digest }}"
+        sed -i "s#FROM .* AS pwntools#FROM ${IMAGE} AS pwntools#" base/healthcheck-docker/Dockerfile
+
+    - name: Update operator
+      if: needs.build-docker.outputs.operator-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-docker.outputs.operator-digest }}"
+        sed -i "s#image: .*#image: ${IMAGE}#" kctf-operator/deploy/operator.yaml
+
+    - name: Download kubectl
+      run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+
+    - name: Setup gcloud CLI
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_email: ${{ secrets.GKE_EMAIL }}
+        service_account_key: ${{ secrets.GKE_KEY }}
+
+    - name: Configure docker to use the gcloud command-line tool as a credential helper
+      run: |
+        gcloud auth configure-docker
+
+    - name: Configure kCTF directory
+      run: |        
+        export PATH=$PATH:$PWD/bin
+        kctf-setup-chal-dir $PWD/samples
+        kctf-chal-create default-task
+
+    - name: Configure kCTF cluster
+      run: |
+        export PATH=$PATH:$PWD/bin
+        kctf-config-create --chal-dir samples --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster
+
+    - name: Expose sample tasks
+      run: |
+        for f in samples/*/challenge.yaml; do
+          sed -i "s/public: false/public: true/" $f
+        done
+
+    - name: Build all tasks
+      run: |
+        cd samples
+        for f in *; do
+          if [ ! "$f" == "kctf-conf" ]; then
+            (cd $f && make docker)
+          fi
+        done
+
+    # TODO: deploy task and check healthcheck
+    # we can use the healthcheck as a readiness probe (if not the case already)
+    # and then use kubectl wait no the deployment
+    # prob want to delete any previous deployment first
+    # enable once healthchecks have been fixed
+
+    - name: Commit
+      run: |
+        if [ ! -z "$(git status --porcelain | grep -v '??')" ]; then
+          git config user.email ${{ github.event.head_commit.author.email }}
+          git config user.name ${{ github.event.head_commit.author.name }}
+          git add base/nsjail-docker/Dockerfile || true
+          git add base/healthcheck-docker/Dockerfile || true
+          git add kctf-operator/deploy/operator.yaml || true
+          git commit -m "Automated commit: update images."
+          git push
+        fi
