@@ -46,7 +46,7 @@ jobs:
           PATHS=(".github/workflows/update-images.yaml" "config/docker/${{ matrix.image }}/**")
         fi
 
-        BASE_SHA="$(git log -n1 --author=kctf-robot@google.com --format=%H || echo '')"
+        BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
         if [ -z "${BASE_SHA}" ]; then
           # we couldn't find any existing robot commit, just rebuild everything
           echo "::set-output name=modified::true"
@@ -188,11 +188,11 @@ jobs:
     - name: Commit
       run: |
         if [ ! -z "$(git status --porcelain | grep -v '??')" ]; then
-          git config user.email "kctf-robot@google.com"
-          git config user.name "kCTF Robot"
+          git config user.email ${{ github.event.head_commit.author.email }}
+          git config user.name ${{ github.event.head_commit.author.name }}
           git add base/nsjail-docker/Dockerfile || true
           git add base/healthcheck-docker/Dockerfile || true
           git add kctf-operator/deploy/operator.yaml || true
-          git commit -m "Update images"
+          git commit -m "Automated commit: update images."
           git push
         fi
