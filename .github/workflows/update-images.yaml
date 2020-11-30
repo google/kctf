@@ -47,16 +47,19 @@ jobs:
         fi
 
         BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
+        echo "BASE_SHA=${BASE_SHA}"
         if [ -z "${BASE_SHA}" ]; then
           # we couldn't find any existing robot commit, just rebuild everything
           echo "::set-output name=modified::true"
           exit 0
         fi
         CHANGED_FILES="$(git diff --name-only ${BASE_SHA} ${{ github.sha }})"
+        echo "CHANGED_FILES=${CHANGED_FILES}"
 
         while IFS= read -r changed_file; do
           for watched_path in "${PATHS[@]}"; do
             if [[ $changed_file == $watched_path ]]; then
+              echo "modified=true: ${changed_file} matches ${watched_path}"
               echo "::set-output name=modified::true"
               exit 0
             fi
