@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM gcr.io/kctf-docker/kctf-chroot@sha256:a956a76aea723aff8fdd91b85233648ec5508fee9ab48813bc9003488550c63c AS chroot
-FROM gcr.io/kctf-docker/kctf-nsjail@sha256:1d36e747baeef0590d7f7d45860e286612a66a5860fd78ae1ce2a76bfc609982 AS bin
+FROM gcr.io/kctf-docker/kctf-chroot@sha256:f83eb60015dcffa1965f9cefda67ed231ddd736d18885b33b144289311d6dc3b AS chroot
+FROM gcr.io/kctf-docker/kctf-nsjail@sha256:99e0fdd0fa3abcea927dc685dd665075eccb852ad806302e6ebc2be647b18008 AS bin
 FROM ubuntu:20.04
 
 RUN apt-get update \
