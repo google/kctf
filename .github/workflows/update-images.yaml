@@ -190,7 +190,7 @@ jobs:
 
     - name: Commit
       run: |
-        MODIFIED_FILES="$(git status --porcelain | grep -v 'sample')"
+        MODIFIED_FILES="$(git status --porcelain | grep -v 'sample' || true)"
         echo "MODIFIED_FILES=${MODIFIED_FILES}"
         if [ ! -z "${MODIFIED_FILES}" ]; then
           git config user.email ${{ github.event.head_commit.author.email }}
