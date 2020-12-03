@@ -6,20 +6,20 @@
 #
 #
 # Copyright 2020 Google LLC
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .cluster-config .challenge .FORCE
+.PHONY: start stop docker ip status logs healthcheck-logs ssh healthcheck-ssh port-forward test-docker healthcheck-test-docker test-kind test-d4w .test-local clean .deploy .cluster-config .FORCE
 
 SHELL := bash
 .ONESHELL:
@@ -41,8 +41,7 @@ CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
 export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
-MAYBE_REMOTE_HEALTHCHECK_IMAGE=${CLUSTER_GEN}/remote-healthcheck-image
-MAYBE_HEALTHCHECK=${CLUSTER_GEN}/healthcheck-image-pushed ${CLUSTER_GEN}/remote-healthcheck-image
+HEALTHCHECK_ENABLED:=$(shell yq read challenge.yaml 'spec.healthcheck.enabled')
 
 docker: .gen/challenge-image
 
@@ -139,35 +138,23 @@ clean:
 	rm -R challenge/.gen/* || true
 	rm -R healthcheck/.gen/* || true
 
-.deploy: .challenge .deployment .cluster-config
+.deploy: .deployment .cluster-config
 
-.challenge: .cluster-config
-	# Applies the yaml for the challenge
+.deployment: challenge.yaml .FORCE | .cluster-config
 	kubectl apply -f challenge.yaml
 
-.deployment: .gen/k8s ${CLUSTER_GEN}/image-pushed ${CLUSTER_GEN}/remote-image ${MAYBE_HEALTHCHECK} | .cluster-config
-	# update the challenge container if the image changed
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
-	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)"
-	if [ "$${CHAL_IMAGE}" != "$${PUSHED_IMAGE}" ]; then
-	  kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":'"$${PUSHED_IMAGE}"'}]'
-	fi
-	
-	# update the healthcheck container if the image changed
-	PUSHED_HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
-	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
-	if [ "$${HEALTHCHECK_IMAGE}" != "$${PUSHED_HEALTHCHECK_IMAGE}" ]; then
-	  kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/healthcheck/image", "value":'"$${PUSHED_HEALTHCHECK_IMAGE}"'}]'
-	fi
+challenge.yaml: ${CLUSTER_GEN}/challenge-image-pushed ${CLUSTER_GEN}/healthcheck-image-pushed
+	yq write --inplace challenge.yaml 'spec.image' $$(cat ${CLUSTER_GEN}/challenge-image-pushed)
+ifeq ($(HEALTHCHECK_ENABLED), true)
+	yq write --inplace challenge.yaml 'spec.healthcheck.image' $$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)
+endif
 
 .gen/challenge-image: challenge/.gen/docker-image
 	NEW_ID=$$(cat challenge/.gen/docker-image)
 	if [[ "$$NEW_ID" = sha256:* ]]; then
 	  NEW_ID=$$(echo "$$NEW_ID" | cut -d ':' -f 2)
 	fi
-	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
-	  echo "$${NEW_ID}" > $@;
-	fi
+	echo "$${NEW_ID}" > $@;
 
 challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
 	$(MAKE) -C challenge .gen/docker-image
@@ -181,7 +168,7 @@ challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .
 	rm -f $@
 	docker.exe context export default --kubeconfig $@
 
-${CLUSTER_GEN}/image-pushed: .gen/challenge-image | .cluster-config
+${CLUSTER_GEN}/challenge-image-pushed: .gen/challenge-image | .cluster-config
 	IMAGE_ID="$$(cat .gen/challenge-image)"
 	if [[ "$${IMAGE_ID}" = "$${REMOTE_IMAGE}:"* ]]; then
 	  IMAGE_TAG="$${IMAGE_ID}"
@@ -202,19 +189,18 @@ ${CLUSTER_GEN}/image-pushed: .gen/challenge-image | .cluster-config
 	if [[ "$$NEW_ID" = sha256:* ]]; then
 	  NEW_ID=$$(echo "$$NEW_ID" | cut -d ':' -f 2)
 	fi
-	if [[ "$${NEW_ID}" != $$(cat $@ 2>/dev/null) ]]; then
-	  echo "$${NEW_ID}" > $@;
-	fi
+	echo "$${NEW_ID}" > $@;
 
 healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
 	$(MAKE) -C healthcheck .gen/docker-image
 
 ${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-config
+ifeq ($(HEALTHCHECK_ENABLED), true)
 	IMAGE_ID="$$(cat .gen/healthcheck-image)"
 	if [[ "$${IMAGE_ID}" = "$${REMOTE_HEALTHCHECK_IMAGE}:"* ]]; then
 	  IMAGE_TAG="$${IMAGE_ID}"
 	else
-	  IMAGE_TAG="${REMOTE_HEALTHCHECK_IMAGE}-$${IMAGE_ID}"
+	  IMAGE_TAG="${REMOTE_HEALTHCHECK_IMAGE}:$${IMAGE_ID}"
 	  docker tag "$${IMAGE_ID}" "$${IMAGE_TAG}"
 	  if [ "${PUSH_TARGET}" == "REMOTE" ]; then
 	    docker push "$${IMAGE_TAG}"
@@ -224,25 +210,13 @@ ${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-confi
 	  kind load docker-image "$${IMAGE_TAG}"
 	fi
 	echo -n "$${IMAGE_TAG}" > $@
+endif
 
 ../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
 
 ../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
 	$(MAKE) -C ${@D}/.. .gen/docker-image
-
-${CLUSTER_GEN}/remote-image: ${CLUSTER_GEN}/image-pushed .FORCE
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/image-pushed)"
-	(kubectl get deployment/${CHALLENGE_NAME} -o jsonpath='{.spec.template.spec.containers[?(@.name == "challenge")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}") > $@
-
-${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed .FORCE
-	PUSHED_IMAGE="$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)"
-	REMOTE_TAG=$$(kubectl get deployment/${CHALLENGE_NAME} -o jsonpath='{.spec.template.spec.containers[?(@.name == "healthcheck")].image}' 2>/dev/null || echo -n "$${PUSHED_IMAGE}")
-	# if we previously deployed without a healthcheck, the output might be empty
-	if [ -z "$${REMOTE_TAG}" ]; then
-	  REMOTE_TAG="$${PUSHED_IMAGE}"
-	fi
-	echo -n "$${REMOTE_TAG}" > $@
 
 .cluster-config:
 	@if [ "${PROJECT}" = "CONFIGMISSING" ]; then
@@ -256,17 +230,3 @@ ${CLUSTER_GEN}/remote-healthcheck-image: ${CLUSTER_GEN}/healthcheck-image-pushed
 	mkdir -p ${CLUSTER_GEN} >&2
 	
 .FORCE:
-
-# This target doesn't live in a cluster specific directory since we need the name to be predictable
-# To make up for it, we FORCE execution every time
-.gen/k8s: ${CLUSTER_GEN}/remote-image ${MAYBE_REMOTE_HEALTHCHECK_IMAGE} | .cluster-config
-	# deployment
-	mkdir -p $@/deployment
-
-	# set the image version to the currently deployed for challenge
-	CHAL_IMAGE="$$(cat ${CLUSTER_GEN}/remote-image)" # I tried this and don't work
-	kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/image", "value":'"$${CHAL_IMAGE}"'}]'
-	
-	# set the image version to the currently deployed for healthcheck
-	HEALTHCHECK_IMAGE="$$(cat ${CLUSTER_GEN}/remote-healthcheck-image)"
-	kubectl patch challenge ${CHALLENGE_NAME} --namespace=${CHALLENGE_NAME} --type='json' -p='[{"op":"replace", "path": "/spec/healthcheck/image", "value":'"$${HEALTHCHECK_IMAGE}"'}]'
