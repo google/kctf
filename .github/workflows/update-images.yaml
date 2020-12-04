@@ -145,6 +145,10 @@ jobs:
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
 
+    - name: Install yq
+      run: |
+        sudo snap install yq
+
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@master
       with:
@@ -173,20 +177,20 @@ jobs:
           sed -i "s/public: false/public: true/" $f
         done
 
-    - name: Build all tasks
+    - name: Deploy all tasks
       run: |
+        export PATH=$PATH:$PWD/bin
         cd samples
         for f in *; do
           if [ ! "$f" == "kctf-conf" ]; then
-            (cd $f && make docker)
+            pushd $f
+              make stop || true
+              make start
+              kctf-kubectl wait --for=condition=available --timeout=5m deployment/$f
+              make stop
+            popd
           fi
         done
-
-    # TODO: deploy task and check healthcheck
-    # we can use the healthcheck as a readiness probe (if not the case already)
-    # and then use kubectl wait no the deployment
-    # prob want to delete any previous deployment first
-    # enable once healthchecks have been fixed
 
     - name: Commit
       run: |
