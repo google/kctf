@@ -22,7 +22,7 @@ RUN apt-get update \
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
 COPY --from=bin /usr/bin/nsjail /usr/bin/nsjail
-COPY --from=chroot /chroot /chroot
+COPY --from=chroot / /chroot
 
 # create a python3 venv and install ecdsa for the proof-of-work
 RUN apt-get update && apt-get -y install python3-venv
