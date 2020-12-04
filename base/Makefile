@@ -36,7 +36,7 @@ export ZONE:=CONFIGMISSING
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
 export KUBECONFIG
 
-export CHALLENGE_NAME:=$(shell basename ${CURDIR})
+export CHALLENGE_NAME:=$(shell yq read challenge.yaml 'metadata.name')
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
 export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
