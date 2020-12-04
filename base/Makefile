@@ -96,7 +96,11 @@ healthcheck-ssh: .cluster-config
 	kubectl exec deployment/${CHALLENGE_NAME} -c healthcheck -it -- /bin/bash
 
 port-forward: .cluster-config
-	kubectl port-forward deployment/${CHALLENGE_NAME} :1337 &
+	@PORT=31337
+	@kubectl port-forward deployment/${CHALLENGE_NAME} --address=127.0.0.1 $${PORT}:1337 > /dev/null &
+	@PORT_FORWARD_PID="$$!"
+	@PS1="\e[0;32m[kctf port-forward] \e[0;31m${CHALLENGE_NAME}@localhost:$${PORT}\e[m$$" bash --norc || true
+	@kill -15 $${PORT_FORWARD_PID}
 
 test-docker: .gen/docker-id
 	docker ps -f "id=$$(cat .gen/docker-id)"
