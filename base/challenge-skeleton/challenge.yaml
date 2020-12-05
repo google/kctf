@@ -9,3 +9,5 @@ spec:
   network:
     public: false
     dns: true
+  healthcheck:
+    enabled: true
