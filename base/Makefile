@@ -187,7 +187,7 @@ endif
 ifeq ($(DOMAIN_NAME),)
         $(error 'HTTPS=true but DOMAIN_NAME is not set.')
 endif
-	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME).$(DOMAIN_NAME)") | kubectl apply -f -
+	(echo "$${CERTIFICATE_TEMPLATE}"; echo '    -' "$(CHALLENGE_NAME)-http.$(DOMAIN_NAME)") | kubectl apply -f -
 	echo "$${INGRESS_TEMPLATE}" | kubectl apply -f -
 	kubectl annotate "ingress/https" "external-dns.alpha.kubernetes.io/hostname=${CHALLENGE_NAME}-http.${DOMAIN_NAME}" --overwrite
 else
