@@ -90,7 +90,7 @@ jobs:
       if: steps.modified.outputs.modified
       uses: google-github-actions/setup-gcloud@master
       with:
-        version: '270.0.0'
+        version: '319.0.0'
         service_account_email: ${{ secrets.GCR_EMAIL }}
         service_account_key: ${{ secrets.GCR_KEY }}
 
@@ -152,7 +152,7 @@ jobs:
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@master
       with:
-        version: '270.0.0'
+        version: '319.0.0'
         service_account_email: ${{ secrets.GKE_EMAIL }}
         service_account_key: ${{ secrets.GKE_KEY }}
 
