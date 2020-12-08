@@ -42,7 +42,7 @@ func NewExternalDnsClusterRoleBinding() runtime.Object {
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      "external-dns-sa",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		}},
 	}
 	return clusterRoleBinding
@@ -52,7 +52,7 @@ func NewExternalDnsDeployment() runtime.Object {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "external-dns",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		},
 		Spec: appsv1.DeploymentSpec{
 			Strategy: appsv1.DeploymentStrategy{

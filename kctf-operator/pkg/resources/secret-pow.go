@@ -55,7 +55,7 @@ func secret(name string, nameMap string, private bool) *corev1.Secret {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		},
 		Data: data,
 	}

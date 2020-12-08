@@ -18,7 +18,7 @@ func GetDomainName(challenge *kctfv1alpha1.Challenge, client client.Client,
 	configmap := &corev1.ConfigMap{}
 
 	err := client.Get(ctx, types.NamespacedName{Name: "external-dns",
-		Namespace: "kube-system"}, configmap)
+		Namespace: "kctf-system"}, configmap)
 
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error(err, "Couldn't get the configmap of the domain name.")

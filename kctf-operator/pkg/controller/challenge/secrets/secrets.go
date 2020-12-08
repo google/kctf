@@ -15,10 +15,10 @@ import (
 func generate(secretName string, challenge *kctfv1alpha1.Challenge,
 	cl client.Client, scheme *runtime.Scheme, log logr.Logger,
 	ctx context.Context) (*corev1.Secret, error) {
-	// We get the secret from kube-system
+	// We get the secret from kctf-system
 	secretKube := &corev1.Secret{}
 	err := cl.Get(ctx, types.NamespacedName{Name: secretName,
-		Namespace: "kube-system"}, secretKube)
+		Namespace: "kctf-system"}, secretKube)
 
 	if err != nil {
 		return secretKube, err

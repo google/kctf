@@ -13,7 +13,7 @@ func NewDaemonSetGcsFuse() runtime.Object {
 	daemonSet := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ctf-daemon-gcsfuse",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 			Labels:    map[string]string{"k8s-app": "ctf-daemon-gcsfuse"},
 		},
 		Spec: appsv1.DaemonSetSpec{

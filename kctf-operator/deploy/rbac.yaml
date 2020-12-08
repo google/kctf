@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kctf-operator
-  namespace: kube-system
+  namespace: kctf-system
 
 ---
 
@@ -13,7 +13,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: kctf-operator
-  namespace: kube-system
+  namespace: kctf-system
 roleRef:
   kind: ClusterRole
   name: kctf-operator

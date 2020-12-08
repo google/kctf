@@ -26,7 +26,7 @@ func create(secretName string, challenge *kctfv1alpha1.Challenge, client client.
 		client, scheme, log, ctx)
 
 	if err != nil {
-		log.Error(err, "Couldn't get the Secret from kube-system", "Secret Name: ",
+		log.Error(err, "Couldn't get the Secret from kctf-system", "Secret Name: ",
 			secretName, " with namespace ", challenge.Namespace)
 		return false, err
 	}
@@ -86,7 +86,7 @@ func updateSecret(secretName string, challenge *kctfv1alpha1.Challenge,
 		cl, scheme, log, ctx)
 
 	if err != nil {
-		log.Error(err, "Couldn't get the Secret from kube-system", "Secret Name: ",
+		log.Error(err, "Couldn't get the Secret from kctf-system", "Secret Name: ",
 			secretName, " with namespace ", challenge.Namespace)
 		return false, err
 	}

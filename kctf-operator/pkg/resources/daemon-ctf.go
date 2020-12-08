@@ -12,7 +12,7 @@ func NewDaemonSetCtf() runtime.Object {
 	daemonSet := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ctf-daemon",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 			Labels:    map[string]string{"k8s-app": "ctf-daemon"},
 		},
 		Spec: appsv1.DaemonSetSpec{

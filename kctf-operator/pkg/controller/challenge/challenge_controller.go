@@ -168,7 +168,7 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 // Function that returns if the chosen namespace is acceptable or no to prevent errors
 func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
 	if namespacedName.Name != namespacedName.Namespace ||
-		namespacedName.Namespace == "default" || namespacedName.Namespace == "kube-system" {
+		namespacedName.Namespace == "default" || namespacedName.Namespace == "kctf-system" {
 		return false
 	}
 	return true
