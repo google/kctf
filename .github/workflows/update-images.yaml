@@ -189,6 +189,15 @@ jobs:
             pushd $f
               CHALLENGE_NAME="$(yq read challenge.yaml 'metadata.name')"
               make start
+              # We want to wait for the deployment to be available, but it
+              # might not have been created yet by the operator.
+              # Ideally, we would expose the condition in the operator but I
+              # don't think that's currently possible.
+              for i in {1..5}; do
+                kctf-kubectl get "deployment/${CHALLENGE_NAME}" && break
+                echo "deployment/${CHALLENGE_NAME} doesn't exist yet, sleeping"
+                sleep 5
+              done
               kctf-kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
               make stop
             popd
