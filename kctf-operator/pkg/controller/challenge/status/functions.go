@@ -44,7 +44,7 @@ func Update(requeue bool, err error, challenge *kctfv1alpha1.Challenge, cl clien
 					challenge.Status.Status = pod.Status.Phase
 
 					// Then we update Health
-					if challenge.Spec.Healthcheck.Enabled == false {
+					if challenge.Spec.Healthcheck.Enabled == false || idx_challenge >= len(pod.Status.ContainerStatuses) {
 						challenge.Status.Health = "disabled"
 					} else {
 						// We check if the challenge is ready to know if it's healthy
