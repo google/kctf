@@ -42,14 +42,13 @@ export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
 HEALTHCHECK_ENABLED:=$(shell yq read challenge.yaml 'spec.healthcheck.enabled')
-CHALLENGE_NAMESPACE:=$(shell yq read challenge.yaml 'metadata.namespace')
 
 docker: .gen/challenge-image
 
 start: .deploy
 
 stop: .cluster-config
-	kubectl delete namespace ${CHALLENGE_NAMESPACE}
+	kubectl delete -f challenge.yaml
 
 ip: .cluster-config
 	@LB_IP=""
@@ -229,9 +228,6 @@ endif
 	@  exit 1
 	@fi
 	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
-	kubectl config set-context --current --namespace="${CHALLENGE_NAMESPACE}" >&2
-	kubectl create namespace "${CHALLENGE_NAMESPACE}" --dry-run=client -oyaml | kubectl apply -f - >&2
-	kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" >&2
 	mkdir -p ${CLUSTER_GEN} >&2
 	
 .FORCE:
