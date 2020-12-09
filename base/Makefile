@@ -65,7 +65,7 @@ status: .cluster-config
 	@echo "Challenge execution status"
 	@echo "This shows you how many instances of the challenges are running."
 	@echo
-	@kubectl get pods -l "app=${CHALLENGE_NAMESPACE}" -o wide
+	@kubectl get pods -l "app=${CHALLENGE_NAME}" -o wide
 	@echo
 	@echo
 	@echo "= DEPLOYMENTS ="
@@ -73,22 +73,22 @@ status: .cluster-config
 	@echo "Challenge deployment status"
 	@echo "This shows you if the challenge was deployed to the cluster."
 	@echo
-	@kubectl get deployments -l "app=${CHALLENGE_NAMESPACE}" -o wide
+	@kubectl get deployments -l "app=${CHALLENGE_NAME}" -o wide
 	@echo
 	@echo "= EXTERNAL SERVICES ="
 	@echo
 	@echo "Challenge external status"
 	@echo "This shows you if the challenge is exposed externally."
 	@echo
-	@kubectl get services -l "app=${CHALLENGE_NAMESPACE}" -o wide
-	@kubectl get ingress -l "app=${CHALLENGE_NAMESPACE}" -o wide
+	@kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
+	@kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
 	@echo
 
 logs: .cluster-config
-	kubectl logs -l "app=${CHALLENGE_NAMESPACE}" -c challenge
+	kubectl logs -l "app=${CHALLENGE_NAME}" -c challenge
 
 healthcheck-logs: .cluster-config
-	kubectl logs -l "app=${CHALLENGE_NAMESPACE}" -c healthcheck
+	kubectl logs -l "app=${CHALLENGE_NAME}" -c healthcheck
 
 ssh: .cluster-config
 	kubectl exec deployment/${CHALLENGE_NAME} -c challenge -it -- /bin/bash
