@@ -15,14 +15,12 @@ import (
 	"github.com/google/kctf/pkg/controller/challenge/set"
 	"github.com/google/kctf/pkg/controller/challenge/status"
 	"github.com/google/kctf/pkg/controller/challenge/volumes"
-	"github.com/prometheus/common/log"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -108,20 +106,6 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	// Checks if namespace is acceptable and if not, it deletes the challenge
-	if !isNamespaceAcceptable(request.NamespacedName) {
-		reqLogger.Info("Can't accept namespace different from name of the challenge. Please change namespace.",
-			request.Name, " with namespace ", request.Namespace)
-		reqLogger.Info("Deleting challenge")
-		err = r.client.Delete(ctx, challenge)
-		if err != nil {
-			status.Update(false, err, challenge, r.client,
-				r.log, ctx)
-			log.Error(err, "Failed to delete challenge")
-		}
-		return reconcile.Result{}, err
-	}
-
 	// Set default values not configured by kubebuilder
 	set.DefaultValues(challenge, r.scheme)
 
@@ -162,15 +146,6 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 	}
 
 	return false, nil
-}
-
-// Function that returns if the chosen namespace is acceptable or no to prevent errors
-func isNamespaceAcceptable(namespacedName types.NamespacedName) bool {
-	if namespacedName.Name != namespacedName.Namespace ||
-		namespacedName.Namespace == "default" || namespacedName.Namespace == "kctf-system" {
-		return false
-	}
-	return true
 }
 
 func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
