@@ -64,8 +64,18 @@ kubectl apply -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/rbac.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/operator.yaml"
 
+OPERATOR_IMAGE=$(yq read "${DIR}/kctf-operator/deploy/operator.yaml" 'spec.template.spec.containers[0].image')
+
 # The operator needs to create some subresources, e.g. the gcsfuse service account
-kubectl wait --for=condition=available --namespace kctf-system --timeout=5m deployment/kctf-operator
+for i in {1..30}; do
+  kctf-kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.image==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
+  if [ "$i" == "30" ]; then
+    echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
+    kctf-kubectl get pods --namespace kctf-system -o=yaml >&2
+    exit 1
+  fi
+  sleep 10
+done
 
 GCS_KSA_NAME="gcsfuse-sa"
 
