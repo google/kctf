@@ -181,11 +181,13 @@ jobs:
       run: |
         export PATH=$PATH:$PWD/bin
         cd samples
+        for challenge_name in $(kctf-kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
+          kctf-kubectl delete "challenge/${challenge_name}"
+        done
         for f in *; do
           if [ ! "$f" == "kctf-conf" ]; then
             pushd $f
               CHALLENGE_NAME="$(yq read challenge.yaml 'metadata.name')"
-              make stop || true
               make start
               kctf-kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
               make stop
