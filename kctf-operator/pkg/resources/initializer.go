@@ -19,11 +19,13 @@ func InitializeOperator(client *client.Client) error {
 
 	objectFunctions := []func() runtime.Object{NewApparmorProfiles, NewServiceAccountGcsFuseSa,
 		NewServiceAccountExternalDnsSa, NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
-		NewExternalDnsDeployment, NewDaemonSetCtf, NewDaemonSetGcsFuse, NewSecretPowBypass, NewSecretPowBypassPub}
+		NewExternalDnsDeployment, NewDaemonSetCtf, NewDaemonSetGcsFuse, NewSecretPowBypass,
+		NewSecretPowBypassPub, NewNetworkPolicyBlockInternal, NewAllowDns}
 
 	names := []string{"Apparmor Profiles", "Service Account Gcs Fuse", "Service Account External DNS",
 		"External DNS Cluster Role", "External DNS Cluster Role Binding", "External DNS Deployment",
-		"Daemon Set Ctf", "Daemon Set Gcs Fuse", "Secret for PowBypass", "Secret for PowBypassPub"}
+		"Daemon Set Ctf", "Daemon Set Gcs Fuse", "Secret for PowBypass", "Secret for PowBypassPub",
+		"Network Policy Block Internal", "Allow DNS"}
 
 	for i, newObject := range objectFunctions {
 

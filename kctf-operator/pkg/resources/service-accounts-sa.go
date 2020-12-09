@@ -10,7 +10,7 @@ func NewServiceAccountGcsFuseSa() runtime.Object {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "gcsfuse-sa",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		},
 	}
 	return serviceAccount
@@ -20,7 +20,7 @@ func NewServiceAccountExternalDnsSa() runtime.Object {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "external-dns-sa",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		},
 	}
 	return serviceAccount

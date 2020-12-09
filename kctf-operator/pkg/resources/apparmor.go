@@ -39,7 +39,7 @@ func NewApparmorProfiles() runtime.Object {
 	configmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "apparmor-profiles",
-			Namespace: "kube-system",
+			Namespace: "kctf-system",
 		},
 		Data: map[string]string{"ctf-profile": ctfProfile},
 	}

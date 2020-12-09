@@ -90,7 +90,7 @@ jobs:
       if: steps.modified.outputs.modified
       uses: google-github-actions/setup-gcloud@master
       with:
-        version: '270.0.0'
+        version: '319.0.0'
         service_account_email: ${{ secrets.GCR_EMAIL }}
         service_account_key: ${{ secrets.GCR_KEY }}
 
@@ -152,7 +152,7 @@ jobs:
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@master
       with:
-        version: '270.0.0'
+        version: '319.0.0'
         service_account_email: ${{ secrets.GKE_EMAIL }}
         service_account_key: ${{ secrets.GKE_KEY }}
 
@@ -181,12 +181,23 @@ jobs:
       run: |
         export PATH=$PATH:$PWD/bin
         cd samples
+        for challenge_name in $(kctf-kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
+          kctf-kubectl delete "challenge/${challenge_name}"
+        done
         for f in *; do
           if [ ! "$f" == "kctf-conf" ]; then
             pushd $f
               CHALLENGE_NAME="$(yq read challenge.yaml 'metadata.name')"
-              make stop || true
               make start
+              # We want to wait for the deployment to be available, but it
+              # might not have been created yet by the operator.
+              # Ideally, we would expose the condition in the operator but I
+              # don't think that's currently possible.
+              for i in {1..5}; do
+                kctf-kubectl get "deployment/${CHALLENGE_NAME}" && break
+                echo "deployment/${CHALLENGE_NAME} doesn't exist yet, sleeping"
+                sleep 5
+              done
               kctf-kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
               make stop
             popd

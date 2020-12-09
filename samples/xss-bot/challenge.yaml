@@ -2,7 +2,6 @@ apiVersion: kctf.dev/v1alpha1
 kind: Challenge
 metadata:
   name: xss-bot
-  namespace: xss-bot
 spec:
   deployed: true
   powDifficultySeconds: 0
