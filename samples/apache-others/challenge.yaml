@@ -2,7 +2,6 @@ apiVersion: kctf.dev/v1alpha1
 kind: Challenge
 metadata:
   name: apache-others
-  namespace: apache-others
 spec:
   deployed: true
   powDifficultySeconds: 0
