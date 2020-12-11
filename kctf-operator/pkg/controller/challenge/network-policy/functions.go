@@ -45,13 +45,13 @@ func updatePolicy(ctx context.Context, policy netv1.NetworkPolicy, challenge *kc
 		controllerutil.SetControllerReference(challenge, &policy, scheme)
 		err = cl.Create(ctx, &policy)
 		if err != nil {
-			log.Error(err, "Failed to create Policy Name: ",
+			log.Error(err, "Failed to create Policy", " Name: ",
 				policy.ObjectMeta.Name, " with namespace ", policy.ObjectMeta.Namespace)
 			return false, err
 		}
 		return true, nil
 	} else if err != nil {
-		log.Error(err, "Couldn't get the Policy Name: ",
+		log.Error(err, "Couldn't get the Policy", " Name: ",
 			policy.ObjectMeta.Name, " with namespace ", policy.ObjectMeta.Namespace)
 		return false, err
 	}
@@ -60,12 +60,12 @@ func updatePolicy(ctx context.Context, policy netv1.NetworkPolicy, challenge *kc
 		existingPolicy.Spec = policy.Spec
 		err = cl.Update(ctx, existingPolicy)
 		if err != nil {
-			log.Error(err, "Failed to update Policy Name: ",
+			log.Error(err, "Failed to update Policy", " Name: ",
 				policy.ObjectMeta.Name, " with namespace ", policy.ObjectMeta.Namespace)
 			return false, err
 		}
 
-		log.Info("Policy updated succesfully Name: ",
+		log.Info("Policy updated succesfully", " Name: ",
 			policy.ObjectMeta.Name, " with namespace ", policy.ObjectMeta.Namespace)
 		return true, nil
 	}
