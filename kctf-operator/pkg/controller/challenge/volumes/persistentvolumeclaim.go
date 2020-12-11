@@ -19,6 +19,9 @@ func persistentVolumeClaim(claim string,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      claim,
 			Namespace: challenge.Namespace,
+			Labels: map[string]string{
+				"app": challenge.Name,
+			},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClassName,

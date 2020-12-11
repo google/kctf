@@ -7,6 +7,7 @@ import (
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -16,7 +17,8 @@ func Update(requeue bool, err error, challenge *kctfv1alpha1.Challenge, cl clien
 	pods := &corev1.PodList{}
 	var listOption client.ListOption
 	listOption = &client.ListOptions{
-		Namespace: challenge.Namespace,
+		Namespace:     challenge.Namespace,
+		LabelSelector: labels.SelectorFromSet(map[string]string{"app": challenge.Name}),
 	}
 
 	err_list := cl.List(ctx, pods, listOption)
