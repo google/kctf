@@ -95,6 +95,11 @@ func (in *ChallengeSpec) DeepCopyInto(out *ChallengeSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AllowConnectTo != nil {
+		in, out := &in.AllowConnectTo, &out.AllowConnectTo
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

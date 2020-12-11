@@ -10,11 +10,40 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func generate(domainName string, challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
-	// Service object
+func generateClusterIPService(challenge *kctfv1alpha1.Challenge) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
+			Namespace: challenge.Namespace,
+			Labels:    map[string]string{"app": challenge.Name},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": challenge.Name},
+			Type:     "ClusterIP",
+			Ports:    []corev1.ServicePort{},
+		},
+	}
+	for _, port := range challenge.Spec.Network.Ports {
+		protocol := corev1.ProtocolTCP
+		switch port.Protocol {
+		case corev1.ProtocolSCTP, corev1.ProtocolTCP, corev1.ProtocolUDP:
+			protocol = port.Protocol
+		}
+		service.Spec.Ports = append(service.Spec.Ports, corev1.ServicePort{
+			Port:       port.TargetPort.IntVal,
+			TargetPort: port.TargetPort,
+			Protocol:   protocol,
+		})
+	}
+
+	return service
+}
+
+func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Challenge) (*corev1.Service, *netv1beta1.Ingress) {
+	// Service object
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      challenge.Name + "-lb-service",
 			Namespace: challenge.Namespace,
 			Labels:    map[string]string{"app": challenge.Name},
 		},
@@ -48,7 +77,7 @@ func generate(domainName string, challenge *kctfv1alpha1.Challenge) (*corev1.Ser
 
 			// Creates the ingress object
 			ingress.Spec.Backend = &netv1beta1.IngressBackend{
-				ServiceName: challenge.Name,
+				ServiceName: service.Name,
 				ServicePort: intstr.FromInt(int(port.Port)),
 			}
 

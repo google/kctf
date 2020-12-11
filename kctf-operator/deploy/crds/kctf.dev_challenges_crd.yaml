@@ -133,6 +133,11 @@ spec:
                 items:
                   type: string
                 type: array
+              allowConnectTo:
+                description: List of challenge names that this challenge is allowed to connect to
+                items:
+                  type: string
+                type: array
               podTemplate:
                 description: PodTemplate is used to set the template for the deployment's
                   pod, so that an author can add volumeMounts and other extra features

@@ -106,6 +106,8 @@ type ChallengeSpec struct {
 
 	// Names of the desired PersistentVolumeClaims
 	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
+
+	AllowConnectTo []string `json:"allowConnectTo,omitempty"`
 }
 
 // ChallengeStatus defines the observed state of Challenge
