@@ -20,15 +20,20 @@ func generateClusterIPService(challenge *kctfv1alpha1.Challenge) *corev1.Service
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": challenge.Name},
 			Type:     "ClusterIP",
-			Ports:    make([]corev1.ServicePort, len(challenge.Spec.Network.Ports)),
+			Ports:    []corev1.ServicePort{},
 		},
 	}
-	for i, port := range challenge.Spec.Network.Ports {
-		service.Spec.Ports[i] = corev1.ServicePort{
+	for _, port := range challenge.Spec.Network.Ports {
+		protocol := corev1.ProtocolTCP
+		switch port.Protocol {
+		case corev1.ProtocolSCTP, corev1.ProtocolTCP, corev1.ProtocolUDP:
+			protocol = port.Protocol
+		}
+		service.Spec.Ports = append(service.Spec.Ports, corev1.ServicePort{
 			Port:       port.TargetPort.IntVal,
 			TargetPort: port.TargetPort,
-			Protocol:   port.Protocol,
-		}
+			Protocol:   protocol,
+		})
 	}
 
 	return service
