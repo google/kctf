@@ -86,12 +86,6 @@ func main() {
 	}
 
 	ctx := context.TODO()
-	// Become the leader before proceeding
-	err = leader.Become(ctx, "kctf-operator-lock")
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
 
 	// Set default manager options
 	// Default manager watches all namespaces
@@ -143,6 +137,14 @@ func main() {
 	// which only happens when it is ran inside the cluster
 	if err := resources.InitializeOperator(&client); err != nil {
 		log.Error(err, "Error initializing initial instances")
+		os.Exit(1)
+	}
+
+	// Become the leader after initializtion is done
+	// Otherwise we're blocked on the readiness probe and the existing (outdated) operator won't terminate
+	err = leader.Become(ctx, "kctf-operator-lock")
+	if err != nil {
+		log.Error(err, "")
 		os.Exit(1)
 	}
 
