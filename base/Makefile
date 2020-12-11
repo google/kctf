@@ -189,14 +189,18 @@ ${CLUSTER_GEN}/challenge-image-pushed: .gen/challenge-image | .cluster-config
 	echo -n "$${IMAGE_TAG}" > $@
 
 .gen/healthcheck-image: healthcheck/.gen/docker-image
+ifeq ($(HEALTHCHECK_ENABLED), true)
 	NEW_ID=$$(cat healthcheck/.gen/docker-image)
 	if [[ "$$NEW_ID" = sha256:* ]]; then
 	  NEW_ID=$$(echo "$$NEW_ID" | cut -d ':' -f 2)
 	fi
 	echo "$${NEW_ID}" > $@;
+endif
 
 healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
+ifeq ($(HEALTHCHECK_ENABLED), true)
 	$(MAKE) -C healthcheck .gen/docker-image
+endif
 
 ${CLUSTER_GEN}/healthcheck-image-pushed: .gen/healthcheck-image | .cluster-config
 ifeq ($(HEALTHCHECK_ENABLED), true)
