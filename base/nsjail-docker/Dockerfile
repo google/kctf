@@ -16,7 +16,7 @@ FROM gcr.io/kctf-docker/kctf-nsjail@sha256:2b448930a0f8145ef3dcb7045ca0773e61372
 FROM ubuntu:20.04
 
 RUN apt-get update \
-    && apt-get install -yq --no-install-recommends python3.8 uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates \
+    && apt-get install -yq --no-install-recommends python3.8 uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates socat \
     && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
@@ -26,19 +26,15 @@ COPY --from=chroot / /chroot
 
 # create a python3 venv and install ecdsa for the proof-of-work
 RUN apt-get update && apt-get -y install python3-venv
-RUN python3 -m venv --copies /venv
+RUN python3 -m venv /venv
 RUN bash -c "source /venv/bin/activate && pip3 install ecdsa"
-RUN mv /venv /chroot/
 
+# we need a clean proc to allow nsjail to remount it in the user namespace
 RUN mkdir /kctf
 RUN mkdir -p /kctf/.fullproc/proc
 RUN chmod 0700 /kctf/.fullproc
-RUN mkdir /chroot/.kctf
-RUN mkdir /chroot/.kctf/pow
-RUN mkdir /chroot/.kctf/pow-bypass
 
 COPY files/kctf_setup /usr/bin/
 COPY files/drop_privs /usr/bin/
-COPY files/proof_of_work/pow.py /chroot/usr/bin/
-COPY files/proof_of_work/maybe_pow.sh /chroot/usr/bin/
-COPY files/nsjail_base.cfg /kctf/nsjail_base.cfg
+COPY files/proof_of_work/pow.py /usr/bin/
+COPY files/proof_of_work/maybe_pow.sh /usr/bin/

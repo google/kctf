@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-POW_FILE="/.kctf/pow/pow.conf"
+POW_FILE="/kctf/pow/pow.conf"
 
 if [ -f ${POW_FILE} ]; then
   source /venv/bin/activate

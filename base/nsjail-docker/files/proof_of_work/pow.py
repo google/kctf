@@ -67,7 +67,7 @@ def can_bypass(chal, sol):
     if not sol.startswith('b.'):
         return False
     sig = bytes.fromhex(sol[2:])
-    with open("/.kctf/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
+    with open("/kctf/pow-bypass/pow-bypass-key-pub.pem", "r") as fd:
         vk = VerifyingKey.from_pem(fd.read())
     return vk.verify(signature=sig, data=bytes(chal, 'ascii'), hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
 
