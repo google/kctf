@@ -88,30 +88,33 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	volumeMounts := []corev1.VolumeMount{{
-		Name:      "pow",
-		ReadOnly:  true,
-		MountPath: "/kctf/pow",
-	},
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "pow",
+			ReadOnly:  true,
+			MountPath: "/kctf/pow",
+		},
 		{
 			Name:      "pow-bypass-pub",
 			ReadOnly:  true,
 			MountPath: "/kctf/pow-bypass",
-		}}
+		},
+	}
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts =
 		append(deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts, volumeMounts...)
 
-	volumes := []corev1.Volume{{
-		Name: "pow",
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: "pow",
+	volumes := []corev1.Volume{
+		{
+			Name: "pow",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "pow",
+					},
 				},
 			},
 		},
-	},
 		{
 			Name: "pow-bypass-pub",
 			VolumeSource: corev1.VolumeSource{
@@ -119,7 +122,8 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 					SecretName: "pow-bypass-pub",
 				},
 			},
-		}}
+		},
+	}
 
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)
 
