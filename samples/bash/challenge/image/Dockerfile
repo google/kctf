@@ -20,4 +20,4 @@ CMD kctf_setup && \
     drop_privs \
     socat \
       TCP-LISTEN:1337,reuseaddr,fork \
-      EXEC:"/usr/bin/stdbuf -i0 -o0 -e0 maybe_pow.sh nsjail --config /home/user/nsjail.cfg -- /bin/bash"
+      EXEC:"maybe_pow.sh nsjail --config /home/user/nsjail.cfg -- /bin/bash"
