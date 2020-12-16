@@ -106,7 +106,7 @@ test-docker: .gen/docker-id
 	docker ps -f "id=$$(cat .gen/docker-id)"
 
 healthcheck-test-docker: .gen/healthcheck-docker-id
-	docker ps -f "id=$$(Icat .gen/healthcheck-docker-id)"
+	docker ps -f "id=$$(cat .gen/healthcheck-docker-id)"
 
 .gen/healthcheck-docker-id: .gen/docker-name .gen/healthcheck-image
 	IMAGE_ID="$$(cat .gen/healthcheck-image)"
