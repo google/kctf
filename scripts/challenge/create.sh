@@ -33,3 +33,4 @@ fi
 
 umask a+rx
 cp -p -r "${CHAL_DIR}/kctf-conf/base/challenge-skeleton" "${CHALLENGE_DIR}"
+yq write --inplace "${CHALLENGE_DIR}/challenge.yaml" 'metadata.name' "${CHALLENGE_NAME}"
