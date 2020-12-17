@@ -16,6 +16,8 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		replicas = *challenge.Spec.Replicas
 	}
 
+	var readOnlyRootFilesystem = true
+
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
@@ -59,24 +61,13 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
 	// Set other container's configurations
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
-	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext == nil {
-		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{}
-	}
-	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem == nil {
-		var readOnlyRootFilesystem = true
-		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem = &readOnlyRootFilesystem
-	}
-	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ProcMount == nil {
-		procMountType := corev1.UnmaskedProcMount
-		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ProcMount = &procMountType
-	}
-
-	if deployment.Spec.Template.Spec.SecurityContext == nil {
-		deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
-	}
-	if deployment.Spec.Template.Spec.SecurityContext.RunAsUser == nil {
-		var uid int64 = 1000
-		deployment.Spec.Template.Spec.SecurityContext.RunAsUser = &uid
+	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{
+		Capabilities: &corev1.Capabilities{
+			Add: []corev1.Capability{
+				"SYS_ADMIN",
+			},
+		},
+		ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
 	}
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Resources = corev1.ResourceRequirements{
@@ -88,33 +79,30 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      "pow",
-			ReadOnly:  true,
-			MountPath: "/kctf/pow",
-		},
+	volumeMounts := []corev1.VolumeMount{{
+		Name:      "pow",
+		ReadOnly:  true,
+		MountPath: "/kctf/pow",
+	},
 		{
 			Name:      "pow-bypass-pub",
 			ReadOnly:  true,
 			MountPath: "/kctf/pow-bypass",
-		},
-	}
+		}}
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts =
 		append(deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts, volumeMounts...)
 
-	volumes := []corev1.Volume{
-		{
-			Name: "pow",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "pow",
-					},
+	volumes := []corev1.Volume{{
+		Name: "pow",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "pow",
 				},
 			},
 		},
+	},
 		{
 			Name: "pow-bypass-pub",
 			VolumeSource: corev1.VolumeSource{
@@ -122,8 +110,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 					SecretName: "pow-bypass-pub",
 				},
 			},
-		},
-	}
+		}}
 
 	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, volumes...)
 
