@@ -13,3 +13,20 @@ spec:
       targetPort: 1337
   healthcheck:
     enabled: true
+  podTemplate:
+    template:
+      spec:
+        containers:
+          - name: challenge
+            volumeMounts:
+              - name: apache-run
+                mountPath: /var/run/apache2
+              - name: apache-log
+                mountPath: /var/log/apache2
+            securityContext:
+              runAsUser: 0
+        volumes:
+          - name: apache-log
+            emptyDir: {}
+          - name: apache-run
+            emptyDir: {}

@@ -49,7 +49,5 @@ COPY chroot /home/user/chroot
 COPY node /home/user/node
 COPY nsjail.cfg /home/user/nsjail.cfg
 
-CMD kctf_setup \
-    && /home/user/node/start.sh \
-    && mount -t tmpfs none /var/run/apache2 \
+CMD /home/user/node/start.sh \
     && bash -c 'source /etc/apache2/envvars && APACHE_RUN_USER=user APACHE_RUN_GROUP=user /usr/sbin/apache2 -D FOREGROUND'

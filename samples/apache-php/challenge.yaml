@@ -9,31 +9,33 @@ spec:
     public: false
     dns: true
     ports:
-    - protocol: "HTTPS"
-      targetPort: 1337
+      - protocol: "HTTPS"
+        targetPort: 1337
   healthcheck:
     enabled: true
   podTemplate:
     template:
       spec:
         containers:
-        - name: challenge
-          volumeMounts:
-          - name: sessions
-            mountPath: /mnt/disks/sessions
-          - name: uploads
-            mountPath: /mnt/disks/uploads
+          - name: challenge
+            volumeMounts:
+              - name: sessions
+                mountPath: /mnt/disks/sessions
+              - name: uploads
+                mountPath: /mnt/disks/uploads
+            securityContext:
+              runAsUser: 0
         volumes:
-        - name: sessions
-          persistentVolumeClaim:
-            claimName: apache-php-sessions
-        - name: uploads
-          persistentVolumeClaim:
-            claimName: apache-php-uploads
+          - name: sessions
+            persistentVolumeClaim:
+              claimName: apache-php-sessions
+          - name: uploads
+            persistentVolumeClaim:
+              claimName: apache-php-uploads
   persistentVolumeClaims:
     - apache-php-sessions
     - apache-php-uploads
   horizontalPodAutoscalerSpec:
     minReplicas: 2
     maxReplicas: 2
-    targetCPUUtilizationPercentage: 50 
+    targetCPUUtilizationPercentage: 50
