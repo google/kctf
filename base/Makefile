@@ -97,10 +97,23 @@ healthcheck-ssh: .cluster-config
 
 port-forward: .cluster-config
 	@PORT=31337
-	@kubectl port-forward deployment/${CHALLENGE_NAME} --address=127.0.0.1 $${PORT}:1337 > /dev/null &
-	@PORT_FORWARD_PID="$$!"
-	@PS1="\e[0;32m[kctf port-forward] \e[0;31m${CHALLENGE_NAME}@localhost:$${PORT}\e[m$$" bash --norc || true
-	@kill -15 $${PORT_FORWARD_PID}
+	@for i in {1..3}; do
+	@  kubectl port-forward deployment/${CHALLENGE_NAME} --address=127.0.0.1 $${PORT}:1337 > /dev/null &
+	@  PORT_FORWARD_PID="$$!"
+	@  sleep 1
+	@  if ! kill -0 "$${PORT_FORWARD_PID}" 2>/dev/null; then
+	@    if [ $$i == 3 ]; then
+	@      echo "port-forward failed 3 times, maybe the challenge is not running?" && false
+	@    fi
+	@    PORT=$$((1024+$$RANDOM))
+	@    continue
+	@  fi
+	@  echo "starting bash with port-forward (ctrl+d to exit)"
+	@  echo -e 'connect with \e[34mnc localhost $$PORT\e[m'
+	@  PS1="\e[0;32m[kctf port-forward] \e[0;31m${CHALLENGE_NAME}@localhost:$${PORT}\e[m$$ " PORT=$${PORT} bash --norc || true
+	@  kill -15 $${PORT_FORWARD_PID}
+	@  break
+	@done
 
 test-docker: .gen/docker-id
 	docker ps -f "id=$$(cat .gen/docker-id)"
@@ -231,7 +244,7 @@ endif
 	@  echo 'error: cluster config not loaded. Run kctf-config-create or kctf-config-load'
 	@  exit 1
 	@fi
-	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >&2
+	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" > /dev/null
 	mkdir -p ${CLUSTER_GEN} >&2
-	
+
 .FORCE:
