@@ -16,7 +16,9 @@ FROM kctf-nsjail
 COPY flag /chroot/
 COPY nsjail.cfg /home/user/
 
-CMD nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg -- \
+CMD kctf_setup && \
+    drop_privs \
+    nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg -- \
     /usr/bin/stdbuf -i0 -o0 -e0 \
     maybe_pow.sh \
     /bin/bash

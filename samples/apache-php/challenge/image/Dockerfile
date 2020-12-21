@@ -58,4 +58,4 @@ RUN chmod 0755 /root
 RUN chmod 0755 /chroot/var/www/html /usr/lib/cgi-bin/
 RUN chmod 0755 /chroot/var/www/html/*.php /usr/lib/cgi-bin/nsjail-php-cgi /root/launch-apache
 
-CMD /root/launch-apache
+CMD kctf_setup && /root/launch-apache

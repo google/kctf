@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,11 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-healthcheck
+set -Eeuxo pipefail
 
-COPY healthz.py /home/user/
-COPY doit.py /home/user/
-COPY run.sh /home/user/
-COPY env /home/user/
-
-CMD drop_privs /home/user/run.sh & /home/user/healthz.py
+# We need a clean proc for user namespaces
+mount -t proc none /kctf/.fullproc/proc

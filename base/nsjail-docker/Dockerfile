@@ -37,6 +37,8 @@ RUN mkdir /chroot/.kctf
 RUN mkdir /chroot/.kctf/pow
 RUN mkdir /chroot/.kctf/pow-bypass
 
+COPY files/kctf_setup /usr/bin/
+COPY files/drop_privs /usr/bin/
 COPY files/proof_of_work/pow.py /chroot/usr/bin/
 COPY files/proof_of_work/maybe_pow.sh /chroot/usr/bin/
 COPY files/nsjail_base.cfg /kctf/nsjail_base.cfg

@@ -10,14 +10,3 @@ spec:
     dns: true
   healthcheck:
     enabled: true
-  podTemplate:
-    template:
-      spec:
-        containers:
-          - name: challenge
-            volumeMounts:
-              - name: slash-tmp
-                mountPath: /tmp
-        volumes:
-          - name: slash-tmp
-            emptyDir: {}
