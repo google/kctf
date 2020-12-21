@@ -19,7 +19,6 @@ COPY nsjail.cfg /home/user/
 
 CMD kctf_setup && \
     drop_privs \
-    nsjail --config /kctf/nsjail_base.cfg --config /home/user/nsjail.cfg -- \
-    /usr/bin/stdbuf -i0 -o0 -e0 \
-    maybe_pow.sh \
-    /home/user/chal
+    socat \
+      TCP-LISTEN:1337,reuseaddr,fork \
+      EXEC:"maybe_pow.sh nsjail --config /home/user/nsjail.cfg -- /home/user/chal"
