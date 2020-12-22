@@ -82,7 +82,7 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 			}
 
 			servicePort := corev1.ServicePort{
-				Port:       80,
+				Port:       port.Port,
 				TargetPort: port.TargetPort,
 				Protocol:   "TCP",
 			}
