@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func isEqual(certificateFound *netgkev1.ManagedCertificate,
@@ -27,8 +26,9 @@ func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.
 	log.Info("Creating a Certificate", "Certificate name: ",
 		certificate.Name, " with namespace ", certificate.Namespace)
 
-	// Creates owner references
-	controllerutil.SetControllerReference(challenge, certificate, scheme)
+	// We don't set a reference since we don't want this object to be garbage collected
+	// Creating a certificate takes a long time, so keep it alive.
+	// controllerutil.SetControllerReference(challenge, certificate, scheme)
 
 	// Creates autoscaling
 	err := client.Create(ctx, certificate)
@@ -36,21 +36,6 @@ func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.
 	if err != nil {
 		log.Error(err, "Failed to create Certificate", "Certificate name: ",
 			certificate.Name, " with namespace ", certificate.Namespace)
-		return false, err
-	}
-
-	return true, nil
-}
-
-func delete(certificateFound *netgkev1.ManagedCertificate, client client.Client,
-	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
-	log.Info("Deleting Certificate", "Certificate name: ",
-		certificateFound.Name, " with namespace ", certificateFound.Namespace)
-
-	err := client.Delete(ctx, certificateFound)
-	if err != nil {
-		log.Error(err, "Failed to delete Certificate", "Certificate name: ",
-			certificateFound.Name, " with namespace ", certificateFound.Namespace)
 		return false, err
 	}
 
@@ -87,10 +72,8 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		"challenge.Spec.Network.Dns", challenge.Spec.Network.Dns)
 
 	if !ingressExists || !challenge.Spec.Network.Dns || domainName == "" {
-		// There shouldn't be a certificate in these cases
-		if certificateExists {
-			return delete(existingCertificate, client, scheme, log, ctx)
-		}
+		// No certificate required.
+		// Note that we don't delete the certificate here since creation takes a long time so we might want to reuse it in the future.
 		return false, nil
 	}
 
