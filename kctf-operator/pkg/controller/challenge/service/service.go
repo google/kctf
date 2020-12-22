@@ -63,7 +63,7 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 		},
 		Spec: netv1beta1.IngressSpec{
 			Rules: []netv1beta1.IngressRule{{
-				Host: challenge.Name + "-http." + domainName,
+				Host: "www." + challenge.Name + "." + domainName,
 			}},
 		},
 	}
@@ -116,8 +116,7 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 	if ingress.Spec.Backend != nil && domainName != "" &&
 		challenge.Spec.Network.Dns == true {
 		service.ObjectMeta.Annotations =
-			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name +
-				"-tcp." + domainName}
+			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name + "." + domainName}
 	}
 	return service, ingress
 }

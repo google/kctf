@@ -15,7 +15,7 @@ func generate(domainName string, challenge *kctfv1alpha1.Challenge) *netgkev1.Ma
 		},
 		Spec: netgkev1.ManagedCertificateSpec{
 			Domains: []string{
-				challenge.Name + "-http." + domainName,
+				"www." + challenge.Name + "." + domainName,
 			},
 		},
 		Status: netgkev1.ManagedCertificateStatus{
