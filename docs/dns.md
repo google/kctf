@@ -1,5 +1,5 @@
 # DNS Support
-If you point a domain or subdomain to Google Cloud DNS as an NS record, kCTF will create a DNS zone that maps the challenge to your challenge's IP address.
+If you point a domain or subdomain to Google Cloud DNS as an NS record, kCTF creates a DNS zone that maps the challenge to your challenge's IP address.
 
 Follow these steps:
 
