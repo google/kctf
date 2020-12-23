@@ -11,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-nsjail
+FROM ubuntu:20.04 as chroot
+
+RUN /usr/sbin/useradd --no-create-home -u 1000 user
+
+FROM gcr.io/kctf-docker/challenge
+
+COPY --from=chroot / /chroot
 
 COPY flag /chroot/
 COPY nsjail.cfg /home/user/
