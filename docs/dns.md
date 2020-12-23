@@ -9,3 +9,5 @@ Follow these steps:
 1. Run `kctf-cluster-start`
 1. Add `DNS=true` on `config/challenge.conf`.
 1. Point the subdomain to Google Cloud DNS. This requires [adding an NS record on your name server](https://cloud.google.com/dns/docs/update-name-servers).
+
+   Run `gcloud dns managed-zones list` to find the zone that was configured and then run `gcloud dns managed-zones describe $ZONENAME`
