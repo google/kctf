@@ -117,13 +117,13 @@ jobs:
       if: needs.build-docker.outputs.challenge-modified
       run: |
         IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" base/challenge-skeleton/challenge/image/Dockerfile
+        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/challenge/image/Dockerfile
 
     - name: Update healthcheck image
       if: needs.build-docker.outputs.healthcheck-modified
       run: |
         IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" base/challenge-skeleton/healthcheck/image/Dockerfile
+        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/healthcheck/image/Dockerfile
 
     - name: Update operator
       if: needs.build-docker.outputs.kctf-operator-modified
