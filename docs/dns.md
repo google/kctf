@@ -3,7 +3,7 @@ If you point a domain or subdomain to Google Cloud DNS as an NS record, kCTF cre
 
 Follow these steps:
 
-1. Configure the subdomain in `kctf-setup-config-create`. 
+1. Configure the domain in `kctf-setup-config-create --domain-name foo.example.com`. 
 
    Example: If you enter *foo.example.com*, the challenges are be deployed on *xxxxx.foo.example.com*.
 1. Run `kctf-cluster-start`
