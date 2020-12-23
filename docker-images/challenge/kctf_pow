@@ -17,7 +17,7 @@ POW_FILE="/kctf/pow/pow.conf"
 
 if [ -f ${POW_FILE} ]; then
   POW="$(cat ${POW_FILE})"
-  if ! /usr/bin/pow.py ask "${POW}"; then
+  if ! /kctf/pow.py ask "${POW}"; then
     echo 'pow fail'
     exit 1
   fi

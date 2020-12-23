@@ -43,7 +43,7 @@ RUN mkdir /kctf
 RUN mkdir -p /kctf/.fullproc/proc
 RUN chmod 0700 /kctf/.fullproc
 
-COPY files/kctf_setup /usr/bin/
-COPY files/drop_privs /usr/bin/
-COPY files/proof_of_work/pow.py /usr/bin/
-COPY files/proof_of_work/maybe_pow.sh /usr/bin/
+COPY kctf_setup /usr/bin/
+COPY kctf_drop_privs /usr/bin/
+COPY kctf_pow /usr/bin/
+COPY pow.py /kctf/
