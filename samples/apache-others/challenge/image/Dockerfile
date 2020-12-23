@@ -13,7 +13,23 @@
 # limitations under the License.
 FROM ubuntu:20.04 as chroot
 
-RUN /usr/sbin/useradd --no-create-home -u 1000 user
+RUN /usr/sbin/useradd -u 1000 user
+
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends \
+       curl ca-certificates socat gnupg lsb-release software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+    && (echo "deb https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main";\
+        echo "deb-src https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main") \
+       > /etc/apt/sources.list.d/nodesource.list \
+    && add-apt-repository universe \
+    && apt-get update \
+    && apt-get install -yq --no-install-recommends nodejs socat \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /home/user/chroot
 
 FROM gcr.io/kctf-docker/challenge
 
@@ -35,22 +51,6 @@ RUN ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/
 RUN ln -s /etc/apache2/mods-available/proxy_http.load /etc/apache2/mods-enabled/
 COPY apache2-nsjail-others.conf /etc/apache2/conf-enabled/
 
-RUN chroot /chroot apt-get update \
-    && chroot /chroot apt-get install -yq --no-install-recommends \
-       curl ca-certificates socat gnupg lsb-release software-properties-common \
-    && rm -rf /chroot/var/lib/apt/lists/*
-
-RUN chroot /chroot curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | chroot /chroot apt-key add - \
-    && (echo "deb https://deb.nodesource.com/node_10.x $(chroot /chroot lsb_release -s -c) main";\
-        echo "deb-src https://deb.nodesource.com/node_10.x $(chroot /chroot lsb_release -s -c) main") \
-       > /chroot/etc/apt/sources.list.d/nodesource.list \
-    && chroot /chroot add-apt-repository universe \
-    && chroot /chroot apt-get update \
-    && chroot /chroot apt-get install -yq --no-install-recommends nodejs socat \
-    && rm -rf /chroot/var/lib/apt/lists/*
-
-RUN mkdir -p /chroot/home/user
-RUN mkdir -p /chroot/home/user/chroot
 COPY chroot /home/user/chroot
 COPY node /home/user/node
 COPY nsjail.cfg /home/user/nsjail.cfg

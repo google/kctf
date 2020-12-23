@@ -15,6 +15,19 @@ FROM ubuntu:20.04 as chroot
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends php-cgi \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rm -rf /var/lib/php/sessions
+RUN mkdir -p /mnt/disks/sessions /mnt/disks/uploads
+RUN ln -s /mnt/disks/sessions /var/lib/php/sessions
+
+COPY html/ /var/www/html
+
+RUN chmod 0755 /var/www/html
+RUN chmod 0755 /var/www/html/*.php
+
 FROM gcr.io/kctf-docker/challenge
 
 COPY --from=chroot / /chroot
@@ -33,9 +46,6 @@ RUN apt-get update \
 
 RUN apt-get update && apt-get install -yq --no-install-recommends apache2 \
     && rm -rf /var/lib/apt/lists/*
-RUN chroot /chroot apt-get update \
-    && chroot /chroot apt-get install -yq --no-install-recommends php-cgi \
-    && rm -rf /chroot/var/lib/apt/lists/*
 
 RUN service apache2 start
 
@@ -50,17 +60,11 @@ RUN ln -s /chroot/var/www /var/www
 VOLUME /mnt/disks/sessions
 VOLUME /mnt/disks/uploads
 
-RUN rm -rf /chroot/var/lib/php/sessions
-RUN chroot /chroot rm -rf /var/lib/php/sessions
-RUN chroot /chroot mkdir -p /mnt/disks/sessions /mnt/disks/uploads
-RUN chroot /chroot ln -s /mnt/disks/sessions /var/lib/php/sessions
-
-COPY html/ /chroot/var/www/html
 COPY cgi-bin/ /usr/lib/cgi-bin
 COPY root/ /root
 RUN chmod 0755 /root
 
-RUN chmod 0755 /chroot/var/www/html /usr/lib/cgi-bin/
-RUN chmod 0755 /chroot/var/www/html/*.php /usr/lib/cgi-bin/nsjail-php-cgi /root/launch-apache
+RUN chmod 0755 /usr/lib/cgi-bin/
+RUN chmod 0755 /usr/lib/cgi-bin/nsjail-php-cgi /root/launch-apache
 
 CMD kctf_setup && /root/launch-apache
