@@ -173,7 +173,7 @@ endif
 	fi
 	echo "$${NEW_ID}" > $@;
 
-challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
+challenge/.gen/docker-image: .FORCE
 	$(MAKE) -C challenge .gen/docker-image
 
 .gen/kind-kubeconfig: .FORCE
@@ -210,7 +210,7 @@ ifeq ($(HEALTHCHECK_ENABLED), true)
 	echo "$${NEW_ID}" > $@;
 endif
 
-healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
+healthcheck/.gen/docker-image: .FORCE
 ifeq ($(HEALTHCHECK_ENABLED), true)
 	$(MAKE) -C healthcheck .gen/docker-image
 endif
@@ -232,12 +232,6 @@ ifeq ($(HEALTHCHECK_ENABLED), true)
 	fi
 	echo -n "$${IMAGE_TAG}" > $@
 endif
-
-../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
-	$(MAKE) -C ${@D}/.. .gen/docker-image
-
-../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
-	$(MAKE) -C ${@D}/.. .gen/docker-image
 
 .cluster-config:
 	@if [ "${PROJECT}" = "CONFIGMISSING" ]; then
