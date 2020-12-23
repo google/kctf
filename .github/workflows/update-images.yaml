@@ -43,7 +43,7 @@ jobs:
         if [ "${{ matrix.image }}" == "operator" ]; then
           PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
         else
-          PATHS=(".github/workflows/update-images.yaml" "config/docker/${{ matrix.image }}/**")
+          PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
         fi
 
         BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
@@ -82,7 +82,7 @@ jobs:
           sudo mv operator-sdk /usr/local/bin/
           /usr/local/bin/operator-sdk build "${{ matrix.image }}"
         else
-          cd "config/docker/${{ matrix.image }}"
+          cd "docker-images/${{ matrix.image }}"
           docker build . --tag "${{ matrix.image }}"
         fi
 
