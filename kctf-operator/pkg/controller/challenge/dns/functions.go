@@ -3,7 +3,7 @@ package dns
 import (
 	"context"
 
-	netgkev1beta1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1beta1"
+	netgkev1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1"
 	"github.com/go-logr/logr"
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
@@ -12,11 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func isEqual(certificateFound *netgkev1beta1.ManagedCertificate,
-	certificate *netgkev1beta1.ManagedCertificate) bool {
+func isEqual(certificateFound *netgkev1.ManagedCertificate,
+	certificate *netgkev1.ManagedCertificate) bool {
 	return certificateFound.Spec.Domains[0] == certificate.Spec.Domains[0]
 }
 
@@ -27,8 +26,9 @@ func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.
 	log.Info("Creating a Certificate", "Certificate name: ",
 		certificate.Name, " with namespace ", certificate.Namespace)
 
-	// Creates owner references
-	controllerutil.SetControllerReference(challenge, certificate, scheme)
+	// We don't set a reference since we don't want this object to be garbage collected
+	// Creating a certificate takes a long time, so keep it alive.
+	// controllerutil.SetControllerReference(challenge, certificate, scheme)
 
 	// Creates autoscaling
 	err := client.Create(ctx, certificate)
@@ -42,74 +42,62 @@ func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.
 	return true, nil
 }
 
-func delete(certificateFound *netgkev1beta1.ManagedCertificate, client client.Client,
-	scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
-	log.Info("Deleting Certificate", "Certificate name: ",
-		certificateFound.Name, " with namespace ", certificateFound.Namespace)
-
-	err := client.Delete(ctx, certificateFound)
-	if err != nil {
-		log.Error(err, "Failed to delete Certificate", "Certificate name: ",
-			certificateFound.Name, " with namespace ", certificateFound.Namespace)
-		return false, err
-	}
-
-	return true, nil
-}
-
 func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Creates certificate object
-	certificateFound := &netgkev1beta1.ManagedCertificate{}
-	ingressFound := &netv1beta1.Ingress{}
+	existingCertificate := &netgkev1.ManagedCertificate{}
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, certificateFound)
-	err_ingress := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, ingressFound)
+		Namespace: challenge.Namespace}, existingCertificate)
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	certificateExists := err == nil
+
+	existingIngress := &netv1beta1.Ingress{}
+	err = client.Get(ctx, types.NamespacedName{Name: challenge.Name,
+		Namespace: challenge.Namespace}, existingIngress)
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	ingressExists := err == nil
 
 	// We get the configmap that contains the domain name and get it
 	domainName := utils.GetDomainName(challenge, client, log, ctx)
 
-	// First we check if there's any ingress (web challenge)
-	if err_ingress == nil {
-		// Then we check dns and domain name
-		if challenge.Spec.Network.Dns == false {
-			log.Info("Can't create certificate for web challenge, since DNS is disabled.")
-		}
+	log.Info("Certificate update status",
+		"challengeName", challenge.Name,
+		"certificateExists", certificateExists,
+		"ingressExists", ingressExists,
+		"domainName", domainName,
+		"challenge.Spec.Network.Dns", challenge.Spec.Network.Dns)
 
-		if domainName == "" {
-			log.Info("Can't create certificate for web challenge, since DomainName is empty.")
-		}
-
-		// If there's no certificate, we create one
-		if challenge.Spec.Network.Dns == true && domainName != "" {
-			if errors.IsNotFound(err) {
-				return create(domainName, challenge, client, scheme, log, ctx)
-			}
-
-			// If there is, we update it if necessary
-			if err == nil {
-				if certificate := generate(domainName, challenge); !isEqual(certificateFound, certificate) {
-					certificateFound.Spec.Domains[0] = certificate.Spec.Domains[0]
-					err = client.Update(ctx, certificateFound)
-					if err != nil {
-						log.Error(err, "Failed to update certificate", "Certificate name: ",
-							certificateFound.Name, " with namespace ", certificateFound.Namespace)
-						return false, err
-					}
-					log.Info("Updated certificate successfully", "Certificate name: ",
-						certificateFound.Name, " with namespace ", certificateFound.Namespace)
-					return true, nil
-				}
-			}
-		}
+	if !ingressExists || !challenge.Spec.Network.Dns || domainName == "" {
+		// No certificate required.
+		// Note that we don't delete the certificate here since creation takes a long time so we might want to reuse it in the future.
+		return false, nil
 	}
 
-	// If there's no ingress or dns/domainName is disabled/empty and there's a certificate, we delete it
-	if err == nil && (errors.IsNotFound(err_ingress) ||
-		challenge.Spec.Network.Dns == false || domainName == "") {
-		return delete(certificateFound, client, scheme, log, ctx)
+	// We checked that we want a certificate. Either create or update it.
+	if !certificateExists {
+		return create(domainName, challenge, client, scheme, log, ctx)
 	}
 
-	return false, nil
+	// Nothing to do if the certificates are the same
+	newCertificate := generate(domainName, challenge)
+	if isEqual(existingCertificate, newCertificate) {
+		return false, nil
+	}
+
+	existingCertificate.Spec.Domains[0] = newCertificate.Spec.Domains[0]
+	err = client.Update(ctx, existingCertificate)
+	if err != nil {
+		log.Error(err, "Failed to update certificate",
+			"Certificate name: ", existingCertificate.Name,
+			" with namespace ", existingCertificate.Namespace)
+		return false, err
+	}
+	log.Info("Updated certificate successfully",
+		"Certificate name: ", existingCertificate.Name,
+		" with namespace ", existingCertificate.Namespace)
+	return true, nil
 }

@@ -185,7 +185,7 @@ func updateLoadBalancerService(challenge *kctfv1alpha1.Challenge, client client.
 	ingressFound := &netv1beta1.Ingress{}
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name + "-lb-service",
 		Namespace: challenge.Namespace}, serviceFound)
-	errIngress := client.Get(ctx, types.NamespacedName{Name: "https",
+	errIngress := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
 		Namespace: challenge.Namespace}, ingressFound)
 
 	// Get the domainName

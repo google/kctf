@@ -32,7 +32,7 @@ func NewDaemonSetGcsFuse() runtime.Object {
 					}},
 					Containers: []corev1.Container{{
 						Name:  "ctf-daemon",
-						Image: "ubuntu:19.10",
+						Image: "ubuntu:20.04",
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: &privileged,
 						},

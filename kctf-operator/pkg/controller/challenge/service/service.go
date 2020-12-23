@@ -56,14 +56,14 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 	// Ingress object
 	ingress := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "https",
+			Name:        challenge.Name,
 			Namespace:   challenge.Namespace,
 			Labels:      map[string]string{"app": challenge.Name},
-			Annotations: map[string]string{"networking.gke.io/managed-certificates": "kctf-certificate"},
+			Annotations: map[string]string{"networking.gke.io/managed-certificates": challenge.Name},
 		},
 		Spec: netv1beta1.IngressSpec{
 			Rules: []netv1beta1.IngressRule{{
-				Host: challenge.Name + "-http." + domainName,
+				Host: "www." + challenge.Name + "." + domainName,
 			}},
 		},
 	}
@@ -82,7 +82,7 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 			}
 
 			servicePort := corev1.ServicePort{
-				Port:       80,
+				Port:       port.Port,
 				TargetPort: port.TargetPort,
 				Protocol:   "TCP",
 			}
@@ -116,8 +116,7 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 	if ingress.Spec.Backend != nil && domainName != "" &&
 		challenge.Spec.Network.Dns == true {
 		service.ObjectMeta.Annotations =
-			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name +
-				"-tcp." + domainName}
+			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name + "." + domainName}
 	}
 	return service, ingress
 }
