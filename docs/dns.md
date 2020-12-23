@@ -7,4 +7,5 @@ Follow these steps:
 
    Example: If you enter *foo.example.com*, the challenges are be deployed on *xxxxx.foo.example.com*.
 1. Run `kctf-cluster-start`
+1. Add `DNS=true` on `config/challenge.conf`.
 1. Point the subdomain to Google Cloud DNS. This requires [adding an NS record on your name server](https://cloud.google.com/dns/docs/update-name-servers).
