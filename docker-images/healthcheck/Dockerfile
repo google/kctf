@@ -11,25 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM ubuntu:20.04 AS pwntools
+FROM ubuntu:20.04
 
-ENV BUILD_PACKAGES build-essential python3-virtualenv virtualenv python3-dev
+ENV BUILD_PACKAGES python3-pip build-essential python3-dev
 
 RUN apt-get update \
     && apt-get -yq --no-install-recommends install $BUILD_PACKAGES \
     && rm -rf /var/lib/apt/lists/* \
-    && python3 -m virtualenv /venv \
-    && bash -c "source /venv/bin/activate && pip install pwntools" \
+    && python3 -m pip install pwntools \
     && apt-get remove --purge -y $BUILD_PACKAGES $(apt-mark showauto)
-
-FROM ubuntu:20.04
 
 RUN apt-get update && apt-get -yq --no-install-recommends install cpio openssl python3 && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
-COPY --from=pwntools /venv /venv
 RUN mkdir -p /home/user/.pwntools-cache && echo never > /home/user/.pwntools-cache/update
 
-COPY files/drop_privs /usr/bin/
-COPY files/bypass_pow /usr/bin/
+COPY kctf_drop_privs /usr/bin/
+COPY kctf_bypass_pow /usr/bin/
