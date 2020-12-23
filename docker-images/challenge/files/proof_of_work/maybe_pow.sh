@@ -16,8 +16,6 @@
 POW_FILE="/kctf/pow/pow.conf"
 
 if [ -f ${POW_FILE} ]; then
-  source /venv/bin/activate
-
   POW="$(cat ${POW_FILE})"
   if ! /usr/bin/pow.py ask "${POW}"; then
     echo 'pow fail'

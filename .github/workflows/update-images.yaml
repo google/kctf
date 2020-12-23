@@ -22,16 +22,14 @@ jobs:
     if: github.event_name == 'push'
     outputs:
       operator-modified: ${{ steps.set-modified.outputs.operator-modified }}
-      nsjail-modified: ${{ steps.set-modified.outputs.nsjail-modified }}
-      chroot-modified: ${{ steps.set-modified.outputs.chroot-modified }}
-      pwntools-modified: ${{ steps.set-modified.outputs.pwntools-modified }}
+      challenge-modified: ${{ steps.set-modified.outputs.challenge-modified }}
+      healthcheck-modified: ${{ steps.set-modified.outputs.healthcheck-modified }}
       operator-digest: ${{ steps.push.outputs.operator-digest }}
-      nsjail-digest: ${{ steps.push.outputs.nsjail-digest }}
-      chroot-digest: ${{ steps.push.outputs.chroot-digest }}
-      pwntools-digest: ${{ steps.push.outputs.pwntools-digest }}
+      challenge-digest: ${{ steps.push.outputs.challenge-digest }}
+      healthcheck-digest: ${{ steps.push.outputs.healthcheck-digest }}
     strategy:
       matrix:
-        image: ["operator", "nsjail", "chroot", "pwntools"]
+        image: ["operator", "challenge", "healthcheck"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -115,23 +113,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Update nsjail
-      if: needs.build-docker.outputs.nsjail-modified
+    - name: Update challenge image
+      if: needs.build-docker.outputs.challenge-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-nsjail@${{ needs.build-docker.outputs.nsjail-digest }}"
-        sed -i "s#FROM .* AS bin#FROM ${IMAGE} AS bin#" base/nsjail-docker/Dockerfile
+        IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
+        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" base/challenge-skeleton/challenge/image/Dockerfile
 
-    - name: Update chroot
-      if: needs.build-docker.outputs.chroot-modified
+    - name: Update healthcheck image
+      if: needs.build-docker.outputs.healthcheck-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-chroot@${{ needs.build-docker.outputs.chroot-digest }}"
-        sed -i "s#FROM .* AS chroot#FROM ${IMAGE} AS chroot#" base/nsjail-docker/Dockerfile
-
-    - name: Update pwntools
-      if: needs.build-docker.outputs.pwntools-modified
-      run: |
-        IMAGE="gcr.io/kctf-docker/kctf-pwntools@${{ needs.build-docker.outputs.pwntools-digest }}"
-        sed -i "s#FROM .* AS pwntools#FROM ${IMAGE} AS pwntools#" base/healthcheck-docker/Dockerfile
+        IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
+        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" base/challenge-skeleton/healthcheck/image/Dockerfile
 
     - name: Update operator
       if: needs.build-docker.outputs.operator-modified
@@ -161,7 +153,7 @@ jobs:
         gcloud auth configure-docker
 
     - name: Configure kCTF directory
-      run: |        
+      run: |
         export PATH=$PATH:$PWD/bin
         kctf-setup-chal-dir $PWD/samples
         kctf-chal-create default-task
@@ -171,6 +163,7 @@ jobs:
         export PATH=$PATH:$PWD/bin
         kctf-config-create --chal-dir samples --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster
 
+    # TODO: this should use challenge templates instead so that we don't have to patch all the images
     - name: Expose sample tasks
       run: |
         for f in samples/*/challenge.yaml; do
