@@ -24,7 +24,7 @@ COPY chal /chroot/home/user/
 COPY nsjail.cfg /home/user/
 
 CMD kctf_setup && \
-    drop_privs \
+    kctf_drop_privs \
     socat \
       TCP-LISTEN:1337,reuseaddr,fork \
       EXEC:"kctf_pow nsjail --config /home/user/nsjail.cfg -- /home/user/chal"

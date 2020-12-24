@@ -18,4 +18,4 @@ COPY doit.py /home/user/
 COPY run.sh /home/user/
 COPY env /home/user/
 
-CMD drop_privs /home/user/run.sh & /home/user/healthz.py
+CMD kctf_drop_privs /home/user/run.sh & /home/user/healthz.py

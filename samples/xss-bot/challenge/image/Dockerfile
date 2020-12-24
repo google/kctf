@@ -34,4 +34,4 @@ COPY bot.js /home/user/
 COPY cookie /home/user/
 RUN cd /home/user && npm install puppeteer proof-of-work
 
-CMD kctf_setup && mount -t tmpfs none /tmp && drop_privs /usr/bin/bash -c 'while true; do /usr/bin/node /home/user/bot.js; done'
+CMD kctf_setup && mount -t tmpfs none /tmp && kctf_drop_privs /usr/bin/bash -c 'while true; do /usr/bin/node /home/user/bot.js; done'
