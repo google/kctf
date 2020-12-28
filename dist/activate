@@ -1,6 +1,90 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# set up the environment
+KCTF_CONFIG_DIR="${HOME}/.config/kctf"
+mkdir -p "${KCTF_CONFIG_DIR}" >/dev/null 2>/dev/null
+export KUBECONFIG="${CONFIG_DIR}/kube.conf"
+
 export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 CTF_NAME=$(basename "${KCTF_CTF_DIR}")
 # TODO: once we have a single kctf binary, just use an alias
 #alias kctf="${KCTF_CTF_DIR}/kctf/bin/kctf"
 export PATH="${PATH}:${KCTF_CTF_DIR}/kctf/bin"
+
+# create a gcloud config for this session
+export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+
+function delete_gcloud_config {
+  if command -v gcloud >/dev/null 2>&1; then
+    GCLOUD_CONFIG_NAME="${CLOUDSDK_ACTIVE_CONFIG_NAME}"
+    unset CLOUDSDK_ACTIVE_CONFIG_NAME
+    if gcloud config configurations describe "${GCLOUD_CONFIG_NAME}" >/dev/null 2>&1; then
+      echo "Deleting gcloud config ${GCLOUD_CONFIG_NAME}"
+      CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud config configurations delete "${GCLOUD_CONFIG_NAME}"
+    fi
+  fi
+}
+trap delete_gcloud_config EXIT
+
+function update_gcloud_config {
+  ACTIVE_ACCOUNT="$(gcloud config get-value core/account 2>/dev/null)"
+  if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
+        gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
+  fi
+  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null
+  gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null
+  gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null
+  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+}
+
+function get_cluster_creds {
+  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
+  kubectl config delete-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >/dev/null 2>/dev/null
+  kubectl config rename-context "gke_${PROJECT}_${ZONE}_${CLUSTER_NAME}" "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
+}
+
+source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
+
+function kctf_usage {
+  echo "kctf command subcommand [args]" 2>&1
+  echo -e "\tavailable commands:" 2>&1
+  echo -e "\t\tconfig:\tcreate/load a cluster config" 2>&1
+  echo -e "\t\tchal:\tcommands around challenges (creating, deploying, etc.)" 2>&1
+}
+
+# Implemented as a function so that we can set environment variables
+function kctf {
+  if [[ $# -lt 1 ]]; then
+    echo "missing required argument" >&2
+    kctf_usage
+    return 1
+  fi
+  case "$1" in
+    config)
+      shift
+      kctf_config $@
+      return
+      ;;
+    chal)
+      echo 'challenge'
+      ;;
+    *)
+      kctf_usage
+      return 1
+      ;;
+  esac
+}
+
 PS1="${PS1}"$'\e[0;32m'"kCTF[ctf=${CTF_NAME},config=\${KCTF_CONFIG:-unset}] >"$'\e[0m'" "
