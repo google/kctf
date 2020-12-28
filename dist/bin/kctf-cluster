@@ -1,22 +1,41 @@
 #!/bin/bash
 # Copyright 2020 Google LLC
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -Eeuo pipefail
-DIR="$( cd "$( dirname "$( readlink -f "${BASH_SOURCE[0]}")" )" >/dev/null && pwd )/../.."
-source "${DIR}/scripts/lib/config.sh"
 
-load_config
+function kctf_cluster_usage {
+  echo "kctf cluster command" 2>&1
+  echo -e "\tavailable commands:" 2>&1
+  echo -e "\t\tstart:\tstart the cluster" 2>&1
+}
+
+if [[ $# -ne 1 ]]; then
+  echo "unexpected argument count" >&2
+  kctf_cluster_usage
+  exit 1
+fi
+
+if [[ $1 != "start" ]]; then
+  echo "unknown command" >&2
+  kctf_cluster_usage
+  exit 1
+fi
+
+if [[ -z "${CLUSTER_NAME-}" ]]; then
+  echo "No config loaded. You need to run \"kctf config\" first." >&2
+  exit 1
+fi
 
 MIN_NODES="1"
 MAX_NODES="2"
@@ -39,8 +58,6 @@ if [ -z "${EXISTING_NAT}" ]; then
   gcloud compute routers nats create "kctf-${CLUSTER_NAME}-nat-config" --router-region "${ZONE::-2}" --router kctf-${CLUSTER_NAME}-nat-router --nat-all-subnet-ip-ranges --auto-allocate-nat-external-ips
 fi
 
-get_cluster_creds
-
 kubectl create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2
 
 # GCSFUSE
@@ -60,18 +77,18 @@ if [ -z "${GCS_GSA_EMAIL}" ]; then
 fi
 
 # Creating CRD, rbac and operator
-kubectl apply -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
-kubectl apply -f "${DIR}/kctf-operator/deploy/rbac.yaml"
-kubectl apply -f "${DIR}/kctf-operator/deploy/operator.yaml"
+kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml"
+kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml"
+kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
 
-OPERATOR_IMAGE=$(yq eval '.spec.template.spec.containers[0].image' "${DIR}/kctf-operator/deploy/operator.yaml")
+OPERATOR_IMAGE=$(yq eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
 
 # The operator needs to create some subresources, e.g. the gcsfuse service account
 for i in {1..30}; do
-  kctf-kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.image==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
+  kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.image==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
   if [ "$i" == "30" ]; then
     echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
-    kctf-kubectl get pods --namespace kctf-system -o=yaml >&2
+    kubectl get pods --namespace kctf-system -o=yaml >&2
     exit 1
   fi
   sleep 10

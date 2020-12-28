@@ -15,13 +15,9 @@
 # set up the environment
 KCTF_CONFIG_DIR="${HOME}/.config/kctf"
 mkdir -p "${KCTF_CONFIG_DIR}" >/dev/null 2>/dev/null
-export KUBECONFIG="${CONFIG_DIR}/kube.conf"
 
 export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 CTF_NAME=$(basename "${KCTF_CTF_DIR}")
-# TODO: once we have a single kctf binary, just use an alias
-#alias kctf="${KCTF_CTF_DIR}/kctf/bin/kctf"
-export PATH="${PATH}:${KCTF_CTF_DIR}/kctf/bin"
 
 # create a gcloud config for this session
 export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
@@ -39,7 +35,7 @@ function delete_gcloud_config {
 trap delete_gcloud_config EXIT
 
 function update_gcloud_config {
-  ACTIVE_ACCOUNT="$(gcloud config get-value core/account 2>/dev/null)"
+  ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
   if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
         gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
   fi
@@ -51,8 +47,6 @@ function update_gcloud_config {
 
 function get_cluster_creds {
   gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
-  kubectl config delete-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >/dev/null 2>/dev/null
-  kubectl config rename-context "gke_${PROJECT}_${ZONE}_${CLUSTER_NAME}" "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
 }
 
 source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
@@ -75,6 +69,11 @@ function kctf {
     config)
       shift
       kctf_config $@
+      return
+      ;;
+    cluster)
+      shift
+      "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
       return
       ;;
     chal)

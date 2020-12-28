@@ -15,133 +15,144 @@
 
 # This file is sourced by kctf/activate
 
+function export_kctf_config_vars {
+  export PROJECT
+  export ZONE
+  export REGISTRY
+  export CLUSTER_NAME
+  export DOMAIN_NAME
+  export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${PROJECT}_${ZONE}_${CLUSTER_NAME}.conf"
+}
+
 function kctf_config_load_usage {
-    echo "kctf config load config_name" >&2
+  echo "kctf config load config_name" >&2
 }
 
 function kctf_config_load {
-    if [[ $# -ne 1 ]]; then
-        echo "missing config name" >&2
-        kctf_config_load_usage
-        return 1
-    fi
+  if [[ $# -ne 1 ]]; then
+    echo "missing config name" >&2
+    kctf_config_load_usage
+    return 1
+  fi
 
-    CONFIG_NAME="$1"
-    CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
-    shift
+  CONFIG_NAME="$1"
+  CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
+  shift
 
-    source "${CONFIG_PATH}" || return 1
-    if command -v gcloud >/dev/null 2>&1; then
-        echo "Updating gcloud config."
-        update_gcloud_config || return 1
-    else
-        echo "Configuration created only locally. Gcloud not installed." >&2
-    fi
+  source "${CONFIG_PATH}" || return 1
+  if command -v gcloud >/dev/null 2>&1; then
+    echo "Updating gcloud config."
+    update_gcloud_config || return 1
+  else
+    echo "Configuration created only locally. Gcloud not installed." >&2
+  fi
 
-    # try to fetch the creds of the k8s cluster
-    get_cluster_creds >/dev/null 2>/dev/null
+  export_kctf_config_vars
 
-    KCTF_CONFIG="${CONFIG_NAME}"
+  # try to fetch the creds of the k8s cluster
+  get_cluster_creds >/dev/null 2>/dev/null
+
+  KCTF_CONFIG="${CONFIG_NAME}"
 }
 
 function kctf_config_create_usage {
-    echo "kctf config create [args] config_name" >&2
-    echo -e "\t-h|--help\tprint this help" >&2
-    echo -e "\t--project\tGoogle Cloud Platform project name" >&2
-    echo -e "\t--zone\t\tGCP Zone (default: europe-west4-b)" >&2
-    echo -e "\t\t\tFor a list of zones run: gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
-    echo -e "\t--registry\t\tContainer Registry (default: eu.gcr.io)" >&2
-    echo -e "\t\t\tPossible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
-    echo -e "\t--cluster-name\tName of the kubernetes cluster (default: kctf-cluster)" >&2
-    echo -e "\t--domain-name\tOptional domain name to host challenges under" >&2
-    echo -e "\t--start-cluster\tStart the cluster if it's not running yet" >&2
+  echo "kctf config create [args] config_name" >&2
+  echo -e "\t-h|--help\tprint this help" >&2
+  echo -e "\t--project\tGoogle Cloud Platform project name" >&2
+  echo -e "\t--zone\t\tGCP Zone (default: europe-west4-b)" >&2
+  echo -e "\t\t\tFor a list of zones run: gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
+  echo -e "\t--registry\t\tContainer Registry (default: eu.gcr.io)" >&2
+  echo -e "\t\t\tPossible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
+  echo -e "\t--cluster-name\tName of the kubernetes cluster (default: kctf-cluster)" >&2
+  echo -e "\t--domain-name\tOptional domain name to host challenges under" >&2
+  echo -e "\t--start-cluster\tStart the cluster if it's not running yet" >&2
 }
 
 function kctf_config_create {
-    # Default Configuration
-    REGISTRY="eu.gcr.io"
-    PROJECT=""
-    ZONE="europe-west4-b"
-    CLUSTER_NAME="kctf-cluster"
-    DOMAIN_NAME=""
-    START_CLUSTER="0"
+  # Default Configuration
+  REGISTRY="eu.gcr.io"
+  PROJECT=""
+  ZONE="europe-west4-b"
+  CLUSTER_NAME="kctf-cluster"
+  DOMAIN_NAME=""
+  START_CLUSTER="0"
 
-    OPTS="h"
-    LONGOPTS="help,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
-    PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf config create" -- "$@")
-    if [[ $? -ne 0 ]]; then
+  OPTS="h"
+  LONGOPTS="help,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf config create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_config_create_usage
+    return 1
+  fi
+  eval set -- "$PARSED"
+
+  while true; do
+    case "$1" in
+      -h|--help)
         kctf_config_create_usage
         return 1
-    fi
-    eval set -- "$PARSED"
-
-    while true; do
-        case "$1" in
-            -h|--help)
-                kctf_config_create_usage
-                return 1
-                ;;
-            --project)
-                PROJECT=$2
-                shift 2
-                ;;
-            --zone)
-                ZONE=$2
-                shift 2
-                ;;
-            --registry)
-                REGISTRY=$2
-                shift 2
-                ;;
-            --cluster-name)
-                CLUSTER_NAME=$2
-                shift 2
-                ;;
-            --domain-name)
-                DOMAIN_NAME="$2"
-                shift 2
-                ;;
-            --start-cluster)
-                START_CLUSTER="1"
-                shift
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                echo "Unrecognized argument \"$1\"." >&2
-                kctf_config_create_usage
-                return 1
-                ;;
-        esac
-    done
-
-    if [[ $# -ne 1 ]]; then
-        echo "kctf config create: config name missing" >&2
+        ;;
+      --project)
+        PROJECT=$2
+        shift 2
+        ;;
+      --zone)
+        ZONE=$2
+        shift 2
+        ;;
+      --registry)
+        REGISTRY=$2
+        shift 2
+        ;;
+      --cluster-name)
+        CLUSTER_NAME=$2
+        shift 2
+        ;;
+      --domain-name)
+        DOMAIN_NAME="$2"
+        shift 2
+        ;;
+      --start-cluster)
+        START_CLUSTER="1"
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
         kctf_config_create_usage
         return 1
-    fi
+        ;;
+    esac
+  done
 
-    CONFIG_NAME="$1"
-    CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
-    shift
+  if [[ $# -ne 1 ]]; then
+    echo "kctf config create: config name missing" >&2
+    kctf_config_create_usage
+    return 1
+  fi
 
-    if [[ -z "$PROJECT" ]]; then
-        echo "Missing required argument \"--project\"." >&2
-        kctf_config_create_usage
-        return 1
-    fi
+  CONFIG_NAME="$1"
+  CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
+  shift
 
-    mkdir -p "${KCTF_CTF_DIR}/kctf/config"
+  if [[ -z "$PROJECT" ]]; then
+    echo "Missing required argument \"--project\"." >&2
+    kctf_config_create_usage
+    return 1
+  fi
 
-    if [ -e "${CONFIG_PATH}" ]; then
-        echo "Overwriting existing config file. Old content:"
-        cat "${CONFIG_PATH}"
-        rm "${CONFIG_PATH}"
-    fi
+  mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
-    cat > "${CONFIG_PATH}" << EOF
+  if [ -e "${CONFIG_PATH}" ]; then
+    echo "Overwriting existing config file. Old content:"
+    cat "${CONFIG_PATH}"
+    rm "${CONFIG_PATH}"
+  fi
+
+  cat > "${CONFIG_PATH}" << EOF
 PROJECT=${PROJECT}
 ZONE=${ZONE}
 REGISTRY=${REGISTRY}
@@ -149,26 +160,30 @@ CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
 EOF
 
-    if command -v gcloud >/dev/null 2>&1; then
-        echo "Updating gcloud config."
-        update_gcloud_config || return 1
+  export_kctf_config_vars
+
+  if command -v gcloud >/dev/null 2>&1; then
+    echo "Updating gcloud config."
+    update_gcloud_config || return 1
+  else
+    echo "Configuration created only locally. Gcloud not installed." >&2
+  fi
+
+  # there might be an existing cluster
+  # if it already exists, we try to update it
+  # otherwise, start it if requsted
+  get_cluster_creds >/dev/null 2>/dev/null
+  GET_CLUSTER_CREDS_RESULT=$?
+  if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
+    if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
+      echo "Existing cluster found, updating cluster."
     else
-        echo "Configuration created only locally. Gcloud not installed." >&2
+      echo "Starting cluster."
     fi
+    kctf cluster start || return 1
+  fi
 
-    # there might be an existing cluster
-    # if it already exists, we try to update it
-    # otherwise, start it if requsted
-    if [[ "${START_CLUSTER}" == "1" ]] || get_cluster_creds >/dev/null 2>/dev/null; then
-        if [[ "${START_CLUSTER}" == "1" ]]; then
-            echo "Starting cluster."
-        else
-            echo "Existing cluster found, updating cluster."
-        fi
-        kctf cluster start || return 1
-    fi
-
-    KCTF_CONFIG="${CONFIG_NAME}"
+  KCTF_CONFIG="${CONFIG_NAME}"
 }
 
 function kctf_config_usage {
@@ -179,25 +194,25 @@ function kctf_config_usage {
 }
 
 function kctf_config {
-    if [[ $# -lt 1 ]]; then
-        echo "missing required argument" >&2
-        kctf_config_usage
-        return 1
-    fi
-    case "$1" in
-        create)
-            shift
-            kctf_config_create $@
-            return
-            ;;
-        load)
-            shift
-            kctf_config_load $@
-            return
-            ;;
-        *)
-            kctf_config_usage
-            return 1
-            ;;
-    esac
+  if [[ $# -lt 1 ]]; then
+    echo "missing required argument" >&2
+    kctf_config_usage
+    return 1
+  fi
+  case "$1" in
+    create)
+      shift
+      kctf_config_create $@
+      return
+      ;;
+    load)
+      shift
+      kctf_config_load $@
+      return
+      ;;
+    *)
+      kctf_config_usage
+      return 1
+      ;;
+  esac
 }
