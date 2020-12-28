@@ -1,0 +1,6 @@
+export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+CTF_NAME=$(basename "${KCTF_CTF_DIR}")
+# TODO: once we have a single kctf binary, just use an alias
+#alias kctf="${KCTF_CTF_DIR}/kctf/bin/kctf"
+export PATH="${PATH}:${KCTF_CTF_DIR}/kctf/bin"
+PS1="${PS1}"$'\e[0;32m'"kCTF[ctf=${CTF_NAME},config=\${KCTF_CONFIG:-unset}] >"$'\e[0m'" "
