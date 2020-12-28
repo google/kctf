@@ -64,7 +64,7 @@ kubectl apply -f "${DIR}/kctf-operator/deploy/crds/kctf.dev_challenges_crd.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/rbac.yaml"
 kubectl apply -f "${DIR}/kctf-operator/deploy/operator.yaml"
 
-OPERATOR_IMAGE=$(yq read "${DIR}/kctf-operator/deploy/operator.yaml" 'spec.template.spec.containers[0].image')
+OPERATOR_IMAGE=$(yq eval '.spec.template.spec.containers[0].image' "${DIR}/kctf-operator/deploy/operator.yaml")
 
 # The operator needs to create some subresources, e.g. the gcsfuse service account
 for i in {1..30}; do

@@ -33,4 +33,4 @@ fi
 
 umask a+rx
 cp -p -r "${DIR}/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
-yq write --inplace "${CHALLENGE_DIR}/challenge.yaml" 'metadata.name' "${CHALLENGE_NAME}"
+yq eval ".metadata.name = \"${CHALLENGE_NAME}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
