@@ -35,6 +35,8 @@ FROM gcr.io/kctf-docker/challenge
 
 COPY --from=chroot / /chroot
 
+RUN touch /chroot/dev/null
+
 COPY flag /chroot/
 
 RUN apt-get update \
