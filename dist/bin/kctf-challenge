@@ -22,7 +22,7 @@ function require_cluster_config {
 }
 
 function kctf_chal_create_usage {
-  echo "kctf chal create name" 2>&1
+  echo "usage: kctf chal create name" 2>&1
 }
 
 function kctf_chal_create {
@@ -46,7 +46,7 @@ function kctf_chal_create {
 }
 
 function kctf_chal_make_usage {
-  echo "kctf chal make [args] target" 2>&1
+  echo "usage: kctf chal make [args] target" 2>&1
   echo -e "args:" 2>&1
   echo -e "\t--challenge-name\tname of the challenge (defaults to the current directory)" >&2
 }
@@ -104,7 +104,7 @@ function kctf_chal_make {
 }
 
 function kctf_chal_usage {
-  echo "kctf chal command" 2>&1
+  echo "usage: kctf chal command" 2>&1
   echo -e "\tavailable commands:" 2>&1
   echo -e "\t\tmake:\t(tmp) run commands from the Makefile" 2>&1
 }

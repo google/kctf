@@ -70,10 +70,11 @@ function _kctf_get_cluster_creds {
 }
 
 function _kctf_usage {
-  echo "kctf command subcommand [args]" 2>&1
+  echo "usage: kctf command subcommand [args]" 2>&1
   echo -e "\tavailable commands:" 2>&1
-  echo -e "\t\tconfig:\tcreate/load a cluster config" 2>&1
   echo -e "\t\tchal:\tcommands around challenges (creating, deploying, etc.)" 2>&1
+  echo -e "\t\tcluster:\tcommands for managing the cluster " 2>&1
+  echo -e "\t\tconfig:\tcreate/load a cluster config" 2>&1
 }
 
 # Implemented as a function so that we can set environment variables where needed
@@ -84,9 +85,9 @@ function kctf {
     return 1
   fi
   case "$1" in
-    config)
+    chal)
       shift
-      _kctf_config $@
+      "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@
       return
       ;;
     cluster)
@@ -94,9 +95,9 @@ function kctf {
       "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
       return
       ;;
-    chal)
+    config)
       shift
-      "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@
+      _kctf_config $@
       return
       ;;
     *)

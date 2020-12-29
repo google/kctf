@@ -136,16 +136,133 @@ function kctf_cluster_stop {
   fi
 }
 
+function kctf_cluster_resize_usage {
+  echo "usage: kctf cluster resize [args]" 2>&1
+  echo -e "args:" 2>&1
+  echo -e "\t--machine-type\tmachine type to use" >&2
+  echo -e "\t              \tto list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
+  echo -e "\t--min-nodes\tminimum number of nodes in the cluster" >&2
+  echo -e "\t--max-nodes\tmaximum number of nodes in the cluster" >&2
+  echo -e "\t--num-nodes\tinitial number of nodes in the cluster" >&2
+  echo -e "\t--pool-name\tname of the node pool" >&2
+  echo -e "\t--old-pool\tname of the old pool to replace" >&2
+}
+
+function kctf_cluster_resize {
+  OPTS=""
+  LONGOPTS="machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_cluster_resize_usage
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  MACHINE_TYPE="n2-standard-4"
+  MIN_NODES="1"
+  MAX_NODES="1"
+  NUM_NODES="1"
+  NEW_POOL_NAME=
+  OLD_POOL_NAME=
+  while true; do
+    case "$1" in
+      --machine-type)
+        MACHINE_TYPE="$2"
+        shift 2
+        ;;
+      --min-nodes)
+        MIN_NODES="$2"
+        shift 2
+        ;;
+      --max-nodes)
+        MAX_NODES="$2"
+        shift 2
+        ;;
+      --num-nodes)
+        NUM_NODES="$2"
+        shift 2
+        ;;
+      --pool-name)
+        NEW_POOL_NAME="$2"
+        shift 2
+        ;;
+      --old-pool)
+        OLD_POOL_NAME="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        kctf_cluster_resize_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ -z "${OLD_POOL_NAME}" ]]; then
+    OLD_POOL_NAME=$(gcloud container node-pools list --cluster ${CLUSTER_NAME} --format 'value(name)')
+    if [ $(echo "${OLD_POOL_NAME}" | wc -l) != "1" ]; then
+      echo 'Multiple node pools found. Please choose which to replace with --old-pool.' >&2
+      echo '== node pools ==' >&2
+      echo "${OLD_POOL_NAME}" >&2
+      exit 1
+    fi
+  fi
+
+  if [[ -z "${NEW_POOL_NAME}" ]]; then
+    NEW_POOL_NAME="${OLD_POOL_NAME}-resized"
+  fi
+
+  if [ "${OLD_POOL_NAME}" = "${NEW_POOL_NAME}" ]; then
+    echo "New pool can't have the same name as the old pool." >&2
+    exit 1
+  fi
+
+  if [[ $# -ne 0 ]]; then
+    echo "Unrecognized arguments \"$@\"." >&2
+    kctf_cluster_resize_usage
+    exit 1
+  fi
+
+  echo 'Creating the new node pool'
+  gcloud container node-pools create "${NEW_POOL_NAME}" \
+    --cluster="${CLUSTER_NAME}" \
+    --machine-type="${MACHINE_TYPE}" \
+    --enable-autorepair \
+    --enable-autoupgrade \
+    --num-nodes="${NUM_NODES}" \
+    --enable-autoscaling \
+    --min-nodes="${MIN_NODES}" \
+    --max-nodes="${MAX_NODES}"
+
+  echo 'Cordoning old nodes'
+  for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
+    kubectl cordon "$node"
+  done
+
+  echo 'Draining old nodes'
+  for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
+    kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 "$node";
+  done
+
+  echo "Deleting old node pool \"${OLD_POOL_NAME}\""
+  gcloud container node-pools delete "${OLD_POOL_NAME}" --cluster "${CLUSTER_NAME}"
+}
+
 function kctf_cluster_usage {
-  echo "kctf cluster command" 2>&1
+  echo "usage: kctf cluster command" 2>&1
   echo -e "\tavailable commands:" 2>&1
   echo -e "\t\tstart:\tstart the cluster" 2>&1
   echo -e "\t\tstop:\tstop the cluster" 2>&1
+  echo -e "\t\tresize:\tresize the cluster" 2>&1
 }
 
 if [[ $# -lt 1 ]]; then
   echo "unexpected argument count" >&2
-  kctf_chal_usage
+  kctf_cluster_usage
   exit 1
 fi
 
@@ -162,6 +279,10 @@ case "$1" in
   stop)
     shift
     kctf_cluster_stop $@
+    ;;
+  resize)
+    shift
+    kctf_cluster_resize $@
     ;;
   *)
     echo "unknown command" >&2

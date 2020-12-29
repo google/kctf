@@ -24,7 +24,7 @@ function _kctf_export_config_vars {
 }
 
 function _kctf_config_load_usage {
-  echo "kctf config load config_name" >&2
+  echo "usage: kctf config load config_name" >&2
 }
 
 function _kctf_config_load {
@@ -60,7 +60,7 @@ function _kctf_config_load {
 }
 
 function _kctf_config_create_usage {
-  echo "kctf config create [args] config_name" >&2
+  echo "usage: kctf config create [args] config_name" >&2
   echo -e "\t-h|--help\tprint this help" >&2
   echo -e "\t--project\tGoogle Cloud Platform project name" >&2
   echo -e "\t--zone\t\tGCP Zone (default: europe-west4-b)" >&2
@@ -191,7 +191,7 @@ EOF
 }
 
 function _kctf_config_usage {
-  echo "kctf config command [args]" 2>&1
+  echo "usage: kctf config command [args]" 2>&1
   echo -e "\tavailable commands:" 2>&1
   echo -e "\t\tcreate:\tcreate a new config" 2>&1
   echo -e "\t\tload:\tload an existing config" 2>&1
