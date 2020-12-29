@@ -218,7 +218,7 @@ function kctf_config_usage {
 if [[ $# -lt 1 ]]; then
   echo "missing required argument" >&2
   kctf_config_usage
-  return 1
+  exit 1
 fi
 case "$1" in
   create)
