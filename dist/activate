@@ -130,8 +130,9 @@ function _kctf_activate {
   fi
   source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
   _kctf_export_variables
-  trap _kctf_cleanup EXIT
   PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
 }
 
-_kctf_activate
+if _kctf_activate; then
+  trap _kctf_cleanup EXIT
+fi

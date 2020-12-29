@@ -41,7 +41,10 @@ function _kctf_config_load {
   source "${CONFIG_PATH}" || return 1
   if command -v gcloud >/dev/null 2>&1; then
     echo "Updating gcloud config."
-    _kctf_update_gcloud_config || return 1
+    if ! _kctf_update_gcloud_config; then
+      echo "Failed updating gcloud config" >&2
+      return 1
+    fi
   else
     echo "Configuration created only locally. Gcloud not installed." >&2
   fi
@@ -50,6 +53,8 @@ function _kctf_config_load {
 
   # try to fetch the creds of the k8s cluster
   _kctf_get_cluster_creds >/dev/null 2>/dev/null
+
+  echo "loaded config"
 
   KCTF_CONFIG="${CONFIG_NAME}"
 }
