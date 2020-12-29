@@ -102,16 +102,25 @@ function kctf {
 
 function _kctf_error_cleanup {
   unset -f _kctf_download_dependencies
-  unset -f _kctf_cleanup
-  unset -f _kctf_update_gcloud_config
+  #unset -f _kctf_cleanup
   unset -f _kctf_usage
+  unset -f _kctf_error_cleanup
+  unset -f _kctf_activate
   unset -f kctf
+  unset -f deactivate
 
   unset KCTF_CONFIG_DIR
   unset KCTF_CTF_DIR
   unset CTF_NAME
   unset KCTF_BIN
   unset KCTF_SESSION
+  unset KUBECONFIG
+
+  unset PROJECT
+  unset ZONE
+  unset REGISTRY
+  unset CLUSTER_NAME
+  unset DOMAIN_NAME
 }
 
 function _kctf_activate {
@@ -122,7 +131,15 @@ function _kctf_activate {
     return 1
   fi
   _kctf_export_variables
+  SAVED_PS1="${PS1}"
   PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
+}
+
+function deactivate {
+  _kctf_cleanup
+  _kctf_error_cleanup
+  PS1="${SAVED_PS1}"
+  unset SAVED_PS1
 }
 
 if _kctf_activate; then
