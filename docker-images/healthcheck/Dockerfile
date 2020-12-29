@@ -13,10 +13,19 @@
 # limitations under the License.
 FROM ubuntu:20.04
 
-RUN apt-get update \
-    && apt-get install -yq --no-install-recommends python3.8 \
-    && rm -rf /var/lib/apt/lists/*
+ENV BUILD_PACKAGES python3-pip build-essential python3-dev
 
-COPY resolv.conf /etc/
+RUN apt-get update \
+    && apt-get -yq --no-install-recommends install $BUILD_PACKAGES \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m pip install pwntools \
+    && apt-get remove --purge -y $BUILD_PACKAGES $(apt-mark showauto)
+
+RUN apt-get update && apt-get -yq --no-install-recommends install cpio openssl python3 && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
+
+RUN mkdir -p /home/user/.pwntools-cache && echo never > /home/user/.pwntools-cache/update
+
+COPY kctf_drop_privs /usr/bin/
+COPY kctf_bypass_pow /usr/bin/

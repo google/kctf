@@ -11,13 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM kctf-nsjail
+FROM ubuntu:20.04 as chroot
+
+RUN /usr/sbin/useradd --no-create-home -u 1000 user
+
+FROM gcr.io/kctf-docker/challenge
+
+COPY --from=chroot / /chroot
 
 COPY flag /chroot/
 COPY nsjail.cfg /home/user/
 
 CMD kctf_setup && \
-    drop_privs \
+    kctf_drop_privs \
     socat \
       TCP-LISTEN:1337,reuseaddr,fork \
-      EXEC:"maybe_pow.sh nsjail --config /home/user/nsjail.cfg -- /bin/bash"
+      EXEC:"kctf_pow nsjail --config /home/user/nsjail.cfg -- /bin/bash"

@@ -21,17 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     outputs:
-      operator-modified: ${{ steps.set-modified.outputs.operator-modified }}
-      nsjail-modified: ${{ steps.set-modified.outputs.nsjail-modified }}
-      chroot-modified: ${{ steps.set-modified.outputs.chroot-modified }}
-      pwntools-modified: ${{ steps.set-modified.outputs.pwntools-modified }}
-      operator-digest: ${{ steps.push.outputs.operator-digest }}
-      nsjail-digest: ${{ steps.push.outputs.nsjail-digest }}
-      chroot-digest: ${{ steps.push.outputs.chroot-digest }}
-      pwntools-digest: ${{ steps.push.outputs.pwntools-digest }}
+      kctf-operator-modified: ${{ steps.set-modified.outputs.kctf-operator-modified }}
+      challenge-modified: ${{ steps.set-modified.outputs.challenge-modified }}
+      healthcheck-modified: ${{ steps.set-modified.outputs.healthcheck-modified }}
+      kctf-operator-digest: ${{ steps.push.outputs.kctf-operator-digest }}
+      challenge-digest: ${{ steps.push.outputs.challenge-digest }}
+      healthcheck-digest: ${{ steps.push.outputs.healthcheck-digest }}
     strategy:
       matrix:
-        image: ["operator", "nsjail", "chroot", "pwntools"]
+        image: ["kctf-operator", "challenge", "healthcheck"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -40,10 +38,10 @@ jobs:
     - id: modified
       name: Check for modified paths
       run: |
-        if [ "${{ matrix.image }}" == "operator" ]; then
+        if [ "${{ matrix.image }}" == "kctf-operator" ]; then
           PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
         else
-          PATHS=(".github/workflows/update-images.yaml" "config/docker/${{ matrix.image }}/**")
+          PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
         fi
 
         BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
@@ -75,14 +73,14 @@ jobs:
     - name: Build image
       if: steps.modified.outputs.modified
       run: |
-        if [ "${{ matrix.image }}" == "operator" ]; then
+        if [ "${{ matrix.image }}" == "kctf-operator" ]; then
           cd kctf-operator
           curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
           chmod u+x operator-sdk
           sudo mv operator-sdk /usr/local/bin/
           /usr/local/bin/operator-sdk build "${{ matrix.image }}"
         else
-          cd "config/docker/${{ matrix.image }}"
+          cd "docker-images/${{ matrix.image }}"
           docker build . --tag "${{ matrix.image }}"
         fi
 
@@ -103,7 +101,7 @@ jobs:
       name: Push images
       if: steps.modified.outputs.modified
       run: |
-        IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/kctf-${{ matrix.image }}"
+        IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/${{ matrix.image }}"
         docker tag "${{ matrix.image }}" "$IMAGE_GCR"
         DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
         echo "::set-output name=${{ matrix.image }}-digest::${DIGEST}"
@@ -115,28 +113,22 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Update nsjail
-      if: needs.build-docker.outputs.nsjail-modified
+    - name: Update challenge image
+      if: needs.build-docker.outputs.challenge-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-nsjail@${{ needs.build-docker.outputs.nsjail-digest }}"
-        sed -i "s#FROM .* AS bin#FROM ${IMAGE} AS bin#" base/nsjail-docker/Dockerfile
+        IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
+        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/challenge/image/Dockerfile
 
-    - name: Update chroot
-      if: needs.build-docker.outputs.chroot-modified
+    - name: Update healthcheck image
+      if: needs.build-docker.outputs.healthcheck-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-chroot@${{ needs.build-docker.outputs.chroot-digest }}"
-        sed -i "s#FROM .* AS chroot#FROM ${IMAGE} AS chroot#" base/nsjail-docker/Dockerfile
-
-    - name: Update pwntools
-      if: needs.build-docker.outputs.pwntools-modified
-      run: |
-        IMAGE="gcr.io/kctf-docker/kctf-pwntools@${{ needs.build-docker.outputs.pwntools-digest }}"
-        sed -i "s#FROM .* AS pwntools#FROM ${IMAGE} AS pwntools#" base/healthcheck-docker/Dockerfile
+        IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
+        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/healthcheck/image/Dockerfile
 
     - name: Update operator
-      if: needs.build-docker.outputs.operator-modified
+      if: needs.build-docker.outputs.kctf-operator-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-docker.outputs.operator-digest }}"
+        IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-docker.outputs.kctf-operator-digest }}"
         sed -i "s#image: .*#image: ${IMAGE}#" kctf-operator/deploy/operator.yaml
 
     - name: Download kubectl
@@ -161,7 +153,7 @@ jobs:
         gcloud auth configure-docker
 
     - name: Configure kCTF directory
-      run: |        
+      run: |
         export PATH=$PATH:$PWD/bin
         kctf-setup-chal-dir $PWD/samples
         kctf-chal-create default-task
@@ -171,6 +163,7 @@ jobs:
         export PATH=$PATH:$PWD/bin
         kctf-config-create --chal-dir samples --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster
 
+    # TODO: this should use challenge templates instead so that we don't have to patch all the images
     - name: Expose sample tasks
       run: |
         for f in samples/*/challenge.yaml; do
@@ -187,7 +180,7 @@ jobs:
         for f in *; do
           if [ ! "$f" == "kctf-conf" ]; then
             pushd $f
-              CHALLENGE_NAME="$(yq read challenge.yaml 'metadata.name')"
+              CHALLENGE_NAME="$(yq eval '.metadata.name' challenge.yaml)"
               make start
               # We want to wait for the deployment to be available, but it
               # might not have been created yet by the operator.

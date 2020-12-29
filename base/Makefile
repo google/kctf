@@ -36,12 +36,12 @@ export ZONE:=CONFIGMISSING
 KUBECONFIG=$(HOME)/.config/kctf/kube.conf
 export KUBECONFIG
 
-export CHALLENGE_NAME:=$(shell yq read challenge.yaml 'metadata.name')
+export CHALLENGE_NAME:=$(shell yq eval '.metadata.name' challenge.yaml)
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
 export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
-HEALTHCHECK_ENABLED:=$(shell yq read challenge.yaml 'spec.healthcheck.enabled')
+HEALTHCHECK_ENABLED:=$(shell yq eval '.spec.healthcheck.enabled' challenge.yaml)
 
 docker: .gen/challenge-image
 
@@ -161,9 +161,9 @@ clean:
 	kubectl apply -f challenge.yaml
 
 challenge.yaml: ${CLUSTER_GEN}/challenge-image-pushed ${CLUSTER_GEN}/healthcheck-image-pushed
-	yq write --inplace challenge.yaml 'spec.image' $$(cat ${CLUSTER_GEN}/challenge-image-pushed)
+	yq eval ".spec.image = \"$$(cat ${CLUSTER_GEN}/challenge-image-pushed)\"" --inplace challenge.yaml
 ifeq ($(HEALTHCHECK_ENABLED), true)
-	yq write --inplace challenge.yaml 'spec.healthcheck.image' $$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)
+	yq eval ".spec.healthcheck.image = \"$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)\"" --inplace challenge.yaml
 endif
 
 .gen/challenge-image: challenge/.gen/docker-image
@@ -173,7 +173,7 @@ endif
 	fi
 	echo "$${NEW_ID}" > $@;
 
-challenge/.gen/docker-image: ../kctf-conf/base/nsjail-docker/.gen/docker-image .FORCE
+challenge/.gen/docker-image: .FORCE
 	$(MAKE) -C challenge .gen/docker-image
 
 .gen/kind-kubeconfig: .FORCE
@@ -210,7 +210,7 @@ ifeq ($(HEALTHCHECK_ENABLED), true)
 	echo "$${NEW_ID}" > $@;
 endif
 
-healthcheck/.gen/docker-image: ../kctf-conf/base/healthcheck-docker/.gen/docker-image .FORCE
+healthcheck/.gen/docker-image: .FORCE
 ifeq ($(HEALTHCHECK_ENABLED), true)
 	$(MAKE) -C healthcheck .gen/docker-image
 endif
@@ -232,12 +232,6 @@ ifeq ($(HEALTHCHECK_ENABLED), true)
 	fi
 	echo -n "$${IMAGE_TAG}" > $@
 endif
-
-../kctf-conf/base/nsjail-docker/.gen/docker-image: .FORCE
-	$(MAKE) -C ${@D}/.. .gen/docker-image
-
-../kctf-conf/base/healthcheck-docker/.gen/docker-image: .FORCE
-	$(MAKE) -C ${@D}/.. .gen/docker-image
 
 .cluster-config:
 	@if [ "${PROJECT}" = "CONFIGMISSING" ]; then

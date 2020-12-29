@@ -11,3 +11,5 @@ spec:
     dns: true
   healthcheck:
     enabled: true
+    image: eu.gcr.io/kctf-test1/bash-healthcheck:c30e3aa508a6cf74b73097869c862f705d1a1f40d89a97b1787528ea0c222068
+  image: eu.gcr.io/kctf-test1/bash:26e14f4e77026c84951a2213cbc1b5911725578e2116aa4de169ee4cb1694414

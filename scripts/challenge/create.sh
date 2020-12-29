@@ -1,12 +1,12 @@
 #!/bin/bash
 # Copyright 2020 Google LLC
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,5 +32,5 @@ if [ -d "${CHALLENGE_DIR}" ]; then
 fi
 
 umask a+rx
-cp -p -r "${CHAL_DIR}/kctf-conf/base/challenge-skeleton" "${CHALLENGE_DIR}"
-yq write --inplace "${CHALLENGE_DIR}/challenge.yaml" 'metadata.name' "${CHALLENGE_NAME}"
+cp -p -r "${DIR}/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
+yq eval ".metadata.name = \"${CHALLENGE_NAME}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
