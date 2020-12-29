@@ -39,10 +39,6 @@ export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-health
 
 HEALTHCHECK_ENABLED:=$(shell ${KCTF_BIN}/yq eval '.spec.healthcheck.enabled' challenge.yaml)
 
-foo:
-	echo "CHALLENGE_NAME: ${CHALLENGE_NAME}"
-	${KCTF_BIN}/yq --help
-
 docker: .gen/challenge-image
 
 start: .deploy
