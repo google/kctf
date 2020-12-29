@@ -27,14 +27,10 @@ SHELL := bash
 
 PUSH_TARGET="REMOTE"
 
-export REGISTRY:=CONFIGMISSING
-export PROJECT:=CONFIGMISSING
-export CLUSTER_NAME:=CONFIGMISSING
-export ZONE:=CONFIGMISSING
-
--include $(HOME)/.config/kctf/cluster.conf
-KUBECONFIG=$(HOME)/.config/kctf/kube.conf
-export KUBECONFIG
+export REGISTRY?=CONFIGMISSING
+export PROJECT?=CONFIGMISSING
+export CLUSTER_NAME?=CONFIGMISSING
+export ZONE?=CONFIGMISSING
 
 export CHALLENGE_NAME:=$(shell yq eval '.metadata.name' challenge.yaml)
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
@@ -136,6 +132,7 @@ healthcheck-test-docker: .gen/healthcheck-docker-id
 	IMAGE_ID="$$(cat .gen/challenge-image)"
 	docker run -d -it -p 1337 --privileged "$${IMAGE_ID}" > $@
 
+#TODO can this be a regular kctf config? I.e. create it once with "kctf config create" and then use it?
 test-kind: LOCAL_KUBECONFIG=".gen/kind-kubeconfig"
 test-kind: PUSH_TARGET="KIND"
 test-kind: | .gen/kind-kubeconfig .test-local
@@ -146,7 +143,6 @@ test-d4w: | .gen/d4w-kubeconfig .test-local
 
 .test-local: PROJECT="kctf-testing"
 .test-local:
-	kubectl config rename-context "$(shell kubectl config current-context --kubeconfig="${LOCAL_KUBECONFIG}")" "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" --kubeconfig="${LOCAL_KUBECONFIG}" || true
 	$(MAKE) .deploy PUSH_TARGET=${PUSH_TARGET} PROJECT=${PROJECT} ZONE=${ZONE} CLUSTER_NAME=${CLUSTER_NAME} KUBECONFIG="${LOCAL_KUBECONFIG}"
 	kubectl patch deployment ${CHALLENGE_NAME}  --type json -p='[{"op": "remove", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1challenge"}]' --kubeconfig=${LOCAL_KUBECONFIG}
 
@@ -238,7 +234,6 @@ endif
 	@  echo 'error: cluster config not loaded. Run kctf-config-create or kctf-config-load'
 	@  exit 1
 	@fi
-	kubectl config use-context "kctf_${PROJECT}_${ZONE}_${CLUSTER_NAME}" > /dev/null
 	mkdir -p ${CLUSTER_GEN} >&2
 
 .FORCE:

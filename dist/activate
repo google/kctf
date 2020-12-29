@@ -20,19 +20,27 @@ export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..
 CTF_NAME=$(basename "${KCTF_CTF_DIR}")
 
 # create a gcloud config for this session
-export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
+export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
 
-function delete_gcloud_config {
+function cleanup {
   if command -v gcloud >/dev/null 2>&1; then
-    GCLOUD_CONFIG_NAME="${CLOUDSDK_ACTIVE_CONFIG_NAME}"
     unset CLOUDSDK_ACTIVE_CONFIG_NAME
+    # regenerate this name in case the user changed the variable
+    GCLOUD_CONFIG_NAME="kctf-${KCTF_SESSION}"
     if gcloud config configurations describe "${GCLOUD_CONFIG_NAME}" >/dev/null 2>&1; then
       echo "Deleting gcloud config ${GCLOUD_CONFIG_NAME}"
       CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud config configurations delete "${GCLOUD_CONFIG_NAME}"
     fi
   fi
+  # regenerate this name in case the user changed the variable
+  KUBE_CONFIG_NAME="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
+  if [[ -e "${KUBE_CONFIG_NAME}" ]]; then
+    rm "${KUBE_CONFIG_NAME}" >/dev/null
+  fi
 }
-trap delete_gcloud_config EXIT
+trap cleanup EXIT
 
 function update_gcloud_config {
   ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
@@ -58,7 +66,7 @@ function kctf_usage {
   echo -e "\t\tchal:\tcommands around challenges (creating, deploying, etc.)" 2>&1
 }
 
-# Implemented as a function so that we can set environment variables
+# Implemented as a function so that we can set environment variables where needed
 function kctf {
   if [[ $# -lt 1 ]]; then
     echo "missing required argument" >&2
@@ -77,7 +85,9 @@ function kctf {
       return
       ;;
     chal)
-      echo 'challenge'
+      shift
+      "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@
+      return
       ;;
     *)
       kctf_usage

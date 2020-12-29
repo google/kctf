@@ -21,7 +21,6 @@ function export_kctf_config_vars {
   export REGISTRY
   export CLUSTER_NAME
   export DOMAIN_NAME
-  export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${PROJECT}_${ZONE}_${CLUSTER_NAME}.conf"
 }
 
 function kctf_config_load_usage {

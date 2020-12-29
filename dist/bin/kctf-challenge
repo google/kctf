@@ -1,0 +1,105 @@
+#!/bin/bash
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+set -Eeuo pipefail
+
+function require_cluster_config {
+  if [[ -z "${CLUSTER_NAME-}" ]]; then
+    echo "No config loaded. You need to run \"kctf config\" first." >&2
+    exit 1
+  fi
+}
+
+function kctf_chal_make_usage {
+  echo "kctf chal make [args] target" 2>&1
+  echo -e "args:" 2>&1
+  echo -e "\t--challenge-name\tname of the challenge (defaults to the current directory)" >&2
+}
+
+function kctf_chal_usage {
+  echo "kctf chal command" 2>&1
+  echo -e "\tavailable commands:" 2>&1
+  echo -e "\t\tmake:\t(tmp) run commands from the Makefile" 2>&1
+}
+
+function kctf_chal_make {
+  OPTS=""
+  LONGOPTS="challenge-name:"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_chal_make_usage
+    return 1
+  fi
+  eval set -- "$PARSED"
+
+  CHALLENGE_NAME=
+  while true; do
+    case "$1" in
+      --challenge-name)
+        CHALLENGE_NAME="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        kctf_chal_make_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ $# -ne 1 ]]; then
+    echo "kctf chal make: target missing" >&2
+    kctf_chal_make_usage
+    return 1
+  fi
+
+  TARGET="$1"
+  shift
+
+  if [[ -z "${CHALLENGE_NAME-}" ]]; then
+    CHALLENGE_NAME=$(realpath "${PWD}" --relative-to "${KCTF_CTF_DIR}" | cut -d/ -f1)
+  fi
+
+  CHALLENGE_PATH="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
+  if [[ -z "${CHALLENGE_NAME-}" ]] || [[ "${CHALLENGE_NAME}" == . ]] || [[ "${CHALLENGE_NAME}" == ".." ]] || [[ ! -e "${CHALLENGE_PATH}/challenge.yaml" ]]; then
+    echo "Couldn't find challenge.yaml under \"${CHALLENGE_PATH}\"" >&2
+    echo "You need to be inside a challenge directory or set --challenge-name" >&2
+    exit 1
+  fi
+
+  make -C "${CHALLENGE_PATH}" -f "${KCTF_CTF_DIR}/kctf/Makefile" "${TARGET}"
+}
+
+if [[ $# -lt 1 ]]; then
+  echo "unexpected argument count" >&2
+  kctf_chal_usage
+  exit 1
+fi
+
+case "$1" in
+  make)
+    shift
+    kctf_chal_make $@
+    ;;
+  *)
+    echo "unknown command" >&2
+    kctf_chal_usage
+    exit 1
+    ;;
+esac
+
