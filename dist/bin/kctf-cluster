@@ -139,18 +139,19 @@ function kctf_cluster_stop {
 function kctf_cluster_resize_usage {
   echo "usage: kctf cluster resize [args]" 2>&1
   echo -e "args:" 2>&1
+  echo -e "\t-h|--help\tprint this help" >&2
   echo -e "\t--machine-type\tmachine type to use" >&2
   echo -e "\t              \tto list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
-  echo -e "\t--min-nodes\tminimum number of nodes in the cluster" >&2
-  echo -e "\t--max-nodes\tmaximum number of nodes in the cluster" >&2
-  echo -e "\t--num-nodes\tinitial number of nodes in the cluster" >&2
+  echo -e "\t--min-nodes\t(required) minimum number of nodes in the cluster" >&2
+  echo -e "\t--max-nodes\t(required) maximum number of nodes in the cluster" >&2
+  echo -e "\t--num-nodes\t(required) initial number of nodes in the cluster" >&2
   echo -e "\t--pool-name\tname of the node pool" >&2
   echo -e "\t--old-pool\tname of the old pool to replace" >&2
 }
 
 function kctf_cluster_resize {
-  OPTS=""
-  LONGOPTS="machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
+  OPTS="h"
+  LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_resize_usage
@@ -159,13 +160,17 @@ function kctf_cluster_resize {
   eval set -- "$PARSED"
 
   MACHINE_TYPE="n2-standard-4"
-  MIN_NODES="1"
-  MAX_NODES="1"
-  NUM_NODES="1"
+  MIN_NODES=
+  MAX_NODES=
+  NUM_NODES=
   NEW_POOL_NAME=
   OLD_POOL_NAME=
   while true; do
     case "$1" in
+      -h|--help)
+        kctf_cluster_resize_usage
+        exit 0
+        ;;
       --machine-type)
         MACHINE_TYPE="$2"
         shift 2
@@ -201,6 +206,12 @@ function kctf_cluster_resize {
         ;;
     esac
   done
+
+  if [[ -z "${MIN_NODES}" ]] || [[ -z "${MAX_NODES}" ]] || [[ -z "${NUM_NODES}" ]]; then
+    echo "Required arguments missing" >&2
+    kctf_cluster_resize_usage
+    exit 1
+  fi
 
   if [[ -z "${OLD_POOL_NAME}" ]]; then
     OLD_POOL_NAME=$(gcloud container node-pools list --cluster ${CLUSTER_NAME} --format 'value(name)')
