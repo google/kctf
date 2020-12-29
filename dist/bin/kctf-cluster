@@ -137,8 +137,8 @@ function kctf_cluster_stop {
 }
 
 function kctf_cluster_resize_usage {
-  echo -e "usage: kctf cluster resize [args]" 2>&1
-  echo -e "args:" 2>&1
+  echo -e "usage: kctf cluster resize [args]" >&2
+  echo -e "args:" >&2
   echo -e "  -h|--help      print this help" >&2
   echo -e "  --machine-type machine type to use" >&2
   echo -e "                 to list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
@@ -264,11 +264,11 @@ function kctf_cluster_resize {
 }
 
 function kctf_cluster_usage {
-  echo -e "usage: kctf cluster command" 2>&1
-  echo -e "available commands:" 2>&1
-  echo -e "  start:  start the cluster" 2>&1
-  echo -e "  stop:   stop the cluster" 2>&1
-  echo -e "  resize: resize the cluster" 2>&1
+  echo -e "usage: kctf cluster command" >&2
+  echo -e "available commands:" >&2
+  echo -e "  start:  start the cluster" >&2
+  echo -e "  stop:   stop the cluster" >&2
+  echo -e "  resize: resize the cluster" >&2
 }
 
 if [[ $# -lt 1 ]]; then

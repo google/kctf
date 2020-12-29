@@ -22,7 +22,7 @@ function require_cluster_config {
 }
 
 function kctf_chal_create_usage {
-  echo "usage: kctf chal create name" 2>&1
+  echo "usage: kctf chal create name" >&2
 }
 
 function kctf_chal_create {
@@ -46,8 +46,8 @@ function kctf_chal_create {
 }
 
 function kctf_chal_make_usage {
-  echo -e "usage: kctf chal make [args] target" 2>&1
-  echo -e "args:" 2>&1
+  echo -e "usage: kctf chal make [args] target" >&2
+  echo -e "args:" >&2
   echo -e "  --challenge-name name of the challenge (defaults to the current directory)" >&2
 }
 
@@ -104,10 +104,10 @@ function kctf_chal_make {
 }
 
 function kctf_chal_usage {
-  echo -e "usage: kctf chal command" 2>&1
-  echo -e "available commands:" 2>&1
-  echo -e "  create: create a new challenge from a template" 2>&1
-  echo -e "  make:   (tmp) run commands from the Makefile" 2>&1
+  echo -e "usage: kctf chal command" >&2
+  echo -e "available commands:" >&2
+  echo -e "  create: create a new challenge from a template" >&2
+  echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
 if [[ $# -lt 1 ]]; then

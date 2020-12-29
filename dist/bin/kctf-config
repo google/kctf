@@ -209,10 +209,10 @@ EOF
 }
 
 function kctf_config_usage {
-  echo -e "usage: kctf config command [args]" 2>&1
-  echo -e "available commands:" 2>&1
-  echo -e "  create: create a new config" 2>&1
-  echo -e "  load:   load an existing config" 2>&1
+  echo -e "usage: kctf config command [args]" >&2
+  echo -e "available commands:" >&2
+  echo -e "  create: create a new config" >&2
+  echo -e "  load:   load an existing config" >&2
 }
 
 if [[ $# -lt 1 ]]; then
