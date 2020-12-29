@@ -83,7 +83,9 @@ function kctf {
     config)
       shift
       CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@)
-      if [[ $? -ne 0 ]] return 1
+      if [[ $? -ne 0 ]]; then
+        return 1
+      fi
       source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
       export PROJECT
       export ZONE
