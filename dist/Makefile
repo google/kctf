@@ -32,12 +32,16 @@ export PROJECT?=CONFIGMISSING
 export CLUSTER_NAME?=CONFIGMISSING
 export ZONE?=CONFIGMISSING
 
-export CHALLENGE_NAME:=$(shell yq eval '.metadata.name' challenge.yaml)
+export CHALLENGE_NAME:=$(shell ${KCTF_BIN}/yq eval '.metadata.name' challenge.yaml)
 CLUSTER_GEN=.gen/${PROJECT}_${ZONE}_${CLUSTER_NAME}
 export REMOTE_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}
 export REMOTE_HEALTHCHECK_IMAGE:=${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck
 
-HEALTHCHECK_ENABLED:=$(shell yq eval '.spec.healthcheck.enabled' challenge.yaml)
+HEALTHCHECK_ENABLED:=$(shell ${KCTF_BIN}/yq eval '.spec.healthcheck.enabled' challenge.yaml)
+
+foo:
+	echo "CHALLENGE_NAME: ${CHALLENGE_NAME}"
+	${KCTF_BIN}/yq --help
 
 docker: .gen/challenge-image
 
@@ -157,9 +161,9 @@ clean:
 	kubectl apply -f challenge.yaml
 
 challenge.yaml: ${CLUSTER_GEN}/challenge-image-pushed ${CLUSTER_GEN}/healthcheck-image-pushed
-	yq eval ".spec.image = \"$$(cat ${CLUSTER_GEN}/challenge-image-pushed)\"" --inplace challenge.yaml
+	${KCTF_BIN}/yq eval ".spec.image = \"$$(cat ${CLUSTER_GEN}/challenge-image-pushed)\"" --inplace challenge.yaml
 ifeq ($(HEALTHCHECK_ENABLED), true)
-	yq eval ".spec.healthcheck.image = \"$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)\"" --inplace challenge.yaml
+	${KCTF_BIN}/yq eval ".spec.healthcheck.image = \"$$(cat ${CLUSTER_GEN}/healthcheck-image-pushed)\"" --inplace challenge.yaml
 endif
 
 .gen/challenge-image: challenge/.gen/docker-image

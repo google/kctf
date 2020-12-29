@@ -12,19 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# set up the environment
+# set up the environment variables
 KCTF_CONFIG_DIR="${HOME}/.config/kctf"
-mkdir -p "${KCTF_CONFIG_DIR}" >/dev/null 2>/dev/null
-
-export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 CTF_NAME=$(basename "${KCTF_CTF_DIR}")
-
-# create a gcloud config for this session
+KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
 KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
-export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
-export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
 
-function cleanup {
+function _kctf_download_dependencies {
+  if [[ ! -x "${KCTF_BIN}/yq" ]]; then
+    if [[ -e "${KCTF_BIN}/yq" ]]; then
+      rm "${KCTF_BIN}/yq" >/dev/null
+    fi
+    wget "https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64" -O "${KCTF_BIN}/yq" --quiet || return 1
+    sha256sum --status -c <(echo "5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632  ${KCTF_BIN}/yq") || return 1
+    chmod u+x "${KCTF_BIN}/yq"
+  fi
+}
+
+function _kctf_export_variables {
+  export KCTF_CTF_DIR
+  export KCTF_BIN
+  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
+  export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
+}
+
+function _kctf_cleanup {
   if command -v gcloud >/dev/null 2>&1; then
     unset CLOUDSDK_ACTIVE_CONFIG_NAME
     # regenerate this name in case the user changed the variable
@@ -40,9 +53,8 @@ function cleanup {
     rm "${KUBE_CONFIG_NAME}" >/dev/null
   fi
 }
-trap cleanup EXIT
 
-function update_gcloud_config {
+function _kctf_update_gcloud_config {
   ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
   if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
         gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
@@ -53,13 +65,11 @@ function update_gcloud_config {
   gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null
 }
 
-function get_cluster_creds {
+function _kctf_get_cluster_creds {
   gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
 }
 
-source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
-
-function kctf_usage {
+function _kctf_usage {
   echo "kctf command subcommand [args]" 2>&1
   echo -e "\tavailable commands:" 2>&1
   echo -e "\t\tconfig:\tcreate/load a cluster config" 2>&1
@@ -70,13 +80,13 @@ function kctf_usage {
 function kctf {
   if [[ $# -lt 1 ]]; then
     echo "missing required argument" >&2
-    kctf_usage
+    _kctf_usage
     return 1
   fi
   case "$1" in
     config)
       shift
-      kctf_config $@
+      _kctf_config $@
       return
       ;;
     cluster)
@@ -90,10 +100,38 @@ function kctf {
       return
       ;;
     *)
-      kctf_usage
+      _kctf_usage
       return 1
       ;;
   esac
 }
 
-PS1="${PS1}"$'\e[0;32m'"kCTF[ctf=${CTF_NAME},config=\${KCTF_CONFIG:-unset}] >"$'\e[0m'" "
+function _kctf_error_cleanup {
+  unset -f _kctf_download_dependencies
+  unset -f _kctf_cleanup
+  unset -f _kctf_update_gcloud_config
+  unset -f _kctf_get_cluster_creds
+  unset -f _kctf_usage
+  unset -f kctf
+
+  unset KCTF_CONFIG_DIR
+  unset KCTF_CTF_DIR
+  unset CTF_NAME
+  unset KCTF_BIN
+  unset KCTF_SESSION
+}
+
+function _kctf_activate {
+  mkdir -p "${KCTF_CONFIG_DIR}" >/dev/null 2>/dev/null
+  if ! _kctf_download_dependencies; then
+    echo 'error downloading dependencies' >&2
+    _kctf_error_cleanup
+    return 1
+  fi
+  source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
+  _kctf_export_variables
+  trap _kctf_cleanup EXIT
+  PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
+}
+
+_kctf_activate
