@@ -70,11 +70,11 @@ function _kctf_get_cluster_creds {
 }
 
 function _kctf_usage {
-  echo "usage: kctf command subcommand [args]" 2>&1
-  echo -e "\tavailable commands:" 2>&1
-  echo -e "\t\tchal:\tcommands around challenges (creating, deploying, etc.)" 2>&1
-  echo -e "\t\tcluster:\tcommands for managing the cluster " 2>&1
-  echo -e "\t\tconfig:\tcreate/load a cluster config" 2>&1
+  echo -e "usage: kctf command subcommand [args]" 2>&1
+  echo -e "available commands:" 2>&1
+  echo -e "  chal:    commands around challenges (creating, deploying, etc.)" 2>&1
+  echo -e "  cluster: commands for managing the cluster " 2>&1
+  echo -e "  config:  create/load a cluster config" 2>&1
 }
 
 # Implemented as a function so that we can set environment variables where needed

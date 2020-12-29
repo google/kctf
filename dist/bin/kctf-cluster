@@ -137,16 +137,16 @@ function kctf_cluster_stop {
 }
 
 function kctf_cluster_resize_usage {
-  echo "usage: kctf cluster resize [args]" 2>&1
+  echo -e "usage: kctf cluster resize [args]" 2>&1
   echo -e "args:" 2>&1
-  echo -e "\t-h|--help\tprint this help" >&2
-  echo -e "\t--machine-type\tmachine type to use" >&2
-  echo -e "\t              \tto list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
-  echo -e "\t--min-nodes\t(required) minimum number of nodes in the cluster" >&2
-  echo -e "\t--max-nodes\t(required) maximum number of nodes in the cluster" >&2
-  echo -e "\t--num-nodes\t(required) initial number of nodes in the cluster" >&2
-  echo -e "\t--pool-name\tname of the node pool" >&2
-  echo -e "\t--old-pool\tname of the old pool to replace" >&2
+  echo -e "  -h|--help      print this help" >&2
+  echo -e "  --machine-type machine type to use" >&2
+  echo -e "                 to list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
+  echo -e "  --min-nodes    (required) minimum number of nodes in the cluster" >&2
+  echo -e "  --max-nodes    (required) maximum number of nodes in the cluster" >&2
+  echo -e "  --num-nodes    (required) initial number of nodes in the cluster" >&2
+  echo -e "  --pool-name    name of the node pool" >&2
+  echo -e "  --old-pool     name of the old pool to replace" >&2
 }
 
 function kctf_cluster_resize {
@@ -264,11 +264,11 @@ function kctf_cluster_resize {
 }
 
 function kctf_cluster_usage {
-  echo "usage: kctf cluster command" 2>&1
-  echo -e "\tavailable commands:" 2>&1
-  echo -e "\t\tstart:\tstart the cluster" 2>&1
-  echo -e "\t\tstop:\tstop the cluster" 2>&1
-  echo -e "\t\tresize:\tresize the cluster" 2>&1
+  echo -e "usage: kctf cluster command" 2>&1
+  echo -e "available commands:" 2>&1
+  echo -e "  start:  start the cluster" 2>&1
+  echo -e "  stop:   stop the cluster" 2>&1
+  echo -e "  resize: resize the cluster" 2>&1
 }
 
 if [[ $# -lt 1 ]]; then
