@@ -29,6 +29,10 @@ function update_gcloud_config {
   fi
 }
 
+function set_lastconfig_link {
+  ln -sf "${CONFIG_NAME}" "${KCTF_CTF_DIR}/kctf/config/.lastconfig"
+}
+
 function kctf_config_load_usage {
   echo "usage: kctf config load config_name" >&2
 }
@@ -41,6 +45,13 @@ function kctf_config_load {
   fi
 
   CONFIG_NAME="$1"
+  if [[ "${CONFIG_NAME}" == ".lastconfig" ]]; then
+    CONFIG_NAME=$(readlink "${KCTF_CTF_DIR}/kctf/config/.lastconfig")
+    if [[ $? -ne 0 ]]; then
+      echo "could not resolve .lastconfig link" >&2
+      return 1
+    fi
+  fi
   CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
   shift
 
@@ -52,6 +63,8 @@ function kctf_config_load {
   gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
 
   echo "loaded config" >&2
+
+  set_lastconfig_link
 
   echo "${CONFIG_NAME}"
 }
@@ -137,6 +150,13 @@ function kctf_config_create {
   fi
 
   CONFIG_NAME="$1"
+  if [[ "${CONFIG_NAME}" == ".lastconfig" ]]; then
+    CONFIG_NAME=$(readlink "${KCTF_CTF_DIR}/kctf/config/.lastconfig")
+    if [[ $? -ne 0 ]]; then
+      echo "could not resolve .lastconfig link" >&2
+      return 1
+    fi
+  fi
   CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
   shift
 
@@ -182,6 +202,8 @@ EOF
     export DOMAIN_NAME
     "${KCTF_BIN}/kctf-cluster" start >&2 || return 1
   fi
+
+  set_lastconfig_link
 
   echo "${CONFIG_NAME}"
 }

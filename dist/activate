@@ -132,6 +132,10 @@ function _kctf_activate {
   fi
   _kctf_export_variables
   SAVED_PS1="${PS1}"
+  echo "kCTF environment activated. Run \"deactivate\" to exit."
+  if kctf config load .lastconfig >/dev/null 2>/dev/null; then
+    echo "automatically loaded last config"
+  fi
   PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
 }
 
