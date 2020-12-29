@@ -54,21 +54,6 @@ function _kctf_cleanup {
   fi
 }
 
-function _kctf_update_gcloud_config {
-  ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
-  if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
-        gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
-  fi
-  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null
-  gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null
-  gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null
-  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null
-}
-
-function _kctf_get_cluster_creds {
-  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return 1
-}
-
 function _kctf_usage {
   echo -e "usage: kctf command subcommand [args]" 2>&1
   echo -e "available commands:" 2>&1
@@ -97,7 +82,15 @@ function kctf {
       ;;
     config)
       shift
-      _kctf_config $@
+      CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@)
+      if [[ $? -ne 0 ]] return 1
+      source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
+      export PROJECT
+      export ZONE
+      export REGISTRY
+      export CLUSTER_NAME
+      export DOMAIN_NAME
+      KCTF_CONFIG="${CONFIG_NAME}"
       return
       ;;
     *)
@@ -111,7 +104,6 @@ function _kctf_error_cleanup {
   unset -f _kctf_download_dependencies
   unset -f _kctf_cleanup
   unset -f _kctf_update_gcloud_config
-  unset -f _kctf_get_cluster_creds
   unset -f _kctf_usage
   unset -f kctf
 
@@ -129,7 +121,6 @@ function _kctf_activate {
     _kctf_error_cleanup
     return 1
   fi
-  source "${KCTF_CTF_DIR}/kctf/bin/kctf-config"
   _kctf_export_variables
   PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
 }

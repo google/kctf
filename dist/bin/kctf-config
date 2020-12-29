@@ -13,24 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file is sourced by kctf/activate
-
-function _kctf_export_config_vars {
-  export PROJECT
-  export ZONE
-  export REGISTRY
-  export CLUSTER_NAME
-  export DOMAIN_NAME
+function update_gcloud_config {
+  if command -v gcloud >/dev/null 2>&1; then
+    echo "Updating gcloud config." >&2
+    ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
+    if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
+          gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
+    fi
+    gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null
+    gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null
+    gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null
+    gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+  else
+    echo "Configuration created only locally. Gcloud not installed." >&2
+  fi
 }
 
-function _kctf_config_load_usage {
+function kctf_config_load_usage {
   echo "usage: kctf config load config_name" >&2
 }
 
-function _kctf_config_load {
+function kctf_config_load {
   if [[ $# -ne 1 ]]; then
     echo "missing config name" >&2
-    _kctf_config_load_usage
+    kctf_config_load_usage
     return 1
   fi
 
@@ -39,27 +45,18 @@ function _kctf_config_load {
   shift
 
   source "${CONFIG_PATH}" || return 1
-  if command -v gcloud >/dev/null 2>&1; then
-    echo "Updating gcloud config."
-    if ! _kctf_update_gcloud_config; then
-      echo "Failed updating gcloud config" >&2
-      return 1
-    fi
-  else
-    echo "Configuration created only locally. Gcloud not installed." >&2
-  fi
 
-  _kctf_export_config_vars
+  update_gcloud_config || return 1
 
   # try to fetch the creds of the k8s cluster
-  _kctf_get_cluster_creds >/dev/null 2>/dev/null
+  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
 
-  echo "loaded config"
+  echo "loaded config" >&2
 
-  KCTF_CONFIG="${CONFIG_NAME}"
+  echo "${CONFIG_NAME}"
 }
 
-function _kctf_config_create_usage {
+function kctf_config_create_usage {
   echo -e "usage: kctf config create [args] config_name" >&2
   echo -e "  -h|--help       print this help" >&2
   echo -e "  --project       Google Cloud Platform project name" >&2
@@ -73,7 +70,7 @@ function _kctf_config_create_usage {
   echo -e "  --start-cluster Start the cluster if it's not running yet" >&2
 }
 
-function _kctf_config_create {
+function kctf_config_create {
   # Default Configuration
   REGISTRY="eu.gcr.io"
   PROJECT=""
@@ -86,7 +83,7 @@ function _kctf_config_create {
   LONGOPTS="help,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf config create" -- "$@")
   if [[ $? -ne 0 ]]; then
-    _kctf_config_create_usage
+    kctf_config_create_usage
     return 1
   fi
   eval set -- "$PARSED"
@@ -94,7 +91,7 @@ function _kctf_config_create {
   while true; do
     case "$1" in
       -h|--help)
-        _kctf_config_create_usage
+        kctf_config_create_usage
         return 1
         ;;
       --project)
@@ -127,7 +124,7 @@ function _kctf_config_create {
         ;;
       *)
         echo "Unrecognized argument \"$1\"." >&2
-        _kctf_config_create_usage
+        kctf_config_create_usage
         return 1
         ;;
     esac
@@ -135,7 +132,7 @@ function _kctf_config_create {
 
   if [[ $# -ne 1 ]]; then
     echo "kctf config create: config name missing" >&2
-    _kctf_config_create_usage
+    kctf_config_create_usage
     return 1
   fi
 
@@ -145,16 +142,16 @@ function _kctf_config_create {
 
   if [[ -z "$PROJECT" ]]; then
     echo "Missing required argument \"--project\"." >&2
-    _kctf_config_create_usage
+    kctf_config_create_usage
     return 1
   fi
 
   mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
   if [ -e "${CONFIG_PATH}" ]; then
-    echo "Overwriting existing config file. Old content:"
-    cat "${CONFIG_PATH}"
-    rm "${CONFIG_PATH}"
+    echo "Overwriting existing config file. Old content:" >&2
+    cat "${CONFIG_PATH}" >&2
+    rm "${CONFIG_PATH}" >&2
   fi
 
   cat > "${CONFIG_PATH}" << EOF
@@ -165,59 +162,53 @@ CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
 EOF
 
-  _kctf_export_config_vars
-
-  if command -v gcloud >/dev/null 2>&1; then
-    echo "Updating gcloud config."
-    _kctf_update_gcloud_config || return 1
-  else
-    echo "Configuration created only locally. Gcloud not installed." >&2
-  fi
+  update_gcloud_config || return 1
 
   # there might be an existing cluster
   # if it already exists, we try to update it
   # otherwise, start it if requsted
-  _kctf_get_cluster_creds >/dev/null 2>/dev/null
+  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
   GET_CLUSTER_CREDS_RESULT=$?
   if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
-      echo "Existing cluster found, updating cluster."
+      echo "Existing cluster found, updating cluster." >&2
     else
-      echo "Starting cluster."
+      echo "Starting cluster." >&2
     fi
-    kctf cluster start || return 1
+    export PROJECT
+    export ZONE
+    export REGISTRY
+    export CLUSTER_NAME
+    export DOMAIN_NAME
+    "${KCTF_BIN}/kctf-cluster" start >&2 || return 1
   fi
 
-  KCTF_CONFIG="${CONFIG_NAME}"
+  echo "${CONFIG_NAME}"
 }
 
-function _kctf_config_usage {
+function kctf_config_usage {
   echo -e "usage: kctf config command [args]" 2>&1
   echo -e "available commands:" 2>&1
   echo -e "  create: create a new config" 2>&1
   echo -e "  load:   load an existing config" 2>&1
 }
 
-function _kctf_config {
-  if [[ $# -lt 1 ]]; then
-    echo "missing required argument" >&2
-    _kctf_config_usage
-    return 1
-  fi
-  case "$1" in
-    create)
-      shift
-      _kctf_config_create $@
-      return
-      ;;
-    load)
-      shift
-      _kctf_config_load $@
-      return
-      ;;
-    *)
-      _kctf_config_usage
-      return 1
-      ;;
-  esac
-}
+if [[ $# -lt 1 ]]; then
+  echo "missing required argument" >&2
+  kctf_config_usage
+  return 1
+fi
+case "$1" in
+  create)
+    shift
+    kctf_config_create $@
+    ;;
+  load)
+    shift
+    kctf_config_load $@
+    ;;
+  *)
+    kctf_config_usage
+    exit 1
+    ;;
+esac
