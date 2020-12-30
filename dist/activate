@@ -82,17 +82,21 @@ function kctf {
       ;;
     config)
       shift
-      CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@)
-      if [[ $? -ne 0 ]]; then
-        return 1
+      if [[ "$1" == "create" ]] || [[ "$1" == "load" ]]; then
+        CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@)
+        if [[ $? -ne 0 ]]; then
+          return 1
+        fi
+        source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
+        export PROJECT
+        export ZONE
+        export REGISTRY
+        export CLUSTER_NAME
+        export DOMAIN_NAME
+        KCTF_CONFIG="${CONFIG_NAME}"
+      else
+        "${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@
       fi
-      source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
-      export PROJECT
-      export ZONE
-      export REGISTRY
-      export CLUSTER_NAME
-      export DOMAIN_NAME
-      KCTF_CONFIG="${CONFIG_NAME}"
       return
       ;;
     *)

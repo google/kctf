@@ -69,6 +69,17 @@ function kctf_config_load {
   echo "${CONFIG_NAME}"
 }
 
+function kctf_config_list {
+  echo "== available configurations =="
+  for file in ${KCTF_CTF_DIR}/kctf/config/*; do
+    CONFIG_NAME="$(basename $file)"
+    if [[ "${CONFIG_NAME}" = ".lastconfig" ]]; then
+      continue
+    fi
+    echo "${CONFIG_NAME}"
+  done
+}
+
 function kctf_config_create_usage {
   echo -e "usage: kctf config create [args] config_name" >&2
   echo -e "  -h|--help       print this help" >&2
@@ -212,6 +223,7 @@ function kctf_config_usage {
   echo -e "usage: kctf config command [args]" >&2
   echo -e "available commands:" >&2
   echo -e "  create: create a new config" >&2
+  echo -e "  list:   list available configs" >&2
   echo -e "  load:   load an existing config" >&2
 }
 
@@ -224,6 +236,10 @@ case "$1" in
   create)
     shift
     kctf_config_create $@
+    ;;
+  list)
+    shift
+    kctf_config_list $@
     ;;
   load)
     shift
