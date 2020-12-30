@@ -146,6 +146,38 @@ function kctf_chal_stop {
   kubectl delete -f "${CHALLENGE_DIR}/challenge.yaml" || return
 }
 
+function kctf_chal_status {
+  require_cluster_config
+  parse_challenge_name_arg_only || return
+
+  echo "= CHALLENGE RESOURCE ="
+  echo
+  kubectl get "challenge/${CHALLENGE_NAME}"
+  echo
+  echo "= INSTANCES / PODs ="
+  echo
+  echo "Challenge execution status"
+  echo "This shows you how many instances of the challenges are running."
+  echo
+  kubectl get pods -l "app=${CHALLENGE_NAME}" -o wide
+  echo
+  echo
+  echo "= DEPLOYMENTS ="
+  echo
+  echo "Challenge deployment status"
+  echo "This shows you if the challenge was deployed to the cluster."
+  echo
+  kubectl get deployments -l "app=${CHALLENGE_NAME}" -o wide
+  echo
+  echo "= EXTERNAL SERVICES ="
+  echo
+  echo "Challenge external status"
+  echo "This shows you if the challenge is exposed externally."
+  echo
+  kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
+  kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
+}
+
 function kctf_chal_create_usage {
   echo "usage: kctf chal create name" >&2
 }
@@ -215,6 +247,7 @@ function kctf_chal_usage {
   echo -e "  list:   list existing challenges" >&2
   echo -e "  start:  deploy the challenge to the cluster" >&2
   echo -e "  stop:   delete the challenge from the cluster" >&2
+  echo -e "  status: print the current status of the challenge" >&2
   echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
@@ -240,6 +273,10 @@ case "$1" in
   stop)
     shift
     kctf_chal_stop $@
+    ;;
+  status)
+    shift
+    kctf_chal_status $@
     ;;
   make)
     shift
