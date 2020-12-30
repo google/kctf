@@ -14,8 +14,12 @@
 # limitations under the License.
 set -Eeuo pipefail
 
+function has_cluster_config {
+  [[ ! -z "${CLUSTER_NAME-}" ]]
+}
+
 function require_cluster_config {
-  if [[ -z "${CLUSTER_NAME-}" ]]; then
+  if ! has_cluster_config; then
     echo "No config loaded. You need to run \"kctf config\" first." >&2
     exit 1
   fi
@@ -43,6 +47,23 @@ function kctf_chal_create {
   umask a+rx
   cp -p -r "${KCTF_CTF_DIR}/kctf/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
   ${KCTF_BIN}/yq eval ".metadata.name = \"${CHALLENGE_NAME}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
+}
+
+function kctf_chal_list {
+  echo '== challenges in repository =='
+  for dir in ${KCTF_CTF_DIR}/*; do
+    if [[ "$(basename ${dir})" == "kctf" ]]; then
+      continue
+    fi
+    if [[ ! -e "${dir}/challenge.yaml" ]]; then
+      continue
+    fi
+    ${KCTF_BIN}/yq eval ".metadata.name" "${dir}/challenge.yaml"
+  done
+  if has_cluster_config; then
+    echo '== deployed challenges =='
+    kubectl get challenges
+  fi
 }
 
 function kctf_chal_make_usage {
@@ -107,6 +128,7 @@ function kctf_chal_usage {
   echo -e "usage: kctf chal command" >&2
   echo -e "available commands:" >&2
   echo -e "  create: create a new challenge from a template" >&2
+  echo -e "  list:   list existing challenges" >&2
   echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
@@ -120,6 +142,10 @@ case "$1" in
   create)
     shift
     kctf_chal_create $@
+    ;;
+  list)
+    shift
+    kctf_chal_list $@
     ;;
   make)
     shift
