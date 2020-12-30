@@ -25,6 +25,127 @@ function require_cluster_config {
   fi
 }
 
+function infer_challenge_name {
+  if [[ -z "${CHALLENGE_NAME-}" ]]; then
+    CHALLENGE_NAME=$(realpath "${PWD}" --relative-to "${KCTF_CTF_DIR}" | cut -d/ -f1)
+  fi
+
+  CHALLENGE_DIR="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
+  if [[ -z "${CHALLENGE_NAME-}" ]] || [[ "${CHALLENGE_NAME}" == . ]] || [[ "${CHALLENGE_NAME}" == ".." ]] || [[ ! -e "${CHALLENGE_DIR}/challenge.yaml" ]]; then
+    echo "Couldn't find challenge.yaml under \"${CHALLENGE_DIR}\"" >&2
+    echo "You need to be inside a challenge directory or set --challenge-name" >&2
+    exit 1
+  fi
+}
+
+function parse_challenge_name_arg_only {
+  OPTS=""
+  LONGOPTS="challenge-name:"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_chal_make_usage
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  CHALLENGE_NAME=
+  while true; do
+    case "$1" in
+      --challenge-name)
+        CHALLENGE_NAME="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        kctf_chal_make_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  infer_challenge_name || return
+}
+
+function build_image {
+  # build the image
+  CONTAINER_NAME="$1"
+  CONTAINER_DIR="${CHALLENGE_DIR}/${CONTAINER_NAME}"
+  echo "building image in \"${CONTAINER_DIR}\""
+  make -C "${CONTAINER_DIR}" .gen/docker-image || return
+  IMAGE_ID=$(cat "${CONTAINER_DIR}/.gen/docker-image")
+  if [[ $? -ne 0 ]]; then
+    return 1
+  fi
+
+  # strip optional sha256 prefix
+  if [[ "${IMAGE_ID}" = sha256:* ]]; then
+    IMAGE_ID=$(echo "${IMAGE_ID}" | cut -d ':' -f 2)
+  fi
+  echo "Image ID \"${IMAGE_ID}\""
+}
+
+function healthcheck_enabled {
+  [[ $("${KCTF_BIN}/yq" eval '.spec.healthcheck.enabled' "${CHALLENGE_DIR}/challenge.yaml") == "true" ]]
+}
+
+function build_images {
+  build_image challenge || return
+  CHALLENGE_IMAGE_LOCAL="${IMAGE_ID}"
+  if healthcheck_enabled; then
+    build_image healthcheck || return
+    HEALTHCHECK_IMAGE_LOCAL="${IMAGE_ID}"
+  fi
+}
+
+function push_image {
+  IMAGE_BASE_URL=$1
+  IMAGE_ID=$2
+
+  #if the image id is a full URL, it has been already pushed
+  if [[ "${IMAGE_ID}" = "${IMAGE_BASE_URL}:"* ]]; then
+    IMAGE_URL="${IMAGE_ID}"
+  else
+    IMAGE_URL="${IMAGE_BASE_URL}:${IMAGE_ID}"
+    docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
+    docker push "${IMAGE_URL}" || return
+  fi
+  echo "Image pushed to \"${IMAGE_URL}\""
+}
+
+function push_images {
+  push_image "${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-challenge" "${CHALLENGE_IMAGE_LOCAL}" || return
+  CHALLENGE_IMAGE_REMOTE="${IMAGE_URL}"
+  if healthcheck_enabled; then
+    push_image "${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck" "${HEALTHCHECK_IMAGE_LOCAL}" || return
+    HEALTHCHECK_IMAGE_REMOTE="${IMAGE_URL}"
+  fi
+}
+
+function kctf_chal_start {
+  require_cluster_config
+  parse_challenge_name_arg_only || return
+  build_images || return
+  push_images || return
+
+  # update challenge.yaml with the image urls
+  "${KCTF_BIN}/yq" eval ".spec.image = \"${CHALLENGE_IMAGE_REMOTE}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
+  if healthcheck_enabled; then
+    "${KCTF_BIN}/yq" eval ".spec.healthcheck.image = \"${HEALTHCHECK_IMAGE_REMOTE}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
+  fi
+
+  kubectl apply -f "${CHALLENGE_DIR}/challenge.yaml" || return
+}
+
+function kctf_chal_stop {
+  require_cluster_config
+  parse_challenge_name_arg_only || return
+  kubectl delete -f "${CHALLENGE_DIR}/challenge.yaml" || return
+}
+
 function kctf_chal_create_usage {
   echo "usage: kctf chal create name" >&2
 }
@@ -73,33 +194,7 @@ function kctf_chal_make_usage {
 }
 
 function kctf_chal_make {
-  OPTS=""
-  LONGOPTS="challenge-name:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
-  if [[ $? -ne 0 ]]; then
-    kctf_chal_make_usage
-    exit 1
-  fi
-  eval set -- "$PARSED"
-
-  CHALLENGE_NAME=
-  while true; do
-    case "$1" in
-      --challenge-name)
-        CHALLENGE_NAME="$2"
-        shift 2
-        ;;
-      --)
-        shift
-        break
-        ;;
-      *)
-        echo "Unrecognized argument \"$1\"." >&2
-        kctf_chal_make_usage
-        exit 1
-        ;;
-    esac
-  done
+  parse_challenge_name_arg_only || return
 
   if [[ $# -ne 1 ]]; then
     echo "kctf chal make: target missing" >&2
@@ -110,18 +205,7 @@ function kctf_chal_make {
   TARGET="$1"
   shift
 
-  if [[ -z "${CHALLENGE_NAME-}" ]]; then
-    CHALLENGE_NAME=$(realpath "${PWD}" --relative-to "${KCTF_CTF_DIR}" | cut -d/ -f1)
-  fi
-
-  CHALLENGE_PATH="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
-  if [[ -z "${CHALLENGE_NAME-}" ]] || [[ "${CHALLENGE_NAME}" == . ]] || [[ "${CHALLENGE_NAME}" == ".." ]] || [[ ! -e "${CHALLENGE_PATH}/challenge.yaml" ]]; then
-    echo "Couldn't find challenge.yaml under \"${CHALLENGE_PATH}\"" >&2
-    echo "You need to be inside a challenge directory or set --challenge-name" >&2
-    exit 1
-  fi
-
-  make -C "${CHALLENGE_PATH}" -f "${KCTF_CTF_DIR}/kctf/Makefile" "${TARGET}"
+  make -C "${CHALLENGE_DIR}" -f "${KCTF_CTF_DIR}/kctf/Makefile" "${TARGET}"
 }
 
 function kctf_chal_usage {
@@ -129,6 +213,8 @@ function kctf_chal_usage {
   echo -e "available commands:" >&2
   echo -e "  create: create a new challenge from a template" >&2
   echo -e "  list:   list existing challenges" >&2
+  echo -e "  start:  deploy the challenge to the cluster" >&2
+  echo -e "  stop:   delete the challenge from the cluster" >&2
   echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
@@ -146,6 +232,14 @@ case "$1" in
   list)
     shift
     kctf_chal_list $@
+    ;;
+  start)
+    shift
+    kctf_chal_start $@
+    ;;
+  stop)
+    shift
+    kctf_chal_stop $@
     ;;
   make)
     shift
