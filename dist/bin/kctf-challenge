@@ -398,27 +398,6 @@ function kctf_chal_list {
   fi
 }
 
-function kctf_chal_make_usage {
-  echo -e "usage: kctf chal make [args] target" >&2
-  echo -e "args:" >&2
-  echo -e "  --challenge-name name of the challenge (defaults to the current directory)" >&2
-}
-
-function kctf_chal_make {
-  parse_challenge_name_arg_only "make" || return
-
-  if [[ $# -ne 1 ]]; then
-    echo "kctf chal make: target missing" >&2
-    kctf_chal_make_usage
-    exit 1
-  fi
-
-  TARGET="$1"
-  shift
-
-  make -C "${CHALLENGE_DIR}" -f "${KCTF_CTF_DIR}/kctf/Makefile" "${TARGET}"
-}
-
 function kctf_chal_usage {
   echo -e "usage: kctf chal command" >&2
   echo -e "available commands:" >&2
@@ -428,7 +407,6 @@ function kctf_chal_usage {
   echo -e "  stop:   delete the challenge from the cluster" >&2
   echo -e "  status: print the current status of the challenge" >&2
   echo -e "  debug:  commands for debugging the challenge" >&2
-  echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
 if [[ $# -lt 1 ]]; then
@@ -461,10 +439,6 @@ case "$1" in
   debug)
     shift
     kctf_chal_debug $@
-    ;;
-  make)
-    shift
-    kctf_chal_make $@
     ;;
   *)
     echo "unknown command" >&2
