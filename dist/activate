@@ -15,7 +15,7 @@
 # set up the environment variables
 KCTF_CONFIG_DIR="${HOME}/.config/kctf"
 KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
-CTF_NAME=$(basename "${KCTF_CTF_DIR}")
+KCTF_CTF_NAME=$(basename "${KCTF_CTF_DIR}")
 KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
 KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
 
@@ -32,6 +32,7 @@ function _kctf_download_dependencies {
 
 function _kctf_export_variables {
   export KCTF_CTF_DIR
+  export KCTF_CTF_NAME
   export KCTF_BIN
   export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
   export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
@@ -117,7 +118,7 @@ function _kctf_error_cleanup {
 
   unset KCTF_CONFIG_DIR
   unset KCTF_CTF_DIR
-  unset CTF_NAME
+  unset KCTF_CTF_NAME
   unset KCTF_BIN
   unset KCTF_SESSION
   unset KUBECONFIG
@@ -144,7 +145,7 @@ function _kctf_activate {
   else
     echo "To create a cluster config, run \"kctf config\""
   fi
-  PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
+  PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${KCTF_CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
 }
 
 function deactivate {
