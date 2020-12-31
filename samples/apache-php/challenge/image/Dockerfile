@@ -28,7 +28,7 @@ COPY html/ /var/www/html
 RUN chmod 0755 /var/www/html
 RUN chmod 0755 /var/www/html/*.php
 
-FROM gcr.io/kctf-docker/challenge
+FROM gcr.io/kctf-docker/challenge@sha256:77f9376e7fdec4f6bac36c412d36453383cee80f94de074d34487974be9b7594
 
 COPY --from=chroot / /chroot
 
