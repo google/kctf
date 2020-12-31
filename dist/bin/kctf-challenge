@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -Eeuo pipefail
-
 function has_cluster_config {
   [[ ! -z "${CLUSTER_NAME-}" ]]
 }
@@ -36,6 +34,14 @@ function infer_challenge_name {
     echo "You need to be inside a challenge directory or set --challenge-name" >&2
     exit 1
   fi
+
+  # the actual challenge name is in the challenge.yaml
+  #CHALLENGE_NAME=$("${KCTF_BIN}/yq" eval ".metadata.name" "${CHALLENGE_DIR}/challenge.yaml")
+}
+
+function parse_challenge_name_arg_only_usage {
+  echo -e "usage: kctf chal ${COMMAND} [args]" >&2
+  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
 }
 
 function parse_challenge_name_arg_only {
@@ -43,7 +49,7 @@ function parse_challenge_name_arg_only {
   LONGOPTS="challenge-name:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
-    kctf_chal_make_usage
+    parse_challenge_name_arg_only_usage
     exit 1
   fi
   eval set -- "$PARSED"
@@ -61,7 +67,50 @@ function parse_challenge_name_arg_only {
         ;;
       *)
         echo "Unrecognized argument \"$1\"." >&2
-        kctf_chal_make_usage
+        parse_challenge_name_arg_only_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  infer_challenge_name || return
+}
+
+function parse_challenge_and_container_name_usage {
+  echo -e "usage: kctf chal ${COMMAND} [args]" >&2
+  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
+  echo -e "  --container      name of the container to interact with, e.g. challenge (default) or healthcheck" >&2
+}
+
+function parse_challenge_and_container_name {
+  OPTS=""
+  LONGOPTS="challenge-name:,container:"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    parse_challenge_and_container_name_usage
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  CHALLENGE_NAME=
+  CONTAINER="challenge"
+  while true; do
+    case "$1" in
+      --challenge-name)
+        CHALLENGE_NAME="$2"
+        shift 2
+        ;;
+      --container)
+        CONTAINER="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        parse_challenge_and_container_name_usage
         exit 1
         ;;
     esac
@@ -127,7 +176,7 @@ function push_images {
 
 function kctf_chal_start {
   require_cluster_config
-  parse_challenge_name_arg_only || return
+  COMMAND="start" parse_challenge_name_arg_only $@ || return
   build_images || return
   push_images || return
 
@@ -142,13 +191,13 @@ function kctf_chal_start {
 
 function kctf_chal_stop {
   require_cluster_config
-  parse_challenge_name_arg_only || return
+  COMMAND="stop" parse_challenge_name_arg_only $@ || return
   kubectl delete -f "${CHALLENGE_DIR}/challenge.yaml" || return
 }
 
 function kctf_chal_status {
   require_cluster_config
-  parse_challenge_name_arg_only || return
+  COMMAND="status" parse_challenge_name_arg_only $@ || return
 
   echo "= CHALLENGE RESOURCE ="
   echo
@@ -176,6 +225,136 @@ function kctf_chal_status {
   echo
   kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
   kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
+}
+
+function kctf_chal_debug_logs {
+  require_cluster_config
+  COMMAND="debug logs" parse_challenge_and_container_name $@ || return
+
+  kubectl logs -l "app=${CHALLENGE_NAME}" -c "${CONTAINER}"
+}
+
+function kctf_chal_debug_ssh {
+  require_cluster_config
+  COMMAND="debug ssh" parse_challenge_and_container_name $@ || return
+
+  kubectl exec "deployment/${CHALLENGE_NAME}" -c "${CONTAINER}" -it -- /bin/bash
+}
+
+function kctf_chal_debug_port_forward_usage {
+  echo -e "usage: kctf chal debug port-forward [args]" >&2
+  echo -e "args:" >&2
+  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
+  echo -e "  --port:          port in the challenge to connect to (default 1337)" >&2
+  echo -e "  --local-port:    local port to listen on (defaults to random free port)" >&2
+}
+
+function kctf_chal_debug_port_forward {
+  REMOTE_PORT=1337
+  LOCAL_PORT=""
+  CHALLENGE_NAME=
+
+  OPTS=""
+  LONGOPTS="challenge-name:,port:,local-port:"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_chal_debug_port_forward_usage
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  CHALLENGE_NAME=
+  while true; do
+    case "$1" in
+      --challenge-name)
+        CHALLENGE_NAME="$2"
+        shift 2
+        ;;
+      --port)
+        REMOTE_PORT="$2"
+        shift 2
+        ;;
+      --local-port)
+        LOCAL_PORT="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        kctf_chal_debug_port_forward_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  infer_challenge_name || return
+
+  echo 'starting port-forward, ctrl+c to exit'
+  kubectl port-forward "deployment/${CHALLENGE_NAME}" --address=127.0.0.1 "${LOCAL_PORT}:${REMOTE_PORT}"
+}
+
+function kctf_chal_debug_docker {
+  COMMAND="debug docker" parse_challenge_and_container_name $@ || return
+
+  build_image "${CONTAINER}" || return
+
+  DOCKER_NAME="kctf-${KCTF_CTF_NAME}-${CHALLENGE_NAME}-${CONTAINER}"
+
+  # kill any existing containers
+  docker kill "${DOCKER_NAME}" >/dev/null 2>/dev/null
+  docker container rm "${DOCKER_NAME}" >/dev/null 2>/dev/null
+
+  echo "Running docker container ${IMAGE_ID} using name ${DOCKER_NAME}"
+  docker run -d --name "${DOCKER_NAME}" -it -p 1337 --privileged "${IMAGE_ID}" || return 1
+  docker ps -f "name=${DOCKER_NAME}" || return 1
+  echo "Container running, ctrl+c to exit"
+  docker attach "${DOCKER_NAME}"
+}
+
+
+function kctf_chal_debug_usage {
+  echo -e "usage: kctf chal debug command" >&2
+  echo -e "available commands:" >&2
+  echo -e "  logs:         print logs of the container" >&2
+  echo -e "  ssh:          spawn an interactive bash in the container" >&2
+  echo -e "  port-forward: create a port-forward to the container's default port" >&2
+  echo -e "  docker:       run the docker container locally" >&2
+  echo -e "NOTE: you can use --container=healthcheck flag to debug the healthcheck" >&2
+}
+
+function kctf_chal_debug {
+  if [[ $# -lt 1 ]]; then
+    echo "unexpected argument count" >&2
+    kctf_chal_debug_usage
+    exit 1
+  fi
+
+  case "$1" in
+    logs)
+      shift
+      kctf_chal_debug_logs $@
+      ;;
+    ssh)
+      shift
+      kctf_chal_debug_ssh $@
+      ;;
+    port-forward)
+      shift
+      kctf_chal_debug_port_forward $@
+      ;;
+    docker)
+      shift
+      kctf_chal_debug_docker $@
+      ;;
+    *)
+      echo "unknown command" >&2
+      kctf_chal_debug_usage
+      exit 1
+      ;;
+  esac
 }
 
 function kctf_chal_create_usage {
@@ -226,7 +405,7 @@ function kctf_chal_make_usage {
 }
 
 function kctf_chal_make {
-  parse_challenge_name_arg_only || return
+  parse_challenge_name_arg_only "make" || return
 
   if [[ $# -ne 1 ]]; then
     echo "kctf chal make: target missing" >&2
@@ -248,6 +427,7 @@ function kctf_chal_usage {
   echo -e "  start:  deploy the challenge to the cluster" >&2
   echo -e "  stop:   delete the challenge from the cluster" >&2
   echo -e "  status: print the current status of the challenge" >&2
+  echo -e "  debug:  commands for debugging the challenge" >&2
   echo -e "  make:   (tmp) run commands from the Makefile" >&2
 }
 
@@ -277,6 +457,10 @@ case "$1" in
   status)
     shift
     kctf_chal_status $@
+    ;;
+  debug)
+    shift
+    kctf_chal_debug $@
     ;;
   make)
     shift
