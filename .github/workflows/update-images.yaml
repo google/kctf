@@ -117,13 +117,21 @@ jobs:
       if: needs.build-docker.outputs.challenge-modified
       run: |
         IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" dist/challenge-templates/challenge-skeleton/challenge/image/Dockerfile
+        for dir in dist/challenge-templates/* samples/*; do
+          if [[ -e "${dir}/challenge/image/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" "${dir}/challenge/image/Dockerfile"
+          fi
+        done
 
     - name: Update healthcheck image
       if: needs.build-docker.outputs.healthcheck-modified
       run: |
         IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" dist/challenge-templates/challenge-skeleton/healthcheck/image/Dockerfile
+        for dir in dist/challenge-templates/* samples/*; do
+          if [[ -e "${dir}/healthcheck/image/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/image/Dockerfile"
+          fi
+        done
 
     - name: Update operator
       if: needs.build-docker.outputs.kctf-operator-modified
@@ -188,17 +196,16 @@ jobs:
           popd
         done
 
-    #TODO: need to update samples/*/Dockerfile if the base image changed
-    #- name: Commit
-    #  run: |
-    #    MODIFIED_FILES="$(git status --porcelain | grep -v 'sample' || true)"
-    #    echo "MODIFIED_FILES=${MODIFIED_FILES}"
-    #    if [ ! -z "${MODIFIED_FILES}" ]; then
-    #      git config user.email ${{ github.event.head_commit.author.email }}
-    #      git config user.name ${{ github.event.head_commit.author.name }}
-    #      git add base/nsjail-docker/Dockerfile || true
-    #      git add base/healthcheck-docker/Dockerfile || true
-    #      git add kctf-operator/deploy/operator.yaml || true
-    #      git commit -m "Automated commit: update images."
-    #      git push
-    #    fi
+    - name: Commit
+      run: |
+        MODIFIED=0
+        git add dist/resources/operator.yaml && MODIFIED=1
+        for dir in dist/challenge-templates/* samples/*; do
+          git add "${dir}/challenge/image/Dockerfile" && MODIFIED=1
+        done
+        if [ "${MODIFIED}" == 1 ]; then
+          git config user.email ${{ github.event.head_commit.author.email }}
+          git config user.name ${{ github.event.head_commit.author.name }}
+          git commit -m "Automated commit: update images."
+          git push
+        fi
