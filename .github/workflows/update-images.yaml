@@ -209,6 +209,12 @@ jobs:
             echo "added ${dir}/challenge/image/Dockerfile"
           fi
         done
+        for dir in dist/challenge-templates/* samples/*; do
+          if git add "${dir}/healthcheck/image/Dockerfile" 2>/dev/null; then
+            MODIFIED=1
+            echo "added ${dir}/healthcheck/image/Dockerfile"
+          fi
+        done
         if [ "${MODIFIED}" == 1 ]; then
           git config user.email ${{ github.event.head_commit.author.email }}
           git config user.name ${{ github.event.head_commit.author.name }}
