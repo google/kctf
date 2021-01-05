@@ -107,11 +107,17 @@ function kctf {
   esac
 }
 
+function _kctf_enable_completion {
+  source "${KCTF_BIN}/kctf-completion"
+}
+
 function _kctf_error_cleanup {
   unset -f _kctf_download_dependencies
   #unset -f _kctf_cleanup
   unset -f _kctf_usage
   unset -f _kctf_error_cleanup
+  unset -f _kctf_export_variables
+  unset -f _kctf_enable_completion
   unset -f _kctf_activate
   unset -f kctf
   unset -f deactivate
@@ -138,6 +144,7 @@ function _kctf_activate {
     return 1
   fi
   _kctf_export_variables
+  _kctf_enable_completion || echo "loading shell completion failed" >&2
   SAVED_PS1="${PS1}"
   echo "kCTF environment activated. Run \"deactivate\" to exit."
   if kctf config load .lastconfig >/dev/null 2>/dev/null; then
