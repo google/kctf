@@ -76,6 +76,7 @@ function kctf {
       return 0
       ;;
     chal)
+      _kctf_set_active_challenge
       shift
       "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@
       return
@@ -122,7 +123,9 @@ function _kctf_error_cleanup {
   unset -f _kctf_error_cleanup
   unset -f _kctf_export_variables
   unset -f _kctf_enable_completion
+  unset -f _kctf_set_active_challenge
   unset -f _kctf_activate
+  unset -f _kctf_chal_string
   unset -f kctf
   unset -f deactivate
 
@@ -138,6 +141,40 @@ function _kctf_error_cleanup {
   unset REGISTRY
   unset CLUSTER_NAME
   unset DOMAIN_NAME
+}
+
+function _kctf_set_active_challenge {
+  current_dir="${PWD}"
+  while [[ "${current_dir}" == "${KCTF_CTF_DIR}"/* ]]; do
+    if [[ -e "${current_dir}/challenge.yaml" ]]; then
+      CHALLENGE_NAME=$("${KCTF_BIN}/yq" eval '.metadata.name' "${current_dir}/challenge.yaml" 2>/dev/null)
+      if [[ $? -ne 0 ]]; then
+        unset CHALLENGE_NAME
+      fi
+      export CHALLENGE_DIR="${current_dir}"
+      export CHALLENGE_NAME
+      return 0
+    fi
+    current_dir="$(dirname ${current_dir})"
+  done
+  unset CHALLENGE_NAME
+}
+
+_KCTF_COLOR1=$'\e[0;32m'
+_KCTF_COLOR2=$'\e[0;36m'
+_KCTF_COLOR_END=$'\e[0m'
+
+function _kctf_config_string {
+  if [ ! -z "${KCTF_CONFIG}" ]; then
+    echo "${_KCTF_COLOR1},config=${_KCTF_COLOR2}${KCTF_CONFIG}"
+  fi
+}
+
+function _kctf_chal_string {
+  _kctf_set_active_challenge
+  if [ ! -z "${CHALLENGE_NAME}" ]; then
+    echo "${_KCTF_COLOR1},chal=${_KCTF_COLOR2}${CHALLENGE_NAME}"
+  fi
 }
 
 function _kctf_activate {
@@ -156,7 +193,7 @@ function _kctf_activate {
   else
     echo "To create a cluster config, run \"kctf config\""
   fi
-  PS1="${PS1}"$'\e[0;32m'"kCTF[ctf="$'\e[0;36m'"${KCTF_CTF_NAME}"$'\e[0;32m'",config="$'\e[0;36m'"\${KCTF_CONFIG:-unset}"$'\e[0;32m'"] >"$'\e[0m'" "
+  PS1="${PS1}${_KCTF_COLOR1}kCTF[ctf=${_KCTF_COLOR2}${KCTF_CTF_NAME}\$(_kctf_config_string)\$(_kctf_chal_string)${_KCTF_COLOR1}] >${_KCTF_COLOR_END} "
 }
 
 function deactivate {
