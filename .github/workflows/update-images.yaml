@@ -199,9 +199,15 @@ jobs:
     - name: Commit
       run: |
         MODIFIED=0
-        git add dist/resources/operator.yaml && MODIFIED=1
+        if git add dist/resources/operator.yaml 2>/dev/null; then
+          MODIFIED=1
+            echo "added dist/resources/operator.yaml"
+        fi
         for dir in dist/challenge-templates/* samples/*; do
-          git add "${dir}/challenge/image/Dockerfile" && MODIFIED=1
+          if git add "${dir}/challenge/image/Dockerfile" 2>/dev/null; then
+            MODIFIED=1
+            echo "added ${dir}/challenge/image/Dockerfile"
+          fi
         done
         if [ "${MODIFIED}" == 1 ]; then
           git config user.email ${{ github.event.head_commit.author.email }}
