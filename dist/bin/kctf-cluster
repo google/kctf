@@ -283,6 +283,10 @@ if [[ -z "${CLUSTER_NAME-}" ]]; then
 fi
 
 case "$1" in
+  -h|--help)
+    kctf_cluster_usage
+    exit 0
+    ;;
   start)
     shift
     kctf_cluster_start $@

@@ -71,6 +71,10 @@ function kctf {
     return 1
   fi
   case "$1" in
+    -h|--help)
+      _kctf_usage
+      return 0
+      ;;
     chal)
       shift
       "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@

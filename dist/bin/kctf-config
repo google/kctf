@@ -44,6 +44,11 @@ function kctf_config_load {
     return 1
   fi
 
+  if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    kctf_config_load_usage
+    return 0
+  fi
+
   CONFIG_NAME="$1"
   if [[ "${CONFIG_NAME}" == ".lastconfig" ]]; then
     CONFIG_NAME=$(readlink "${KCTF_CTF_DIR}/kctf/config/.lastconfig")
@@ -233,6 +238,10 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 case "$1" in
+  -h|--help)
+    kctf_config_usage
+    exit 0
+    ;;
   create)
     shift
     kctf_config_create $@

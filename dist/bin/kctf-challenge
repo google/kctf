@@ -39,17 +39,21 @@ function infer_challenge_name {
   #CHALLENGE_NAME=$("${KCTF_BIN}/yq" eval ".metadata.name" "${CHALLENGE_DIR}/challenge.yaml")
 }
 
-function parse_challenge_name_arg_only_usage {
+function parse_help_arg_only_usage {
   echo -e "usage: kctf chal ${COMMAND} [args]" >&2
-  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
+  echo -e "" >&2
+  echo -e "${DESCRIPTION}" >&2
+  echo -e "" >&2
+  echo -e "Args:" >&2
+  echo -e "  -h|--help        print this help" >&2
 }
 
-function parse_challenge_name_arg_only {
-  OPTS=""
-  LONGOPTS="challenge-name:"
+function parse_help_arg_only {
+  OPTS="h"
+  LONGOPTS="help"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
-    parse_challenge_name_arg_only_usage
+    parse_help_arg_only_usage
     exit 1
   fi
   eval set -- "$PARSED"
@@ -57,9 +61,9 @@ function parse_challenge_name_arg_only {
   CHALLENGE_NAME=
   while true; do
     case "$1" in
-      --challenge-name)
-        CHALLENGE_NAME="$2"
-        shift 2
+      -h|--help)
+        parse_help_arg_only_usage
+        exit 0
         ;;
       --)
         shift
@@ -67,7 +71,7 @@ function parse_challenge_name_arg_only {
         ;;
       *)
         echo "Unrecognized argument \"$1\"." >&2
-        parse_challenge_name_arg_only_usage
+        parse_help_arg_only_usage
         exit 1
         ;;
     esac
@@ -76,18 +80,18 @@ function parse_challenge_name_arg_only {
   infer_challenge_name || return
 }
 
-function parse_challenge_and_container_name_usage {
+function parse_container_name_usage {
   echo -e "usage: kctf chal ${COMMAND} [args]" >&2
-  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
+  echo -e "  -h|--help        print this help" >&2
   echo -e "  --container      name of the container to interact with, e.g. challenge (default) or healthcheck" >&2
 }
 
-function parse_challenge_and_container_name {
-  OPTS=""
-  LONGOPTS="challenge-name:,container:"
+function parse_container_name {
+  OPTS="h"
+  LONGOPTS="help,container:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
-    parse_challenge_and_container_name_usage
+    parse_container_name_usage
     exit 1
   fi
   eval set -- "$PARSED"
@@ -96,9 +100,9 @@ function parse_challenge_and_container_name {
   CONTAINER="challenge"
   while true; do
     case "$1" in
-      --challenge-name)
-        CHALLENGE_NAME="$2"
-        shift 2
+      -h|--help)
+        parse_container_name_usage
+        exit 0
         ;;
       --container)
         CONTAINER="$2"
@@ -110,7 +114,7 @@ function parse_challenge_and_container_name {
         ;;
       *)
         echo "Unrecognized argument \"$1\"." >&2
-        parse_challenge_and_container_name_usage
+        parse_container_name_usage
         exit 1
         ;;
     esac
@@ -176,7 +180,7 @@ function push_images {
 
 function kctf_chal_start {
   require_cluster_config
-  COMMAND="start" parse_challenge_name_arg_only $@ || return
+  COMMAND="start" DESCRIPTION="Deploy the challenge to the cluster." parse_help_arg_only $@ || return
   build_images || return
   push_images || return
 
@@ -191,13 +195,13 @@ function kctf_chal_start {
 
 function kctf_chal_stop {
   require_cluster_config
-  COMMAND="stop" parse_challenge_name_arg_only $@ || return
+  COMMAND="stop" DESCRIPTION="Stop a challenge running on the cluster." parse_help_arg_only $@ || return
   kubectl delete -f "${CHALLENGE_DIR}/challenge.yaml" || return
 }
 
 function kctf_chal_status {
   require_cluster_config
-  COMMAND="status" parse_challenge_name_arg_only $@ || return
+  COMMAND="status" DESCRIPTION="Print the challenge status." parse_help_arg_only $@ || return
 
   echo "= CHALLENGE RESOURCE ="
   echo
@@ -229,14 +233,14 @@ function kctf_chal_status {
 
 function kctf_chal_debug_logs {
   require_cluster_config
-  COMMAND="debug logs" parse_challenge_and_container_name $@ || return
+  COMMAND="debug logs" parse_container_name $@ || return
 
   kubectl logs -l "app=${CHALLENGE_NAME}" -c "${CONTAINER}"
 }
 
 function kctf_chal_debug_ssh {
   require_cluster_config
-  COMMAND="debug ssh" parse_challenge_and_container_name $@ || return
+  COMMAND="debug ssh" parse_container_name $@ || return
 
   kubectl exec "deployment/${CHALLENGE_NAME}" -c "${CONTAINER}" -it -- /bin/bash
 }
@@ -244,9 +248,9 @@ function kctf_chal_debug_ssh {
 function kctf_chal_debug_port_forward_usage {
   echo -e "usage: kctf chal debug port-forward [args]" >&2
   echo -e "args:" >&2
-  echo -e "  --challenge-name name of the challenge, defaults to current directory" >&2
-  echo -e "  --port:          port in the challenge to connect to (default 1337)" >&2
-  echo -e "  --local-port:    local port to listen on (defaults to random free port)" >&2
+  echo -e "  -h|--help     print this help" >&2
+  echo -e "  --port:       port in the challenge to connect to (default 1337)" >&2
+  echo -e "  --local-port: local port to listen on (defaults to random free port)" >&2
 }
 
 function kctf_chal_debug_port_forward {
@@ -254,8 +258,8 @@ function kctf_chal_debug_port_forward {
   LOCAL_PORT=""
   CHALLENGE_NAME=
 
-  OPTS=""
-  LONGOPTS="challenge-name:,port:,local-port:"
+  OPTS="h"
+  LONGOPTS="help,challenge-name:,port:,local-port:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_debug_port_forward_usage
@@ -266,9 +270,9 @@ function kctf_chal_debug_port_forward {
   CHALLENGE_NAME=
   while true; do
     case "$1" in
-      --challenge-name)
-        CHALLENGE_NAME="$2"
-        shift 2
+      -h|--help)
+        kctf_chal_debug_port_forward_usage
+        exit 0
         ;;
       --port)
         REMOTE_PORT="$2"
@@ -297,7 +301,7 @@ function kctf_chal_debug_port_forward {
 }
 
 function kctf_chal_debug_docker {
-  COMMAND="debug docker" parse_challenge_and_container_name $@ || return
+  COMMAND="debug docker" parse_container_name $@ || return
 
   build_image "${CONTAINER}" || return
 
@@ -333,6 +337,10 @@ function kctf_chal_debug {
   fi
 
   case "$1" in
+    -h|--help)
+      kctf_chal_debug_usage
+      exit 0
+      ;;
     logs)
       shift
       kctf_chal_debug_logs $@
@@ -366,6 +374,11 @@ function kctf_chal_create {
     echo "kctf chal create: name missing" >&2
     kctf_chal_create_usage
     exit 1
+  fi
+
+  if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    kctf_chal_create_usage
+    exit 0
   fi
 
   CHALLENGE_NAME="$1"
@@ -416,6 +429,10 @@ if [[ $# -lt 1 ]]; then
 fi
 
 case "$1" in
+  -h|--help)
+    kctf_chal_usage
+    exit 0
+    ;;
   create)
     shift
     kctf_chal_create $@

@@ -14,17 +14,13 @@
 
 function _kctf_complete_chal_debug() {
   if [ "$COMP_CWORD" == "3" ]; then
-    COMPREPLY=($(compgen -W "logs ssh port-forward docker" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+    COMPREPLY=($(compgen -W "--help logs ssh port-forward docker" -- "${COMP_WORDS[${COMP_CWORD}]}"))
     return
   fi
 
   case "${COMP_WORDS[3]}" in
     logs|ssh|docker)
       if [ "${PREV_IS_FLAG}" = 1 ]; then
-        # TODO complete --challenge-dir
-        #if [ "${PREV_WORD}" = "--challenge-dir" ]; then
-        #  return 0
-        #fi
         if [ "${PREV_WORD}" = "--container" ]; then
           # TODO get containers from challenge.yaml
           COMPREPLY=($(compgen -W "challenge healthcheck" -- "${COMP_WORDS[${COMP_CWORD}]}"))
@@ -32,17 +28,14 @@ function _kctf_complete_chal_debug() {
         fi
         return 0
       fi
-      # TODO complete --challenge-dir
-      COMPREPLY=($(compgen -W "--challenge-dir --container" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --container" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     port-forward)
       if [ "${PREV_IS_FLAG}" = 1 ]; then
-        # TODO complete --challenge-dir
         return
       fi
-      # TODO complete --challenge-dir
-      COMPREPLY=($(compgen -W "--port --local-port" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --port --local-port" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     *)
@@ -53,16 +46,20 @@ function _kctf_complete_chal_debug() {
 
 function _kctf_complete_chal() {
   if [ "$COMP_CWORD" == "2" ]; then
-    COMPREPLY=($(compgen -W "create list start stop status debug" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+    COMPREPLY=($(compgen -W "--help create list start stop status debug" -- "${COMP_WORDS[${COMP_CWORD}]}"))
     return
   fi
 
   case "${COMP_WORDS[2]}" in
-    list|create)
+    list)
+      return
+      ;;
+    create)
+      COMPREPLY=($(compgen -W "--help" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     start|stop|status)
-      # TODO complete --challenge-dir
+      COMPREPLY=($(compgen -W "--help" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     debug)
@@ -77,7 +74,7 @@ function _kctf_complete_chal() {
 
 function _kctf_complete_cluster() {
   if [ "$COMP_CWORD" == "2" ]; then
-    COMPREPLY=($(compgen -W "start stop resize" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+    COMPREPLY=($(compgen -W "--help start stop resize" -- "${COMP_WORDS[${COMP_CWORD}]}"))
     return
   fi
 
@@ -113,7 +110,7 @@ GCP_REGISTRIES="gcr.io asia.gcr.io eu.gcr.io us.gcr.io"
 
 function _kctf_complete_config() {
   if [ "$COMP_CWORD" == "2" ]; then
-    COMPREPLY=($(compgen -W "create load list" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+    COMPREPLY=($(compgen -W "--help create load list" -- "${COMP_WORDS[${COMP_CWORD}]}"))
     return
   fi
   case "${COMP_WORDS[2]}" in
@@ -133,7 +130,7 @@ function _kctf_complete_config() {
         fi
         return 0
       fi
-      COMPREPLY=($(compgen -W "--project --zone --registry --cluster-name --domain-name --start-cluster" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --project --zone --registry --cluster-name --domain-name --start-cluster" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     load)
@@ -154,7 +151,7 @@ function _kctf_complete_config() {
 
 function _kctf_complete() {
   if [ "$COMP_CWORD" == "1" ]; then
-    COMPREPLY=($(compgen -W "chal cluster config" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+    COMPREPLY=($(compgen -W "--help chal cluster config" -- "${COMP_WORDS[${COMP_CWORD}]}"))
     return
   fi
   PREV_WORD="${COMP_WORDS[$(($COMP_CWORD - 1))]}"
