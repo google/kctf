@@ -42,7 +42,7 @@ function parse_help_arg_only_usage {
 function parse_help_arg_only {
   OPTS="h"
   LONGOPTS="help"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
   if [[ $? -ne 0 ]]; then
     parse_help_arg_only_usage
     exit 1
@@ -79,7 +79,7 @@ function parse_container_name_usage {
 function parse_container_name {
   OPTS="h"
   LONGOPTS="help,container:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
   if [[ $? -ne 0 ]]; then
     parse_container_name_usage
     exit 1
@@ -247,7 +247,7 @@ function kctf_chal_debug_port_forward {
 
   OPTS="h"
   LONGOPTS="help,challenge-name:,port:,local-port:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal debug port-forward" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_debug_port_forward_usage
     exit 1
@@ -352,30 +352,64 @@ function kctf_chal_debug {
 }
 
 function kctf_chal_create_usage {
-  echo "usage: kctf chal create name" >&2
+  echo "usage: kctf chal create [args] name" >&2
+  echo "args:" >&2
+  echo "  -h|--help       print this help" >&2
+  echo "  --challenge-dir path where to create the new challenge" >&2
+  echo "                  default: \"${KCTF_CTF_DIR}/\${CHALLENGE_NAME}\"" >&2
 }
 
 function kctf_chal_create {
+  OPTS="h"
+  LONGOPTS="help,challenge-dir:"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_chal_create_usage
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  CHALLENGE_DIR=
+  while true; do
+    case "$1" in
+      -h|--help)
+        kctf_chal_create_usage
+        exit 0
+        ;;
+      --challenge-dir)
+        CHALLENGE_DIR="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Unrecognized argument \"$1\"." >&2
+        parse_help_arg_only_usage
+        exit 1
+        ;;
+    esac
+  done
+
   if [[ $# -ne 1 ]]; then
     echo "kctf chal create: name missing" >&2
     kctf_chal_create_usage
     exit 1
   fi
 
-  if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-    kctf_chal_create_usage
-    exit 0
-  fi
-
   CHALLENGE_NAME="$1"
   shift
 
-  #we don't require anymore that the path is under the ctf directory.
-  #TODO: add a flag to control this
-  CHALLENGE_DIR="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
+  if [[ -z "${CHALLENGE_DIR}" ]]; then
+    CHALLENGE_DIR="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
+  fi
   if [[ -e "${CHALLENGE_DIR}" ]]; then
+    echo "challenge dir \"${CHALLENGE_DIR}\" does already exist" >&2
     exit 1
   fi
+
+  mkdir -p $(dirname "${CHALLENGE_DIR}") >/dev/null 2>/dev/null
 
   umask a+rx
   cp -p -r "${KCTF_CTF_DIR}/kctf/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
