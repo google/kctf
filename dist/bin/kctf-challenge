@@ -117,8 +117,7 @@ function build_image {
   CONTAINER_NAME="$1"
   CONTAINER_DIR="${CHALLENGE_DIR}/${CONTAINER_NAME}"
   echo "building image in \"${CONTAINER_DIR}\""
-  # TODO remove the /image
-  IMAGE_ID=$(docker build -q "${CONTAINER_DIR}/image")
+  IMAGE_ID=$(docker build -q "${CONTAINER_DIR}")
   if [[ $? -ne 0 ]]; then
     return 1
   fi
