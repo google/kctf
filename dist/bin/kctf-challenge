@@ -403,6 +403,15 @@ function kctf_chal_create {
 
   if [[ -z "${CHALLENGE_DIR}" ]]; then
     CHALLENGE_DIR="${KCTF_CTF_DIR}/${CHALLENGE_NAME}"
+  else
+    CHALLENGE_DIR_REALPATH=$(realpath --canonicalize-missing "${CHALLENGE_DIR}")
+    if [[ "${CHALLENGE_DIR_REALPATH}" != "${KCTF_CTF_DIR}"/* ]]; then
+      echo "Challenge dir needs to be under the CTF dir:" >&2
+      echo "  \"${CHALLENGE_DIR_REALPATH}\"" >&2
+      echo "  not under" >&2
+      echo "  \"${KCTF_CTF_DIR}\"" >&2
+      exit 1
+    fi
   fi
   if [[ -e "${CHALLENGE_DIR}" ]]; then
     echo "challenge dir \"${CHALLENGE_DIR}\" does already exist" >&2
