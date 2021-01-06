@@ -427,15 +427,17 @@ function kctf_chal_create {
 
 function kctf_chal_list {
   echo '== challenges in repository =='
-  for dir in ${KCTF_CTF_DIR}/*; do
-    if [[ "$(basename ${dir})" == "kctf" ]]; then
-      continue
+
+  for challenge_yaml in $(find "${KCTF_CTF_DIR}" -path "${KCTF_CTF_DIR}/kctf" -prune -false -o -name "challenge.yaml"); do
+    challenge_name=$(${KCTF_BIN}/yq eval ".metadata.name" "${challenge_yaml}")
+    challenge_dir=$(realpath --relative-to "${KCTF_CTF_DIR}" $(dirname "${challenge_yaml}"))
+    if [[ "${challenge_name}" == ${challenge_dir} ]]; then
+      echo "${challenge_name}"
+    else
+      echo "${challenge_name} (dir: ${challenge_dir})"
     fi
-    if [[ ! -e "${dir}/challenge.yaml" ]]; then
-      continue
-    fi
-    ${KCTF_BIN}/yq eval ".metadata.name" "${dir}/challenge.yaml"
   done
+
   if has_cluster_config; then
     echo '== deployed challenges =='
     kubectl get challenges
