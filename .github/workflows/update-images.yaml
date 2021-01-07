@@ -198,26 +198,19 @@ jobs:
 
     - name: Commit
       run: |
-        MODIFIED=0
-        if git add dist/resources/operator.yaml 2>/dev/null; then
-          MODIFIED=1
-            echo "added dist/resources/operator.yaml"
-        fi
+        # git add returns success for files that exist and haven't been modified
+        git add dist/resources/operator.yaml
         for dir in dist/challenge-templates/* samples/*; do
-          if git add "${dir}/challenge/image/Dockerfile" 2>/dev/null; then
-            MODIFIED=1
-            echo "added ${dir}/challenge/image/Dockerfile"
+          if [[ ! -e "${dir}/challenge.yaml" ]]; then
+            continue
           fi
+          git add "${dir}/challenge/image/Dockerfile"
+          # not all challenges might have healthchecks, ignore errors
+          git add "${dir}/healthcheck/image/Dockerfile" 2>&1 || true
         done
-        for dir in dist/challenge-templates/* samples/*; do
-          if git add "${dir}/healthcheck/image/Dockerfile" 2>/dev/null; then
-            MODIFIED=1
-            echo "added ${dir}/healthcheck/image/Dockerfile"
-          fi
-        done
-        if [ "${MODIFIED}" == 1 ]; then
-          git config user.email ${{ github.event.head_commit.author.email }}
-          git config user.name ${{ github.event.head_commit.author.name }}
-          git commit -m "Automated commit: update images."
+        git status
+        git config user.email ${{ github.event.head_commit.author.email }}
+        git config user.name ${{ github.event.head_commit.author.name }}
+        if git commit -m "Automated commit: update images."; then
           git push
         fi
