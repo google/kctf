@@ -12,30 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# set up the environment variables
-KCTF_CONFIG_DIR="${HOME}/.config/kctf"
-KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
-KCTF_CTF_NAME=$(basename "${KCTF_CTF_DIR}")
-KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
-KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
+KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
+
+export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+
+function _kctf_setup_environment {
+  KCTF_CONFIG_DIR="$(mktemp -d --tmpdir kctf.XXXXXXXXXX)"
+  if [[ $? -ne 0 ]]; then
+    return 1
+  fi
+  export KCTF_CTF_NAME=$(basename "${KCTF_CTF_DIR}")
+  export KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
+  KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+
+  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
+  export KUBECONFIG="${KCTF_CONFIG_DIR}/kube.conf"
+}
 
 function _kctf_download_dependencies {
   if [[ ! -x "${KCTF_BIN}/yq" ]]; then
     if [[ -e "${KCTF_BIN}/yq" ]]; then
       rm "${KCTF_BIN}/yq" >/dev/null
     fi
-    wget "https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64" -O "${KCTF_BIN}/yq" --quiet || return 1
-    sha256sum --status -c <(echo "5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632  ${KCTF_BIN}/yq") || return 1
+    wget "${KCTF_YQ_URL}" -O "${KCTF_BIN}/yq" --quiet || return 1
+    sha256sum --status -c <(echo "${KCTF_YQ_HASH}  ${KCTF_BIN}/yq") || return 1
     chmod u+x "${KCTF_BIN}/yq"
   fi
-}
-
-function _kctf_export_variables {
-  export KCTF_CTF_DIR
-  export KCTF_CTF_NAME
-  export KCTF_BIN
-  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
-  export KUBECONFIG="${KCTF_CONFIG_DIR}/kube-${KCTF_SESSION}.conf"
 }
 
 function _kctf_cleanup {
@@ -121,9 +124,9 @@ function _kctf_error_cleanup {
   #unset -f _kctf_cleanup
   unset -f _kctf_usage
   unset -f _kctf_error_cleanup
-  unset -f _kctf_export_variables
   unset -f _kctf_enable_completion
   unset -f _kctf_set_active_challenge
+  unset -f _kctf_setup_environment
   unset -f _kctf_activate
   unset -f _kctf_chal_string
   unset -f kctf
@@ -134,6 +137,8 @@ function _kctf_error_cleanup {
   unset KCTF_CTF_NAME
   unset KCTF_BIN
   unset KCTF_SESSION
+  unset KCTF_YQ_URL
+  unset KCTF_YQ_HASH
   unset KUBECONFIG
 
   unset PROJECT
@@ -178,13 +183,14 @@ function _kctf_chal_string {
 }
 
 function _kctf_activate {
-  mkdir -p "${KCTF_CONFIG_DIR}" >/dev/null 2>/dev/null
-  if ! _kctf_download_dependencies; then
-    echo 'error downloading dependencies' >&2
-    _kctf_error_cleanup
+  if ! _kctf_setup_environment; then
+    echo 'error setting up the environment' >&2
     return 1
   fi
-  _kctf_export_variables
+  if ! _kctf_download_dependencies; then
+    echo 'error downloading dependencies' >&2
+    return 1
+  fi
   _kctf_enable_completion || echo "loading shell completion failed" >&2
   SAVED_PS1="${PS1}"
   echo "kCTF environment activated. Run \"deactivate\" to exit."
@@ -205,4 +211,6 @@ function deactivate {
 
 if _kctf_activate; then
   trap _kctf_cleanup EXIT
+else
+  _kctf_error_cleanup
 fi
