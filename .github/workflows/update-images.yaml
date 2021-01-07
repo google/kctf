@@ -183,7 +183,8 @@ jobs:
             CHALLENGE_NAME="$("${KCTF_BIN}/yq" eval '.metadata.name' challenge.yaml)"
             kctf chal start
             # We want to wait for the deployment to be available, but it
-            # might not have been created yet by the operator.
+            # might not have been created yet by the operator and wait will fail.
+            # So try to "kubectl get" the challenge a few times to make sure it exists.
             # Ideally, we would expose the condition in the operator but I
             # don't think that's currently possible.
             for i in {1..5}; do

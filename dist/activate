@@ -121,6 +121,7 @@ function _kctf_enable_completion {
 
 function _kctf_error_cleanup {
   unset -f _kctf_download_dependencies
+  # don't unset _kctf_cleanup since it's used in a trap below
   #unset -f _kctf_cleanup
   unset -f _kctf_usage
   unset -f _kctf_error_cleanup
