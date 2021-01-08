@@ -118,8 +118,8 @@ jobs:
       run: |
         IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
         for dir in dist/challenge-templates/* samples/*; do
-          if [[ -e "${dir}/challenge/image/Dockerfile" ]]; then
-            sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" "${dir}/challenge/image/Dockerfile"
+          if [[ -e "${dir}/challenge/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" "${dir}/challenge/Dockerfile"
           fi
         done
 
@@ -128,8 +128,8 @@ jobs:
       run: |
         IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
         for dir in dist/challenge-templates/* samples/*; do
-          if [[ -e "${dir}/healthcheck/image/Dockerfile" ]]; then
-            sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/image/Dockerfile"
+          if [[ -e "${dir}/healthcheck/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/Dockerfile"
           fi
         done
 
@@ -205,9 +205,9 @@ jobs:
           if [[ ! -e "${dir}/challenge.yaml" ]]; then
             continue
           fi
-          git add "${dir}/challenge/image/Dockerfile"
+          git add "${dir}/challenge/Dockerfile"
           # not all challenges might have healthchecks, ignore errors
-          git add "${dir}/healthcheck/image/Dockerfile" 2>&1 || true
+          git add "${dir}/healthcheck/Dockerfile" 2>&1 || true
         done
         git status
         git config user.email ${{ github.event.head_commit.author.email }}

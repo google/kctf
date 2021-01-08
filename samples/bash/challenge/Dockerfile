@@ -15,7 +15,7 @@ FROM ubuntu:20.04 as chroot
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
-FROM gcr.io/kctf-docker/challenge@sha256:8d60f80c06ad8c93dbf2703e3a31a64fe77d9fc87bd5260a70a72e30a474a593
+FROM gcr.io/kctf-docker/challenge@sha256:4be06cbbb443a74f6f1aaea63ea078c6f815801768ac5899df07409302e7b340
 
 COPY --from=chroot / /chroot
 
