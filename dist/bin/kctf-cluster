@@ -125,6 +125,13 @@ function kctf_cluster_start {
 }
 
 function kctf_cluster_stop {
+  echo "deleting all challenges so that load balancers etc can be cleaned up"
+  for chal_name in $(kubectl get challenges -o=jsonpath="{.items[*].metadata.name}"); do
+    kubectl delete "challenge/${chal_name}"
+  done
+  # deleting the cluster below takes a while, so sleeping for a bit doesn't hurt
+  sleep 20
+
   CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud container clusters delete ${CLUSTER_NAME}
   gcloud compute routers delete "kctf-${CLUSTER_NAME}-nat-router" --region "${ZONE::-2}" --quiet
 
