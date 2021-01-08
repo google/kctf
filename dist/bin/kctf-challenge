@@ -414,7 +414,7 @@ function kctf_chal_create {
     fi
   fi
   if [[ -e "${CHALLENGE_DIR}" ]]; then
-    echo "challenge dir \"${CHALLENGE_DIR}\" does already exist" >&2
+    echo "error: challenge dir \"${CHALLENGE_DIR}\" does already exist" >&2
     exit 1
   fi
 
