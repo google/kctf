@@ -13,7 +13,7 @@ func portsDefault() []kctfv1alpha1.PortSpec {
 		kctfv1alpha1.PortSpec{
 			// Keeping the same name as in previous network file
 			Name:       "netcat",
-			Port:       1,
+			Port:       1337,
 			TargetPort: intstr.FromInt(1337),
 			Protocol:   "TCP",
 		},

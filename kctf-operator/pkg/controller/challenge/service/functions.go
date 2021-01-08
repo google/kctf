@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -32,7 +33,7 @@ func equalPorts(found []corev1.ServicePort, wanted []corev1.ServicePort) bool {
 		return false
 	}
 
-	for i, _ := range found {
+	for i := range found {
 		if found[i].Name != wanted[i].Name || found[i].Protocol != wanted[i].Protocol ||
 			found[i].Port != wanted[i].Port || found[i].TargetPort != wanted[i].TargetPort {
 			return false
@@ -47,100 +48,17 @@ func copyPorts(found *corev1.Service, wanted *corev1.Service) {
 	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
 }
 
-func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
-	log logr.Logger, ctx context.Context, errIngress error) (bool, error) {
-	domainName := utils.GetDomainName(challenge, client, log, ctx)
-	serv, ingress := generateLoadBalancerService(domainName, challenge)
-	// Create the service
-	log.Info("Creating a new Service", "Service.Namespace",
-		serv.Namespace, "Service.Name", serv.Name)
-
-	// Defines ownership
-	controllerutil.SetControllerReference(challenge, serv, scheme)
-
-	// Creates the service
-	err := client.Create(ctx, serv)
-
-	if err != nil {
-		log.Error(err, "Failed to create new Service", "Service.Namespace",
-			serv.Namespace, "Service.Name", serv.Name)
-		return false, err
-	}
-
-	// Create ingress, if there's any https
-	if errors.IsNotFound(errIngress) && ingress.Spec.Backend != nil {
-		// If there's a port HTTPS
-		if challenge.Spec.Network.Dns == true && domainName != "" {
-			// Create ingress in the client
-			log.Info("Creating a new Ingress", "Ingress Namespace", ingress.Namespace,
-				"Ingress Name", ingress.Name)
-
-			// Defines ownership
-			controllerutil.SetControllerReference(challenge, ingress, scheme)
-
-			// Creates the ingress
-			err = client.Create(ctx, ingress)
-
-			if err != nil {
-				log.Error(err, "Failed to create new Ingress", "Ingress Namespace", ingress.Namespace,
-					"Ingress Name", ingress.Name)
-				return false, err
-			}
-		} else {
-			// If there was some inconsistency with dns or domain name
-			if challenge.Spec.Network.Dns == false {
-				log.Info("Failed to create Ingress instance, DNS isn't enabled. Challenge won't be reconciled here.",
-					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
-			}
-
-			if domainName == "" {
-				log.Info("Failed to create Ingress instance, domain name wasn't set. Challenge won't be reconciled here.",
-					"Challenge name: ", challenge.Name, " with namespace ", challenge.Namespace)
-			}
-
-			return false, nil
-		}
-	}
-
-	// Service created successfully - return and requeue
-	return true, nil
-}
-
-func delete(serviceFound *corev1.Service, ingressFound *netv1beta1.Ingress,
-	client client.Client, scheme *runtime.Scheme, log logr.Logger,
-	ctx context.Context, errIngress error) (bool, error) {
-	log.Info("Deleting the Service", "Service.Namespace", serviceFound.Namespace,
-		"Service.Name", serviceFound.Name)
-	err := client.Delete(ctx, serviceFound)
-
-	if err != nil {
-		log.Error(err, "Failed to delete Service", "Service.Namespace", serviceFound.Namespace,
-			"Service.Name", serviceFound.Name)
-		return false, err
-	}
-
-	// Delete ingress if existent
-	if errIngress == nil {
-		log.Info("Deleting the Ingress", "Ingress.Namespace", ingressFound.Namespace, "Ingress.Name", ingressFound.Name)
-		err = client.Delete(ctx, ingressFound)
-
-		if err != nil {
-			log.Error(err, "Failed to delete Ingress", "Ingress.Namespace", ingressFound.Namespace,
-				"Ingress.Name", ingressFound.Name)
-			return false, err
-		}
-	}
-
-	// Service deleted successfully - return and requeue
-	return true, err
-}
-
 func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
-	newService := generateClusterIPService(challenge)
+	newService := generateNodePortService(challenge)
 	existingService := &corev1.Service{}
-	err := client.Get(ctx, types.NamespacedName{Name: newService.Name, Namespace: newService.Namespace}, existingService)
 
-	if err == nil {
+	err := client.Get(ctx, types.NamespacedName{Name: newService.Name, Namespace: newService.Namespace}, existingService)
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	serviceExists := err == nil
+
+	if serviceExists {
 		// client.Get successful: try to update the existing service
 		if isServiceEqual(existingService, newService) {
 			return false, nil
@@ -155,10 +73,6 @@ func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Clie
 		log.Info("Updated internal service successfully", " Name: ",
 			newService.Name, " with namespace ", newService.Namespace)
 		return true, nil
-	}
-
-	if !errors.IsNotFound(err) {
-		return false, err
 	}
 
 	// Defines ownership
@@ -176,90 +90,129 @@ func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Clie
 	return true, nil
 }
 
+func updateIngress(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	existingIngress := &netv1beta1.Ingress{}
+	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingIngress)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	ingressExists := err == nil
+
+	domainName := utils.GetDomainName(challenge, client, log, ctx)
+	newIngress := generateIngress(domainName, challenge)
+
+	if ingressExists {
+		if newIngress.Spec.Backend == nil || challenge.Spec.Network.Public == false {
+			err := client.Delete(ctx, existingIngress)
+			return true, err
+		}
+
+		if isIngressEqual(existingIngress, newIngress) {
+			return false, nil
+		}
+
+		existingIngress.Spec.Backend = newIngress.Spec.Backend
+		existingIngress.ObjectMeta.Annotations = newIngress.ObjectMeta.Annotations
+		err := client.Update(ctx, existingIngress)
+
+		return true, err
+	}
+
+	if newIngress.Spec.Backend == nil || challenge.Spec.Network.Public == false {
+		return false, nil
+	}
+
+	controllerutil.SetControllerReference(challenge, newIngress, scheme)
+
+	err = client.Create(ctx, newIngress)
+
+	return true, err
+}
+
 func updateLoadBalancerService(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Service is created in challenge_controller and here we just ensure that everything is alright
 	// Creates the service if it doesn't exist
 	// Check existence of the service:
-	serviceFound := &corev1.Service{}
-	ingressFound := &netv1beta1.Ingress{}
+	existingService := &corev1.Service{}
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name + "-lb-service",
-		Namespace: challenge.Namespace}, serviceFound)
-	errIngress := client.Get(ctx, types.NamespacedName{Name: challenge.Name,
-		Namespace: challenge.Namespace}, ingressFound)
+		Namespace: challenge.Namespace}, existingService)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	serviceExists := err == nil
 
 	// Get the domainName
 	domainName := utils.GetDomainName(challenge, client, log, ctx)
+	newService := generateLoadBalancerService(domainName, challenge)
 
-	// Just enter here if the service doesn't exist yet:
-	if errors.IsNotFound(err) && challenge.Spec.Network.Public == true &&
-		challenge.Spec.Deployed == true {
-		// Define a new service if the challenge is public
-		return create(challenge, client, scheme, log, ctx, errIngress)
+	if serviceExists {
+		if len(newService.Spec.Ports) == 0 || challenge.Spec.Network.Public == false {
+			err := client.Delete(ctx, existingService)
+			return true, err
+		}
 
-		// When service exists and public is changed to false
-	} else if err == nil && (challenge.Spec.Network.Public == false ||
-		challenge.Spec.Deployed == false) {
-		return delete(serviceFound, ingressFound, client, scheme, log, ctx, errIngress)
+		if isServiceEqual(existingService, newService) {
+			return false, nil
+		}
+
+		copyPorts(existingService, newService)
+		existingService.ObjectMeta.Annotations = newService.ObjectMeta.Annotations
+
+		err := client.Update(ctx, existingService)
+
+		return true, err
 	}
 
-	// Now we check if the service and the ingress are according to the CR:
-	if challenge.Spec.Network.Public && challenge.Spec.Deployed == true {
-		serv, ingress := generateLoadBalancerService(domainName, challenge)
-		if !isServiceEqual(serviceFound, serv) {
-			copyPorts(serviceFound, serv)
-			err = client.Update(ctx, serviceFound)
-			if err != nil {
-				log.Error(err, "Failed to update service", "Service Name: ",
-					serv.Name, " with namespace ", serv.Namespace)
-				return false, err
-			}
-			log.Info("Service updated successfully", "Name: ",
-				serv.Name, " with namespace ", serv.Namespace)
-			return true, nil
-		}
-		// Flags if there was a change in the ingress instance
-		change_ingress := false
-
-		// If ingress should be created:
-		if errors.IsNotFound(errIngress) && ingress.Spec.Backend != nil {
-			// create ingress
-			change_ingress = true
-			err = client.Create(ctx, ingress)
-		}
-
-		// Cases when the ingress should be deleted or merely updated
-		if errIngress == nil && !isIngressEqual(ingressFound, ingress) {
-			change_ingress = true
-			if ingressFound.Spec.Backend != nil && ingress.Spec.Backend == nil {
-				// Deletes ingress
-				err = client.Delete(ctx, ingressFound)
-			} else {
-				// Updates ingress
-				ingressFound.Spec = ingress.Spec
-				err = client.Update(ctx, ingressFound)
-			}
-		}
-
-		if change_ingress == true {
-			if err != nil {
-				log.Error(err, "Failed to update ingress", "Ingress Name: ",
-					ingress.Name, " with namespace ", ingress.Namespace)
-				return false, err
-			}
-			log.Info("Updated ingress successfully", "Ingress Name: ",
-				ingress.Name, " with namespace ", ingress.Namespace)
-			return true, nil
-		}
+	if len(newService.Spec.Ports) == 0 || challenge.Spec.Network.Public == false {
+		return false, nil
 	}
 
-	return false, nil
+	controllerutil.SetControllerReference(challenge, newService, scheme)
+
+	err = client.Create(ctx, newService)
+
+	return true, err
+}
+
+func checkPortsValid(challenge *kctfv1alpha1.Challenge) error {
+	seenHTTPSPort := false
+	ports := make(map[int32]int32)
+	for _, port := range challenge.Spec.Network.Ports {
+		if port.Protocol == "HTTPS" {
+			if seenHTTPSPort {
+				return fmt.Errorf("only one https port supported")
+			}
+		}
+		externalPort := port.Port
+		targetPort := port.TargetPort.IntVal
+		if externalPort == 0 {
+			externalPort = targetPort
+		}
+		existingPort, portExists := ports[externalPort]
+		if portExists && existingPort != targetPort {
+			return fmt.Errorf("conflicting port mapping %v->%v and %v->%v", externalPort, existingPort, externalPort, targetPort)
+		}
+		ports[externalPort] = targetPort
+	}
+	return nil
 }
 
 func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 
 	changed := false
+
+	err := checkPortsValid(challenge)
+	if err != nil {
+		log.Error(err, "Invalid port configuration",
+			" Name: ", challenge.Name,
+			" with namespace ", challenge.Namespace)
+		return false, err
+	}
 
 	internalServiceChanged, err := updateInternalService(challenge, client, scheme, log, ctx)
 	if err != nil {
@@ -272,10 +225,18 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	loadBalancerServiceChanged, err := updateLoadBalancerService(challenge, client, scheme, log, ctx)
 	if err != nil {
 		log.Error(err, "Error updating load balancer service", " Name: ",
-			challenge.Name, " with namespace ", challenge.Namespace, " error: ")
+			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
 	changed = changed || loadBalancerServiceChanged
+
+	ingressChanged, err := updateIngress(challenge, client, scheme, log, ctx)
+	if err != nil {
+		log.Error(err, "Error updating ingress", " Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return false, err
+	}
+	changed = changed || ingressChanged
 
 	return changed, nil
 }
