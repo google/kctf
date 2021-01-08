@@ -11,20 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM ubuntu:20.04 as chroot
+FROM gcr.io/kctf-docker/healthcheck@sha256:2c73ec03c99478585b17292d5ea2637b85d51afd4ef7d99f77047f3ae60864cd
 
-RUN /usr/sbin/useradd --no-create-home -u 1000 user
+COPY healthz.py /home/user/
+COPY doit.py /home/user/
+COPY run.sh /home/user/
+COPY env /home/user/
 
-FROM gcr.io/kctf-docker/challenge
-
-COPY --from=chroot / /chroot
-
-COPY flag /chroot/
-COPY chal /chroot/home/user/
-COPY nsjail.cfg /home/user/
-
-CMD kctf_setup && \
-    kctf_drop_privs \
-    socat \
-      TCP-LISTEN:1337,reuseaddr,fork \
-      EXEC:"kctf_pow nsjail --config /home/user/nsjail.cfg -- /home/user/chal"
+CMD kctf_drop_privs /home/user/run.sh & /home/user/healthz.py

@@ -117,29 +117,33 @@ jobs:
       if: needs.build-docker.outputs.challenge-modified
       run: |
         IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/challenge/image/Dockerfile
+        for dir in dist/challenge-templates/* samples/*; do
+          if [[ -e "${dir}/challenge/image/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" "${dir}/challenge/image/Dockerfile"
+          fi
+        done
 
     - name: Update healthcheck image
       if: needs.build-docker.outputs.healthcheck-modified
       run: |
         IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
-        sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" challenge-templates/challenge-skeleton/healthcheck/image/Dockerfile
+        for dir in dist/challenge-templates/* samples/*; do
+          if [[ -e "${dir}/healthcheck/image/Dockerfile" ]]; then
+            sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/image/Dockerfile"
+          fi
+        done
 
     - name: Update operator
       if: needs.build-docker.outputs.kctf-operator-modified
       run: |
         IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-docker.outputs.kctf-operator-digest }}"
-        sed -i "s#image: .*#image: ${IMAGE}#" kctf-operator/deploy/operator.yaml
+        sed -i "s#image: .*#image: ${IMAGE}#" dist/resources/operator.yaml
 
     - name: Download kubectl
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
-
-    - name: Install yq
-      run: |
-        sudo snap install yq
 
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@master
@@ -152,16 +156,10 @@ jobs:
       run: |
         gcloud auth configure-docker
 
-    - name: Configure kCTF directory
-      run: |
-        export PATH=$PATH:$PWD/bin
-        kctf-setup-chal-dir $PWD/samples
-        kctf-chal-create default-task
-
     - name: Configure kCTF cluster
       run: |
-        export PATH=$PATH:$PWD/bin
-        kctf-config-create --chal-dir samples --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster
+        source samples/kctf/activate
+        kctf config create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster test
 
     # TODO: this should use challenge templates instead so that we don't have to patch all the images
     - name: Expose sample tasks
@@ -172,41 +170,48 @@ jobs:
 
     - name: Deploy all tasks
       run: |
-        export PATH=$PATH:$PWD/bin
+        source samples/kctf/activate
         cd samples
-        for challenge_name in $(kctf-kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
-          kctf-kubectl delete "challenge/${challenge_name}"
+        for challenge_name in $(kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
+          kubectl delete "challenge/${challenge_name}"
         done
         for f in *; do
-          if [ ! "$f" == "kctf-conf" ]; then
-            pushd $f
-              CHALLENGE_NAME="$(yq eval '.metadata.name' challenge.yaml)"
-              make start
-              # We want to wait for the deployment to be available, but it
-              # might not have been created yet by the operator.
-              # Ideally, we would expose the condition in the operator but I
-              # don't think that's currently possible.
-              for i in {1..5}; do
-                kctf-kubectl get "deployment/${CHALLENGE_NAME}" && break
-                echo "deployment/${CHALLENGE_NAME} doesn't exist yet, sleeping"
-                sleep 5
-              done
-              kctf-kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
-              make stop
-            popd
+          if [ "$f" == "kctf" ]; then
+            continue
           fi
+          pushd $f
+            CHALLENGE_NAME="$("${KCTF_BIN}/yq" eval '.metadata.name' challenge.yaml)"
+            kctf chal start
+            # We want to wait for the deployment to be available, but it
+            # might not have been created yet by the operator and wait will fail.
+            # So try to "kubectl get" the challenge a few times to make sure it exists.
+            # Ideally, we would expose the condition in the operator but I
+            # don't think that's currently possible.
+            for i in {1..5}; do
+              kubectl get "deployment/${CHALLENGE_NAME}" && break
+              echo "deployment/${CHALLENGE_NAME} doesn't exist yet, sleeping"
+              sleep 5
+            done
+            kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
+            kctf chal stop
+          popd
         done
 
     - name: Commit
       run: |
-        MODIFIED_FILES="$(git status --porcelain | grep -v 'sample' || true)"
-        echo "MODIFIED_FILES=${MODIFIED_FILES}"
-        if [ ! -z "${MODIFIED_FILES}" ]; then
-          git config user.email ${{ github.event.head_commit.author.email }}
-          git config user.name ${{ github.event.head_commit.author.name }}
-          git add base/nsjail-docker/Dockerfile || true
-          git add base/healthcheck-docker/Dockerfile || true
-          git add kctf-operator/deploy/operator.yaml || true
-          git commit -m "Automated commit: update images."
+        # git add returns success for files that exist and haven't been modified
+        git add dist/resources/operator.yaml
+        for dir in dist/challenge-templates/* samples/*; do
+          if [[ ! -e "${dir}/challenge.yaml" ]]; then
+            continue
+          fi
+          git add "${dir}/challenge/image/Dockerfile"
+          # not all challenges might have healthchecks, ignore errors
+          git add "${dir}/healthcheck/image/Dockerfile" 2>&1 || true
+        done
+        git status
+        git config user.email ${{ github.event.head_commit.author.email }}
+        git config user.name ${{ github.event.head_commit.author.name }}
+        if git commit -m "Automated commit: update images."; then
           git push
         fi
