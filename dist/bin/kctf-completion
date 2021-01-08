@@ -55,7 +55,14 @@ function _kctf_complete_chal() {
       return
       ;;
     create)
-      COMPREPLY=($(compgen -W "--help" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      if [ "${PREV_IS_FLAG}" = 1 ]; then
+        if [ "${PREV_WORD}" == "--challenge-dir" ]; then
+          COMPREPLY=($(compgen -d -- "${COMP_WORDS[${COMP_CWORD}]}"))
+          return
+        fi
+        return 0
+      fi
+      COMPREPLY=($(compgen -W "--help --challenge-dir" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     start|stop|status)
