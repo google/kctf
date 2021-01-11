@@ -14,7 +14,27 @@
 # limitations under the License.
 set -Eeuo pipefail
 
-function kctf_cluster_start {
+function create_operator {
+  # Creating CRD, rbac and operator
+  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml"
+  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml"
+  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
+
+  OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
+
+  # The operator needs to create some subresources, e.g. the gcsfuse service account
+  for i in {1..30}; do
+    kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.imageID==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
+    if [ "$i" == "30" ]; then
+      echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
+      kubectl get pods --namespace kctf-system -o=yaml >&2
+      exit 1
+    fi
+    sleep 10
+  done
+}
+
+function kctf_cluster_start_gce {
   MIN_NODES="1"
   MAX_NODES="2"
   NUM_NODES="1"
@@ -54,23 +74,7 @@ function kctf_cluster_start {
     done
   fi
 
-  # Creating CRD, rbac and operator
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml"
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml"
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
-
-  OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
-
-  # The operator needs to create some subresources, e.g. the gcsfuse service account
-  for i in {1..30}; do
-    kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.image==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
-    if [ "$i" == "30" ]; then
-      echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
-      kubectl get pods --namespace kctf-system -o=yaml >&2
-      exit 1
-    fi
-    sleep 10
-  done
+  create_operator
 
   GCS_KSA_NAME="gcsfuse-sa"
 
@@ -124,7 +128,24 @@ function kctf_cluster_start {
   fi
 }
 
-function kctf_cluster_stop {
+function kctf_cluster_start {
+  case "${CLUSTER_TYPE}" in
+    gce)
+      kctf_cluster_start_gce
+      return
+      ;;
+    kind)
+      kctf_cluster_start_kind
+      return
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
+}
+
+function kctf_cluster_stop_gce {
   echo "deleting all challenges so that load balancers etc can be cleaned up"
   for chal_name in $(kubectl get challenges -o=jsonpath="{.items[*].metadata.name}"); do
     kubectl delete "challenge/${chal_name}"
@@ -145,6 +166,39 @@ function kctf_cluster_stop {
   fi
 }
 
+function kctf_cluster_start_kind {
+  if ! "${KCTF_BIN}/kind" get kubeconfig --name "${CLUSTER_NAME}" >/dev/null 2>/dev/null; then
+    "${KCTF_BIN}/kind" create cluster --name "${CLUSTER_NAME}"
+  fi
+
+  kubectl create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2
+
+  create_operator
+
+  kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false"
+}
+
+function kctf_cluster_stop_kind {
+  "${KCTF_BIN}/kind" delete cluster --name "${CLUSTER_NAME}"
+}
+
+function kctf_cluster_stop {
+  case "${CLUSTER_TYPE}" in
+    gce)
+      kctf_cluster_stop_gce
+      return
+      ;;
+    kind)
+      kctf_cluster_stop_kind
+      return
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
+}
+
 function kctf_cluster_resize_usage {
   echo -e "usage: kctf cluster resize [args]" >&2
   echo -e "args:" >&2
@@ -159,6 +213,11 @@ function kctf_cluster_resize_usage {
 }
 
 function kctf_cluster_resize {
+  if [[ "${CLUSTER_TYPE}" != "gce" ]]; then
+    echo "only cluster type \"gce\" is supported by resize" >&2
+    return 1
+  fi
+
   OPTS="h"
   LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")

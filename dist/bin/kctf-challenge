@@ -152,7 +152,18 @@ function push_image {
   else
     IMAGE_URL="${IMAGE_BASE_URL}:${IMAGE_ID}"
     docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
-    docker push "${IMAGE_URL}" || return
+    case "${CLUSTER_TYPE}" in
+      gce)
+        docker push "${IMAGE_URL}" || return
+        ;;
+      kind)
+        "${KCTF_BIN}/kind" load docker-image --name "${CLUSTER_NAME}" "${IMAGE_URL}" || return
+        ;;
+      *)
+        echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+        return 1
+        ;;
+    esac
   fi
   echo "Image pushed to \"${IMAGE_URL}\""
 }
@@ -179,6 +190,13 @@ function kctf_chal_start {
   fi
 
   kubectl apply -f "${CHALLENGE_DIR}/challenge.yaml" || return
+
+  if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+    # TODO: the operator should do this
+    # we should either have the operator know that it's running in kind (maybe add cluster_type in a configmap)
+    # or have an apparmor option in challenge.yaml
+    kubectl patch "deployment/${CHALLENGE_NAME}" --type json -p='[{"op": "remove", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1challenge"}]'
+  fi
 }
 
 function kctf_chal_stop {
