@@ -104,6 +104,7 @@ function kctf {
           return 1
         fi
         source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
+        export CLUSTER_TYPE
         export PROJECT
         export ZONE
         export REGISTRY
@@ -149,6 +150,7 @@ function _kctf_error_cleanup {
   unset KCTF_YQ_HASH
   unset KUBECONFIG
 
+  unset CLUSTER_TYPE
   unset PROJECT
   unset ZONE
   unset REGISTRY

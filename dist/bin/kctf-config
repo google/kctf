@@ -62,10 +62,23 @@ function kctf_config_load {
 
   source "${CONFIG_PATH}" || return 1
 
-  update_gcloud_config || return 1
-
-  # try to fetch the creds of the k8s cluster
-  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+  case "${CLUSTER_TYPE}" in
+    gce)
+      update_gcloud_config || return 1
+      # try to fetch the creds of the k8s cluster
+      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+      ;;
+    kind)
+      kube_config=$("${KCTF_BIN}/kind" get kubeconfig --name "${CLUSTER_NAME}" 2>/dev/null)
+      if [[ $? -eq 0 ]]; then
+        echo "${kube_config}" > "${KUBECONFIG}"
+      fi
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
 
   echo "loaded config" >&2
 
@@ -88,6 +101,8 @@ function kctf_config_list {
 function kctf_config_create_usage {
   echo -e "usage: kctf config create [args] config_name" >&2
   echo -e "  -h|--help       print this help" >&2
+  echo -e "  --type          what kind of cluster to create " >&2
+  echo -e "                  currently supported values: gce (remote) and kind (local)" >&2
   echo -e "  --project       Google Cloud Platform project name" >&2
   echo -e "  --zone          GCP Zone (default: europe-west4-b)" >&2
   echo -e "                  For a list of zones run:" >&2
@@ -101,6 +116,7 @@ function kctf_config_create_usage {
 
 function kctf_config_create {
   # Default Configuration
+  CLUSTER_TYPE="gce"
   REGISTRY="eu.gcr.io"
   PROJECT=""
   ZONE="europe-west4-b"
@@ -109,7 +125,7 @@ function kctf_config_create {
   START_CLUSTER="0"
 
   OPTS="h"
-  LONGOPTS="help,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
+  LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf config create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_config_create_usage
@@ -122,6 +138,10 @@ function kctf_config_create {
       -h|--help)
         kctf_config_create_usage
         return 1
+        ;;
+      --type)
+        CLUSTER_TYPE=$2
+        shift 2
         ;;
       --project)
         PROJECT=$2
@@ -176,11 +196,24 @@ function kctf_config_create {
   CONFIG_PATH="${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
   shift
 
-  if [[ -z "$PROJECT" ]]; then
-    echo "Missing required argument \"--project\"." >&2
-    kctf_config_create_usage
-    return 1
-  fi
+  case "${CLUSTER_TYPE}" in
+    gce)
+      if [[ -z "$PROJECT" ]]; then
+        echo "Missing required argument \"--project\"." >&2
+        kctf_config_create_usage
+        return 1
+      fi
+      ;;
+    kind)
+      if [[ -z "$PROJECT" ]]; then
+        PROJECT="kind-project"
+      fi
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
 
   mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
@@ -191,6 +224,7 @@ function kctf_config_create {
   fi
 
   cat > "${CONFIG_PATH}" << EOF
+CLUSTER_TYPE=${CLUSTER_TYPE}
 PROJECT=${PROJECT}
 ZONE=${ZONE}
 REGISTRY=${REGISTRY}
@@ -198,12 +232,29 @@ CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
 EOF
 
-  update_gcloud_config || return 1
+  case "${CLUSTER_TYPE}" in
+    gce)
+      update_gcloud_config || return 1
+      # try to fetch the creds of the k8s cluster
+      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+      GET_CLUSTER_CREDS_RESULT=$?
+      ;;
+    kind)
+      kube_config=$("${KCTF_BIN}/kind" get kubeconfig --name "${CLUSTER_NAME}" 2>/dev/null)
+      GET_CLUSTER_CREDS_RESULT=$?
+      if [[ "${GET_CLUSTER_CREDS_RESULT}" -eq 0 ]]; then
+        echo "${kube_config}" > "${KUBECONFIG}"
+      fi
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
 
   # there might be an existing cluster
   # if it already exists, we try to update it
-  # otherwise, start it if requsted
-  gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
+  # otherwise, start it if requested
   GET_CLUSTER_CREDS_RESULT=$?
   if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
@@ -211,6 +262,7 @@ EOF
     else
       echo "Starting cluster." >&2
     fi
+    export CLUSTER_TYPE
     export PROJECT
     export ZONE
     export REGISTRY
