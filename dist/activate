@@ -15,6 +15,8 @@
 KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
 KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
 
+KIND_URL="https://kind.sigs.k8s.io/dl/v0.9.0/kind-$(uname)-amd64"
+
 export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 
 function _kctf_setup_environment {
@@ -38,6 +40,11 @@ function _kctf_download_dependencies {
     wget "${KCTF_YQ_URL}" -O "${KCTF_BIN}/yq" --quiet || return 1
     sha256sum --status -c <(echo "${KCTF_YQ_HASH}  ${KCTF_BIN}/yq") || return 1
     chmod u+x "${KCTF_BIN}/yq"
+  fi
+
+  if [[ ! -x "${KCTF_BIN}/kind" ]]; then
+    curl -Lo "${KCTF_BIN}/kind" "${KIND_URL}" || return 1
+    chmod u+x "${KCTF_BIN}/kind"
   fi
 }
 
