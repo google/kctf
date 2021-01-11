@@ -1,2 +1,3 @@
+dist/bin/kind
 dist/bin/yq
 dist/config/*
