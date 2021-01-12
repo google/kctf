@@ -205,9 +205,6 @@ function kctf_config_create {
       fi
       ;;
     kind)
-      if [[ -z "$PROJECT" ]]; then
-        PROJECT="kind-project"
-      fi
       ;;
     *)
       echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
