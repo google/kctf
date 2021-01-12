@@ -126,9 +126,15 @@ function kctf_cluster_start {
 
 function kctf_cluster_stop {
   echo "deleting all challenges so that load balancers etc can be cleaned up"
-  for chal_name in $(kubectl get challenges -o=jsonpath="{.items[*].metadata.name}"); do
-    kubectl delete "challenge/${chal_name}"
-  done
+  CHALLENGES=$(kubectl get challenge --all-namespaces -o=jsonpath='{range .items[*]}{@.metadata.namespace}{"/"}{@.metadata.name}{" "}{end}')
+  if [[ ! -z "${CHALLENGES}" ]]; then
+    for chal_and_ns in ${CHALLENGES}; do
+      IFS='/' read -r -a chal_and_ns_array <<< "$chal_and_ns"
+      chal_namespace="${chal_and_ns_array[0]}"
+      chal_name="${chal_and_ns_array[1]}"
+      kubectl delete "challenge/${chal_name}" --namespace "${chal_namespace}"
+    done
+  fi
 
   # deleting the cluster below takes a while, so sleeping for a bit doesn't hurt
   echo "Sleeping 20s to give time to delete resources" >&2
