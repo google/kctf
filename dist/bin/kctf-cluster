@@ -24,7 +24,7 @@ function create_operator {
 
   # The operator needs to create some subresources, e.g. the gcsfuse service account
   for i in {1..30}; do
-    kubectl get pods --namespace kctf-system -o=jsonpath="{.items[*].status.containerStatuses[?(@.imageID==\"${OPERATOR_IMAGE}\")].ready}" | grep "true" && break
+    kubectl get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
     if [ "$i" == "30" ]; then
       echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
       kubectl get pods --namespace kctf-system -o=yaml >&2
