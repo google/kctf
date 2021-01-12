@@ -35,4 +35,4 @@ IMAGE_ID="${IMAGE_URL}@${OPERATOR_SHA}"
 echo "pushed to ${IMAGE_ID}"
 OPERATOR_YAML="${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
 sed -i "s#image: .*#image: ${IMAGE_ID}#" "${OPERATOR_YAML}"
-"${KCTF_BIN}/bin/kctf-cluster" start
+"${KCTF_BIN}/kctf-cluster" start
