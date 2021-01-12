@@ -187,13 +187,6 @@ function kctf_chal_start {
   fi
 
   kubectl apply -f "${CHALLENGE_DIR}/challenge.yaml" || return
-
-  if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
-    # TODO: the operator should do this
-    # we should either have the operator know that it's running in kind (maybe add cluster_type in a configmap)
-    # or have an apparmor option in challenge.yaml
-    kubectl patch "deployment/${CHALLENGE_NAME}" --type json -p='[{"op": "remove", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1challenge"}]'
-  fi
 }
 
 function kctf_chal_stop {
