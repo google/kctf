@@ -23,14 +23,14 @@ function create_operator {
   OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
 
   # The operator needs to create some subresources, e.g. the gcsfuse service account
-  for i in {1..30}; do
+  for i in {1..100}; do
     kubectl get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
-    if [ "$i" == "30" ]; then
+    if [ "$i" == "100" ]; then
       echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
       kubectl get pods --namespace kctf-system -o=yaml >&2
       exit 1
     fi
-    sleep 10
+    sleep 3
   done
 }
 
