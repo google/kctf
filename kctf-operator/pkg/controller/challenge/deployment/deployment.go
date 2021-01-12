@@ -53,6 +53,9 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	// Changes what need to be changed in the Template and in the container challenge
 	deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
 		Labels: map[string]string{"app": challenge.Name},
+		Annotations: map[string]string{
+			"container.apparmor.security.beta.kubernetes.io/challenge": "unconfined",
+		},
 	}
 	// Set container ports based on the ports that were passed
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
