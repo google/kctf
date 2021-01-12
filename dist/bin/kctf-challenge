@@ -379,7 +379,7 @@ function kctf_chal_create {
   eval set -- "$PARSED"
 
   CHALLENGE_DIR=
-  TEMPLATE=challenge-skeleton
+  TEMPLATE=pwn
   while true; do
     case "$1" in
       -h|--help)

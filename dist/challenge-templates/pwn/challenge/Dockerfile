@@ -11,16 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM ubuntu:20.04 as build
+
+RUN apt-get update && apt-get install -yq --no-install-recommends build-essential
+
+RUN mkdir /build
+COPY chal.c /build/
+RUN make -C /build chal
+
 FROM ubuntu:20.04 as chroot
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
+
+COPY flag /
+COPY --from=build /build/chal /home/user/
 
 FROM gcr.io/kctf-docker/challenge@sha256:38d97b5eda781d3e2cdee20c9c672d16fb95b8da26702262526f961108f409ef
 
 COPY --from=chroot / /chroot
 
-COPY flag /chroot/
-COPY chal /chroot/home/user/
 COPY nsjail.cfg /home/user/
 
 CMD kctf_setup && \
