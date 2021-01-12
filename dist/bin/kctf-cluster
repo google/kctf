@@ -129,7 +129,9 @@ function kctf_cluster_stop {
   for chal_name in $(kubectl get challenges -o=jsonpath="{.items[*].metadata.name}"); do
     kubectl delete "challenge/${chal_name}"
   done
+
   # deleting the cluster below takes a while, so sleeping for a bit doesn't hurt
+  echo "Sleeping 20s to give time to delete resources" >&2
   sleep 20
 
   CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud container clusters delete ${CLUSTER_NAME}
