@@ -123,6 +123,10 @@ function _kctf_complete_config() {
   case "${COMP_WORDS[2]}" in
     create)
       if [ "${PREV_IS_FLAG}" = 1 ] && [ "${PREV_WORD}" != "--start-cluster" ]; then
+        if [ "${PREV_WORD}" == "--type" ]; then
+          COMPREPLY=($(compgen -W "gce kind" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+          return
+        fi
         if [ "${PREV_WORD}" == "--project" ]; then
           COMPREPLY=($(compgen -W "$(gcloud projects list --format 'get(project_id)')" -- "${COMP_WORDS[${COMP_CWORD}]}"))
           return
@@ -137,7 +141,7 @@ function _kctf_complete_config() {
         fi
         return 0
       fi
-      COMPREPLY=($(compgen -W "--help --project --zone --registry --cluster-name --domain-name --start-cluster" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --type --project --zone --registry --cluster-name --domain-name --start-cluster" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     load)

@@ -54,7 +54,7 @@ func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
 		Labels: map[string]string{"app": challenge.Name},
 		Annotations: map[string]string{
-			"container.apparmor.security.beta.kubernetes.io/challenge": "localhost/ctf-profile",
+			"container.apparmor.security.beta.kubernetes.io/challenge": "unconfined",
 		},
 	}
 	// Set container ports based on the ports that were passed

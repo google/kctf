@@ -143,25 +143,33 @@ function build_images {
 }
 
 function push_image {
-  IMAGE_BASE_URL=$1
+  IMAGE_NAME=$1
   IMAGE_ID=$2
 
-  #if the image id is a full URL, it has been already pushed
-  if [[ "${IMAGE_ID}" = "${IMAGE_BASE_URL}:"* ]]; then
-    IMAGE_URL="${IMAGE_ID}"
-  else
-    IMAGE_URL="${IMAGE_BASE_URL}:${IMAGE_ID}"
-    docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
-    docker push "${IMAGE_URL}" || return
-  fi
+  case "${CLUSTER_TYPE}" in
+    gce)
+      IMAGE_URL="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-${IMAGE_NAME}:${IMAGE_ID}"
+      docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
+      docker push "${IMAGE_URL}" || return
+      ;;
+    kind)
+      IMAGE_URL="kind/${IMAGE_NAME}:${IMAGE_ID}"
+      docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
+      "${KCTF_BIN}/kind" load docker-image --name "${CLUSTER_NAME}" "${IMAGE_URL}" || return
+      ;;
+    *)
+      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      return 1
+      ;;
+  esac
   echo "Image pushed to \"${IMAGE_URL}\""
 }
 
 function push_images {
-  push_image "${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-challenge" "${CHALLENGE_IMAGE_LOCAL}" || return
+  push_image "challenge" "${CHALLENGE_IMAGE_LOCAL}" || return
   CHALLENGE_IMAGE_REMOTE="${IMAGE_URL}"
   if healthcheck_enabled; then
-    push_image "${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-healthcheck" "${HEALTHCHECK_IMAGE_LOCAL}" || return
+    push_image "healthcheck" "${HEALTHCHECK_IMAGE_LOCAL}" || return
     HEALTHCHECK_IMAGE_REMOTE="${IMAGE_URL}"
   fi
 }
