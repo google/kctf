@@ -177,9 +177,9 @@ function _kctf_set_active_challenge {
   unset CHALLENGE_NAME
 }
 
-_KCTF_COLOR1=$'\e[0;32m'
-_KCTF_COLOR2=$'\e[0;36m'
-_KCTF_COLOR_END=$'\e[0m'
+_KCTF_COLOR1=$'\001\e[0;32m\002'
+_KCTF_COLOR2=$'\001\e[0;36m\002'
+_KCTF_COLOR_END=$'\001\e[0m\002'
 
 function _kctf_config_string {
   if [ ! -z "${KCTF_CONFIG}" ]; then
