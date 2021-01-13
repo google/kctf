@@ -14,6 +14,8 @@
 # limitations under the License.
 set -Eeuo pipefail
 
+source "${KCTF_BIN}/kctf-log"
+
 function create_operator {
   # Creating CRD, rbac and operator
   kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml"
@@ -26,7 +28,7 @@ function create_operator {
   for i in {1..100}; do
     kubectl get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
     if [ "$i" == "100" ]; then
-      echo "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes" >&2
+      _kctf_log_err "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes"
       kubectl get pods --namespace kctf-system -o=yaml >&2
       exit 1
     fi
@@ -139,14 +141,14 @@ function kctf_cluster_start {
       return
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
 }
 
 function kctf_cluster_stop_gce {
-  echo "deleting all challenges so that load balancers etc can be cleaned up"
+  _kctf_log "deleting all challenges so that load balancers etc can be cleaned up"
   CHALLENGES=$(kubectl get challenge --all-namespaces -o=jsonpath='{range .items[*]}{@.metadata.namespace}{"/"}{@.metadata.name}{" "}{end}')
   if [[ ! -z "${CHALLENGES}" ]]; then
     for chal_and_ns in ${CHALLENGES}; do
@@ -158,7 +160,7 @@ function kctf_cluster_stop_gce {
   fi
 
   # deleting the cluster below takes a while, so sleeping for a bit doesn't hurt
-  echo "Sleeping 20s to give time to delete resources" >&2
+  _kctf_log "Sleeping 20s to give time to delete resources"
   sleep 20
 
   CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud container clusters delete ${CLUSTER_NAME}
@@ -199,7 +201,7 @@ function kctf_cluster_stop {
       return
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
@@ -220,7 +222,7 @@ function kctf_cluster_resize_usage {
 
 function kctf_cluster_resize {
   if [[ "${CLUSTER_TYPE}" != "gce" ]]; then
-    echo "only cluster type \"gce\" is supported by resize" >&2
+    _kctf_log_err "only cluster type \"gce\" is supported by resize"
     return 1
   fi
 
@@ -274,7 +276,7 @@ function kctf_cluster_resize {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         kctf_cluster_resize_usage
         exit 1
         ;;
@@ -282,7 +284,7 @@ function kctf_cluster_resize {
   done
 
   if [[ -z "${MIN_NODES}" ]] || [[ -z "${MAX_NODES}" ]] || [[ -z "${NUM_NODES}" ]]; then
-    echo "Required arguments missing" >&2
+    _kctf_log_err "Required arguments missing"
     kctf_cluster_resize_usage
     exit 1
   fi
@@ -290,7 +292,7 @@ function kctf_cluster_resize {
   if [[ -z "${OLD_POOL_NAME}" ]]; then
     OLD_POOL_NAME=$(gcloud container node-pools list --cluster ${CLUSTER_NAME} --format 'value(name)')
     if [ $(echo "${OLD_POOL_NAME}" | wc -l) != "1" ]; then
-      echo 'Multiple node pools found. Please choose which to replace with --old-pool.' >&2
+      _kctf_log_err 'Multiple node pools found. Please choose which to replace with --old-pool.'
       echo '== node pools ==' >&2
       echo "${OLD_POOL_NAME}" >&2
       exit 1
@@ -302,17 +304,17 @@ function kctf_cluster_resize {
   fi
 
   if [ "${OLD_POOL_NAME}" = "${NEW_POOL_NAME}" ]; then
-    echo "New pool can't have the same name as the old pool." >&2
+    _kctf_log_err "New pool can't have the same name as the old pool."
     exit 1
   fi
 
   if [[ $# -ne 0 ]]; then
-    echo "Unrecognized arguments \"$@\"." >&2
+    _kctf_log_err "Unrecognized arguments \"$@\"."
     kctf_cluster_resize_usage
     exit 1
   fi
 
-  echo 'Creating the new node pool'
+  _kctf_log 'Creating the new node pool'
   gcloud container node-pools create "${NEW_POOL_NAME}" \
     --cluster="${CLUSTER_NAME}" \
     --machine-type="${MACHINE_TYPE}" \
@@ -323,17 +325,17 @@ function kctf_cluster_resize {
     --min-nodes="${MIN_NODES}" \
     --max-nodes="${MAX_NODES}"
 
-  echo 'Cordoning old nodes'
+  _kctf_log 'Cordoning old nodes'
   for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
     kubectl cordon "$node"
   done
 
-  echo 'Draining old nodes'
+  _kctf_log 'Draining old nodes'
   for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
     kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 "$node";
   done
 
-  echo "Deleting old node pool \"${OLD_POOL_NAME}\""
+  _kctf_log "Deleting old node pool \"${OLD_POOL_NAME}\""
   gcloud container node-pools delete "${OLD_POOL_NAME}" --cluster "${CLUSTER_NAME}"
 }
 
@@ -346,13 +348,13 @@ function kctf_cluster_usage {
 }
 
 if [[ $# -lt 1 ]]; then
-  echo "unexpected argument count" >&2
+  _kctf_log_err "unexpected argument count"
   kctf_cluster_usage
   exit 1
 fi
 
 if [[ -z "${CLUSTER_NAME-}" ]]; then
-  echo "No config loaded. You need to run \"kctf config\" first." >&2
+  _kctf_log_err "No config loaded. You need to run \"kctf config\" first."
   exit 1
 fi
 
@@ -374,7 +376,7 @@ case "$1" in
     kctf_cluster_resize $@
     ;;
   *)
-    echo "unknown command" >&2
+    _kctf_log_err "unknown command"
     kctf_cluster_usage
     exit 1
     ;;

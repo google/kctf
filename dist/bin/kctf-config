@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source "${KCTF_BIN}/kctf-log"
+
 function update_gcloud_config {
   if command -v gcloud >/dev/null 2>&1; then
-    echo "Updating gcloud config." >&2
+    _kctf_log "Updating gcloud config."
     ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
     if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
           gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return 1
@@ -25,7 +27,7 @@ function update_gcloud_config {
     gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null
     gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null
   else
-    echo "Configuration created only locally. Gcloud not installed." >&2
+    _kctf_log_warn "Configuration created only locally. Gcloud not installed."
   fi
 }
 
@@ -39,7 +41,7 @@ function kctf_config_load_usage {
 
 function kctf_config_load {
   if [[ $# -ne 1 ]]; then
-    echo "missing config name" >&2
+    _kctf_log_err "missing config name"
     kctf_config_load_usage
     return 1
   fi
@@ -53,7 +55,7 @@ function kctf_config_load {
   if [[ "${CONFIG_NAME}" == ".lastconfig" ]]; then
     CONFIG_NAME=$(readlink "${KCTF_CTF_DIR}/kctf/config/.lastconfig")
     if [[ $? -ne 0 ]]; then
-      echo "could not resolve .lastconfig link" >&2
+      _kctf_log_err "could not resolve .lastconfig link"
       return 1
     fi
   fi
@@ -75,12 +77,12 @@ function kctf_config_load {
       fi
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
 
-  echo "loaded config" >&2
+  _kctf_log "loaded config"
 
   set_lastconfig_link
 
@@ -172,7 +174,7 @@ function kctf_config_create {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         kctf_config_create_usage
         return 1
         ;;
@@ -180,7 +182,7 @@ function kctf_config_create {
   done
 
   if [[ $# -ne 1 ]]; then
-    echo "kctf config create: config name missing" >&2
+    _kctf_log_err "kctf config create: config name missing"
     kctf_config_create_usage
     return 1
   fi
@@ -189,7 +191,7 @@ function kctf_config_create {
   if [[ "${CONFIG_NAME}" == ".lastconfig" ]]; then
     CONFIG_NAME=$(readlink "${KCTF_CTF_DIR}/kctf/config/.lastconfig")
     if [[ $? -ne 0 ]]; then
-      echo "could not resolve .lastconfig link" >&2
+      _kctf_log_err "could not resolve .lastconfig link"
       return 1
     fi
   fi
@@ -199,7 +201,7 @@ function kctf_config_create {
   case "${CLUSTER_TYPE}" in
     gce)
       if [[ -z "$PROJECT" ]]; then
-        echo "Missing required argument \"--project\"." >&2
+        _kctf_log_err "Missing required argument \"--project\"."
         kctf_config_create_usage
         return 1
       fi
@@ -207,7 +209,7 @@ function kctf_config_create {
     kind)
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
@@ -215,7 +217,7 @@ function kctf_config_create {
   mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
   if [ -e "${CONFIG_PATH}" ]; then
-    echo "Overwriting existing config file. Old content:" >&2
+    _kctf_warn "Overwriting existing config file. Old content:"
     cat "${CONFIG_PATH}" >&2
     rm "${CONFIG_PATH}" >&2
   fi
@@ -244,7 +246,7 @@ EOF
       fi
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
@@ -255,9 +257,9 @@ EOF
   GET_CLUSTER_CREDS_RESULT=$?
   if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
-      echo "Existing cluster found, updating cluster." >&2
+      _kctf_log "Existing cluster found, updating cluster."
     else
-      echo "Starting cluster." >&2
+      _kctf_log "Starting cluster."
     fi
     export CLUSTER_TYPE
     export PROJECT
@@ -282,7 +284,7 @@ function kctf_config_usage {
 }
 
 if [[ $# -lt 1 ]]; then
-  echo "missing required argument" >&2
+  _kctf_log_err "missing required argument"
   kctf_config_usage
   exit 1
 fi
