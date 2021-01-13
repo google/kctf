@@ -363,13 +363,14 @@ function kctf_chal_create_usage {
   echo "usage: kctf chal create [args] name" >&2
   echo "args:" >&2
   echo "  -h|--help       print this help" >&2
+  echo "  --template      which template to use (run --template list to print available templates)" >&2
   echo "  --challenge-dir path where to create the new challenge" >&2
   echo "                  default: \"${KCTF_CTF_DIR}/\${CHALLENGE_NAME}\"" >&2
 }
 
 function kctf_chal_create {
   OPTS="h"
-  LONGOPTS="help,challenge-dir:"
+  LONGOPTS="help,template:,challenge-dir:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_create_usage
@@ -378,11 +379,16 @@ function kctf_chal_create {
   eval set -- "$PARSED"
 
   CHALLENGE_DIR=
+  TEMPLATE=pwn
   while true; do
     case "$1" in
       -h|--help)
         kctf_chal_create_usage
         exit 0
+        ;;
+      --template)
+        TEMPLATE="$2"
+        shift 2
         ;;
       --challenge-dir)
         CHALLENGE_DIR="$2"
@@ -400,9 +406,24 @@ function kctf_chal_create {
     esac
   done
 
+  if [[ "${TEMPLATE}" == "list" ]]; then
+    echo "available templates:"
+    for template in ${KCTF_CTF_DIR}/kctf/challenge-templates/*; do
+      echo "  $(basename ${template})"
+    done
+    exit 0
+  fi
+
   if [[ $# -ne 1 ]]; then
     echo "kctf chal create: name missing" >&2
     kctf_chal_create_usage
+    exit 1
+  fi
+
+  TEMPLATE_DIR="${KCTF_CTF_DIR}/kctf/challenge-templates/${TEMPLATE}"
+  if [[ ! -e "${TEMPLATE_DIR}/challenge.yaml" ]]; then
+    echo "kctf chal create: template \"${TEMPLATE}\" not found" >&2
+    echo "  run \"kctf chal create --template list\" to list available templates" >&2
     exit 1
   fi
 
@@ -429,7 +450,7 @@ function kctf_chal_create {
   mkdir -p $(dirname "${CHALLENGE_DIR}") >/dev/null 2>/dev/null
 
   umask a+rx
-  cp -p -r "${KCTF_CTF_DIR}/kctf/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
+  cp -p -r "${TEMPLATE_DIR}" "${CHALLENGE_DIR}"
   ${KCTF_BIN}/yq eval ".metadata.name = \"${CHALLENGE_NAME}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
 }
 
