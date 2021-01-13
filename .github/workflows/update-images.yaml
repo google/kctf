@@ -173,6 +173,7 @@ jobs:
         source samples/kctf/activate
         cd samples
         for challenge_name in $(kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
+          echo "deleting challenge ${challenge_name}"
           kubectl delete "challenge/${challenge_name}"
         done
         for f in *; do
@@ -180,8 +181,11 @@ jobs:
             continue
           fi
           pushd $f
+            echo "entering challenge directory $f"
             CHALLENGE_NAME="$("${KCTF_BIN}/yq" eval '.metadata.name' challenge.yaml)"
+            echo "starting challenge ${CHALLENGE_NAME}"
             kctf chal start
+            echo "challenge started, waiting for it to become available"
             # We want to wait for the deployment to be available, but it
             # might not have been created yet by the operator and wait will fail.
             # So try to "kubectl get" the challenge a few times to make sure it exists.
@@ -193,6 +197,7 @@ jobs:
               sleep 5
             done
             kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
+            echo "challenge availble, stopping"
             kctf chal stop
           popd
         done
