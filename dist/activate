@@ -157,9 +157,9 @@ function _kctf_set_active_challenge {
       if [[ $? -ne 0 ]]; then
         unset CHALLENGE_NAME
       fi
-      CHALLENGE_NAMESPACE=$("${KCTF_BIN}/yq" eval --exit-status '.metadata.namespace' "${current_dir}/challenge.yaml" 2>/dev/null)
-      if [[ $? -ne 0 ]]; then
-        CHALLENGE_NAMESPACE="default"
+      CHALLENGE_NAMESPACE="default"
+      if "${KCTF_BIN}/yq" eval --exit-status '.metadata.namespace' "${current_dir}/challenge.yaml" 2>/dev/null; then
+        CHALLENGE_NAMESPACE=$("${KCTF_BIN}/yq" eval '.metadata.namespace' "${current_dir}/challenge.yaml" 2>/dev/null)
       fi
       export CHALLENGE_DIR="${current_dir}"
       export CHALLENGE_NAME
