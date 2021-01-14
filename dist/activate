@@ -113,7 +113,7 @@ function kctf {
         export REGISTRY
         export CLUSTER_NAME
         export DOMAIN_NAME
-	export EMAIL_ADDRESS
+        export EMAIL_ADDRESS
         KCTF_CONFIG="${CONFIG_NAME}"
       else
         "${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@
