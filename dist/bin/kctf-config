@@ -113,6 +113,9 @@ function kctf_config_create_usage {
   echo -e "                  Possible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
   echo -e "  --cluster-name  Name of the kubernetes cluster (default: kctf-cluster)" >&2
   echo -e "  --domain-name   Optional domain name to host challenges under" >&2
+  echo -e "  --email-address Optional email address for LetsEncrypt registration (for wildcard certificates)" >&2
+  echo -e "                  To use it, please read and agree to the ACME Subscriber Agreement:" >&2
+  echo -e "                    https://letsencrypt.org/repository/" >&2
   echo -e "  --start-cluster Start the cluster if it's not running yet" >&2
 }
 
@@ -124,10 +127,11 @@ function kctf_config_create {
   ZONE="europe-west4-b"
   CLUSTER_NAME="kctf-cluster"
   DOMAIN_NAME=""
+  EMAIL_ADDRESS=""
   START_CLUSTER="0"
 
   OPTS="h"
-  LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,start-cluster"
+  LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,email-address:,start-cluster"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf config create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_config_create_usage
@@ -163,6 +167,10 @@ function kctf_config_create {
         ;;
       --domain-name)
         DOMAIN_NAME="$2"
+        shift 2
+        ;;
+      --email-address)
+        EMAIL_ADDRESS="$2"
         shift 2
         ;;
       --start-cluster)
@@ -229,6 +237,7 @@ ZONE=${ZONE}
 REGISTRY=${REGISTRY}
 CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
+EMAIL_ADDRESS=${EMAIL_ADDRESS}
 EOF
 
   case "${CLUSTER_TYPE}" in
@@ -267,6 +276,7 @@ EOF
     export REGISTRY
     export CLUSTER_NAME
     export DOMAIN_NAME
+    export EMAIL_ADDRESS
     "${KCTF_BIN}/kctf-cluster" start >&2 || return 1
   fi
 

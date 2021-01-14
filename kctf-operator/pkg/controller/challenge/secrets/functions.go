@@ -49,7 +49,7 @@ func create(secretName string, challenge *kctfv1alpha1.Challenge, client client.
 
 func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-	secrets := []string{"pow-bypass", "pow-bypass-pub"}
+	secrets := []string{"pow-bypass", "pow-bypass-pub", "tls-cert"}
 	requeue := false
 	var err error
 
@@ -103,6 +103,8 @@ func updateSecret(secretName string, challenge *kctfv1alpha1.Challenge,
 		log.Info("Secret updated succesfully", "Name: ",
 			secretName, " with namespace ", challenge.Namespace)
 		return true, nil
+	} else {
+		log.Info("Secrets are the same", "name", secretName, "namespace", challenge.Namespace)
 	}
 
 	return false, nil

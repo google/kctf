@@ -126,7 +126,7 @@ function kctf_cluster_start_gce {
 
     gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin
 
-    kubectl create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --dry-run=client -o yaml | kubectl apply -f -
+    kubectl create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | kubectl apply -f -
   fi
 }
 
