@@ -2,7 +2,6 @@ package service
 
 import (
 	"strconv"
-
 	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
@@ -24,9 +23,27 @@ func generateNodePortService(challenge *kctfv1alpha1.Challenge) *corev1.Service 
 		},
 	}
 
+	challengePorts := challenge.Spec.Network.Ports
+
+	if challenge.Spec.Network.Public == false {
+		// The user could create a challenge of this name
+		// and it will receive the traffic of all private
+		// challenges in this namespace.
+		service.Spec.Selector = map[string]string{
+			"app": "kctf-private-challenge",
+		}
+		// Name port 80 to ensure a change is detected.
+		challengePorts = append([]kctfv1alpha1.PortSpec{{
+			Port:       80,
+			TargetPort: intstr.FromInt(80),
+			Protocol:   corev1.ProtocolTCP,
+			Name:       "kctf-private-challenge",
+		}}, challengePorts...)
+	}
+
 	portsSeen := make(map[int32]bool)
 
-	for i, port := range challenge.Spec.Network.Ports {
+	for i, port := range challengePorts {
 		if portsSeen[port.Port] {
 			continue
 		}

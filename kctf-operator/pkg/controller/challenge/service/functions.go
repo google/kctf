@@ -64,6 +64,8 @@ func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Clie
 			return false, nil
 		}
 
+		// Ensure the selector is updated in case public changed
+		existingService.Spec.Selector = newService.Spec.Selector
 		copyPorts(existingService, newService)
 		err = client.Update(ctx, existingService)
 		if err != nil {
@@ -104,7 +106,7 @@ func updateIngress(challenge *kctfv1alpha1.Challenge, client client.Client, sche
 	newIngress := generateIngress(domainName, challenge)
 
 	if ingressExists {
-		if newIngress.Spec.Backend == nil || challenge.Spec.Network.Public == false {
+		if newIngress.Spec.Backend == nil {
 			err := client.Delete(ctx, existingIngress)
 			return true, err
 		}
@@ -120,7 +122,7 @@ func updateIngress(challenge *kctfv1alpha1.Challenge, client client.Client, sche
 		return true, err
 	}
 
-	if newIngress.Spec.Backend == nil || challenge.Spec.Network.Public == false {
+	if newIngress.Spec.Backend == nil {
 		return false, nil
 	}
 
