@@ -60,9 +60,13 @@ function _kctf_complete_chal() {
           COMPREPLY=($(compgen -d -- "${COMP_WORDS[${COMP_CWORD}]}"))
           return
         fi
+        if [ "${PREV_WORD}" == "--template" ]; then
+          COMPREPLY=($(compgen -W "list $(ls ${KCTF_CTF_DIR}/kctf/challenge-templates/)" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+          return
+        fi
         return 0
       fi
-      COMPREPLY=($(compgen -W "--help --challenge-dir" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --template --challenge-dir" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     start|stop|status)

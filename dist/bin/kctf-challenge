@@ -12,20 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+source "${KCTF_BIN}/kctf-log"
+
 function has_cluster_config {
   [[ ! -z "${CLUSTER_NAME-}" ]]
 }
 
 function require_cluster_config {
   if ! has_cluster_config; then
-    echo "No config loaded. You need to run \"kctf config\" first." >&2
+    _kctf_log_err "No config loaded. You need to run \"kctf config\" first."
     exit 1
   fi
 }
 
 function require_active_challenge {
   if [[ -z "${CHALLENGE_DIR-}" ]]; then
-    echo "No active challenge, please cd to a challenge directory first." >&2
+    _kctf_log_err "No active challenge, please cd to a challenge directory first."
     exit 1
   fi
 }
@@ -60,7 +63,7 @@ function parse_help_arg_only {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         parse_help_arg_only_usage
         exit 1
         ;;
@@ -102,7 +105,7 @@ function parse_container_name {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         parse_container_name_usage
         exit 1
         ;;
@@ -116,7 +119,7 @@ function build_image {
   # build the image
   CONTAINER_NAME="$1"
   CONTAINER_DIR="${CHALLENGE_DIR}/${CONTAINER_NAME}"
-  echo "building image in \"${CONTAINER_DIR}\""
+  _kctf_log "building image in \"${CONTAINER_DIR}\""
   IMAGE_ID=$(docker build -q "${CONTAINER_DIR}")
   if [[ $? -ne 0 ]]; then
     return 1
@@ -126,7 +129,7 @@ function build_image {
   if [[ "${IMAGE_ID}" = sha256:* ]]; then
     IMAGE_ID=$(echo "${IMAGE_ID}" | cut -d ':' -f 2)
   fi
-  echo "Image ID \"${IMAGE_ID}\""
+  _kctf_log "Image ID \"${IMAGE_ID}\""
 }
 
 function healthcheck_enabled {
@@ -158,11 +161,11 @@ function push_image {
       "${KCTF_BIN}/kind" load docker-image --name "${CLUSTER_NAME}" "${IMAGE_URL}" || return
       ;;
     *)
-      echo "unknown cluster type \"${CLUSTER_TYPE}\"" >&2
+      _kctf_log_err "unknown cluster type \"${CLUSTER_TYPE}\""
       return 1
       ;;
   esac
-  echo "Image pushed to \"${IMAGE_URL}\""
+  _kctf_log "Image pushed to \"${IMAGE_URL}\""
 }
 
 function push_images {
@@ -201,14 +204,14 @@ function kctf_chal_status {
 
   echo "= CHALLENGE RESOURCE ="
   echo
-  kubectl get "challenge/${CHALLENGE_NAME}"
+  kubectl get "challenge/${CHALLENGE_NAME}" --namespace "${CHALLENGE_NAMESPACE}"
   echo
   echo "= INSTANCES / PODs ="
   echo
   echo "Challenge execution status"
   echo "This shows you how many instances of the challenges are running."
   echo
-  kubectl get pods -l "app=${CHALLENGE_NAME}" -o wide
+  kubectl get pods -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
   echo
   echo
   echo "= DEPLOYMENTS ="
@@ -216,29 +219,29 @@ function kctf_chal_status {
   echo "Challenge deployment status"
   echo "This shows you if the challenge was deployed to the cluster."
   echo
-  kubectl get deployments -l "app=${CHALLENGE_NAME}" -o wide
+  kubectl get deployments -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
   echo
   echo "= EXTERNAL SERVICES ="
   echo
   echo "Challenge external status"
   echo "This shows you if the challenge is exposed externally."
   echo
-  kubectl get services -l "app=${CHALLENGE_NAME}" -o wide
-  kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide
+  kubectl get services -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
+  kubectl get ingress -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
 }
 
 function kctf_chal_debug_logs {
   require_cluster_config
   COMMAND="debug logs" parse_container_name $@ || return
 
-  kubectl logs -l "app=${CHALLENGE_NAME}" -c "${CONTAINER}"
+  kubectl logs -l "app=${CHALLENGE_NAME}" -c "${CONTAINER}" --namespace "${CHALLENGE_NAMESPACE}"
 }
 
 function kctf_chal_debug_ssh {
   require_cluster_config
   COMMAND="debug ssh" parse_container_name $@ || return
 
-  kubectl exec "deployment/${CHALLENGE_NAME}" -c "${CONTAINER}" -it -- /bin/bash
+  kubectl exec "deployment/${CHALLENGE_NAME}" --namespace "${CHALLENGE_NAMESPACE}" -c "${CONTAINER}" -it -- /bin/bash
 }
 
 function kctf_chal_debug_port_forward_usage {
@@ -281,7 +284,7 @@ function kctf_chal_debug_port_forward {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         kctf_chal_debug_port_forward_usage
         exit 1
         ;;
@@ -290,8 +293,8 @@ function kctf_chal_debug_port_forward {
 
   require_active_challenge
 
-  echo 'starting port-forward, ctrl+c to exit'
-  kubectl port-forward "deployment/${CHALLENGE_NAME}" --address=127.0.0.1 "${LOCAL_PORT}:${REMOTE_PORT}"
+  _kctf_log 'starting port-forward, ctrl+c to exit'
+  kubectl port-forward "deployment/${CHALLENGE_NAME}" --namespace "${CHALLENGE_NAMESPACE}" --address=127.0.0.1 "${LOCAL_PORT}:${REMOTE_PORT}"
 }
 
 function kctf_chal_debug_docker {
@@ -305,10 +308,10 @@ function kctf_chal_debug_docker {
   docker kill "${DOCKER_NAME}" >/dev/null 2>/dev/null
   docker container rm "${DOCKER_NAME}" >/dev/null 2>/dev/null
 
-  echo "Running docker container ${IMAGE_ID} using name ${DOCKER_NAME}"
+  _kctf_log "Running docker container ${IMAGE_ID} using name ${DOCKER_NAME}"
   docker run -d --name "${DOCKER_NAME}" -it -p 1337 --privileged "${IMAGE_ID}" || return 1
   docker ps -f "name=${DOCKER_NAME}" || return 1
-  echo "Container running, ctrl+c to exit"
+  _kctf_log "Container running, ctrl+c to exit"
   docker attach "${DOCKER_NAME}"
 }
 
@@ -325,7 +328,7 @@ function kctf_chal_debug_usage {
 
 function kctf_chal_debug {
   if [[ $# -lt 1 ]]; then
-    echo "unexpected argument count" >&2
+    _kctf_log_err "unexpected argument count"
     kctf_chal_debug_usage
     exit 1
   fi
@@ -352,7 +355,7 @@ function kctf_chal_debug {
       kctf_chal_debug_docker $@
       ;;
     *)
-      echo "unknown command" >&2
+      _kctf_log_err "unknown command"
       kctf_chal_debug_usage
       exit 1
       ;;
@@ -363,13 +366,14 @@ function kctf_chal_create_usage {
   echo "usage: kctf chal create [args] name" >&2
   echo "args:" >&2
   echo "  -h|--help       print this help" >&2
+  echo "  --template      which template to use (run --template list to print available templates)" >&2
   echo "  --challenge-dir path where to create the new challenge" >&2
   echo "                  default: \"${KCTF_CTF_DIR}/\${CHALLENGE_NAME}\"" >&2
 }
 
 function kctf_chal_create {
   OPTS="h"
-  LONGOPTS="help,challenge-dir:"
+  LONGOPTS="help,template:,challenge-dir:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_create_usage
@@ -378,11 +382,16 @@ function kctf_chal_create {
   eval set -- "$PARSED"
 
   CHALLENGE_DIR=
+  TEMPLATE=pwn
   while true; do
     case "$1" in
       -h|--help)
         kctf_chal_create_usage
         exit 0
+        ;;
+      --template)
+        TEMPLATE="$2"
+        shift 2
         ;;
       --challenge-dir)
         CHALLENGE_DIR="$2"
@@ -393,16 +402,31 @@ function kctf_chal_create {
         break
         ;;
       *)
-        echo "Unrecognized argument \"$1\"." >&2
+        _kctf_log_err "Unrecognized argument \"$1\"."
         parse_help_arg_only_usage
         exit 1
         ;;
     esac
   done
 
+  if [[ "${TEMPLATE}" == "list" ]]; then
+    echo "available templates:"
+    for template in ${KCTF_CTF_DIR}/kctf/challenge-templates/*; do
+      echo "  $(basename ${template})"
+    done
+    exit 0
+  fi
+
   if [[ $# -ne 1 ]]; then
-    echo "kctf chal create: name missing" >&2
+    _kctf_log_err "kctf chal create: name missing"
     kctf_chal_create_usage
+    exit 1
+  fi
+
+  TEMPLATE_DIR="${KCTF_CTF_DIR}/kctf/challenge-templates/${TEMPLATE}"
+  if [[ ! -e "${TEMPLATE_DIR}/challenge.yaml" ]]; then
+    _kctf_log_err "kctf chal create: template \"${TEMPLATE}\" not found"
+    _kctf_log_err "  run \"kctf chal create --template list\" to list available templates"
     exit 1
   fi
 
@@ -414,22 +438,22 @@ function kctf_chal_create {
   else
     CHALLENGE_DIR_REALPATH=$(realpath --canonicalize-missing "${CHALLENGE_DIR}")
     if [[ "${CHALLENGE_DIR_REALPATH}" != "${KCTF_CTF_DIR}"/* ]]; then
-      echo "Challenge dir needs to be under the CTF dir:" >&2
-      echo "  \"${CHALLENGE_DIR_REALPATH}\"" >&2
-      echo "  not under" >&2
-      echo "  \"${KCTF_CTF_DIR}\"" >&2
+      _kctf_log_err "Challenge dir needs to be under the CTF dir:"
+      _kctf_log_err "  \"${CHALLENGE_DIR_REALPATH}\""
+      _kctf_log_err "  not under"
+      _kctf_log_err "  \"${KCTF_CTF_DIR}\""
       exit 1
     fi
   fi
   if [[ -e "${CHALLENGE_DIR}" ]]; then
-    echo "error: challenge dir \"${CHALLENGE_DIR}\" does already exist" >&2
+    _kctf_log_err "error: challenge dir \"${CHALLENGE_DIR}\" does already exist"
     exit 1
   fi
 
   mkdir -p $(dirname "${CHALLENGE_DIR}") >/dev/null 2>/dev/null
 
   umask a+rx
-  cp -p -r "${KCTF_CTF_DIR}/kctf/challenge-templates/challenge-skeleton" "${CHALLENGE_DIR}"
+  cp -p -r "${TEMPLATE_DIR}" "${CHALLENGE_DIR}"
   ${KCTF_BIN}/yq eval ".metadata.name = \"${CHALLENGE_NAME}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
 }
 
@@ -464,7 +488,7 @@ function kctf_chal_usage {
 }
 
 if [[ $# -lt 1 ]]; then
-  echo "unexpected argument count" >&2
+  _kctf_log_err "unexpected argument count"
   kctf_chal_usage
   exit 1
 fi
@@ -499,7 +523,7 @@ case "$1" in
     kctf_chal_debug $@
     ;;
   *)
-    echo "unknown command" >&2
+    _kctf_log_err "unknown command"
     kctf_chal_usage
     exit 1
     ;;

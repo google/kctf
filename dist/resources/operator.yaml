@@ -16,7 +16,6 @@ spec:
       serviceAccountName: kctf-operator
       containers:
         - name: kctf-operator
-          # TODO: Replace this with the built image name
           image: gcr.io/kctf-docker/kctf-operator@sha256:ccc960d2d0c163efe3ecffac4aa5bc2c0fef952321a52b95300d46f8f4273150
           command:
           - kctf-operator

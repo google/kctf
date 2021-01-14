@@ -117,7 +117,7 @@ jobs:
       if: needs.build-docker.outputs.challenge-modified
       run: |
         IMAGE="gcr.io/kctf-docker/challenge@${{ needs.build-docker.outputs.challenge-digest }}"
-        for dir in dist/challenge-templates/* samples/*; do
+        for dir in dist/challenge-templates/*; do
           if [[ -e "${dir}/challenge/Dockerfile" ]]; then
             sed -i "s#FROM gcr.io/kctf-docker/challenge.*#FROM ${IMAGE}#" "${dir}/challenge/Dockerfile"
           fi
@@ -127,7 +127,7 @@ jobs:
       if: needs.build-docker.outputs.healthcheck-modified
       run: |
         IMAGE="gcr.io/kctf-docker/healthcheck@${{ needs.build-docker.outputs.healthcheck-digest }}"
-        for dir in dist/challenge-templates/* samples/*; do
+        for dir in dist/challenge-templates/*; do
           if [[ -e "${dir}/healthcheck/Dockerfile" ]]; then
             sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/Dockerfile"
           fi
@@ -158,30 +158,28 @@ jobs:
 
     - name: Configure kCTF cluster
       run: |
-        source samples/kctf/activate
+        mkdir /tmp/samples
+        cp -R dist /tmp/samples/kctf
+        source /tmp/samples/kctf/activate
         kctf config create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name $GKE_CLUSTER.kctf.dev --start-cluster test
-
-    # TODO: this should use challenge templates instead so that we don't have to patch all the images
-    - name: Expose sample tasks
-      run: |
-        for f in samples/*/challenge.yaml; do
-          sed -i "s/public: false/public: true/" $f
-        done
 
     - name: Deploy all tasks
       run: |
-        source samples/kctf/activate
-        cd samples
+        source /tmp/samples/kctf/activate
+        cd /tmp/samples
         for challenge_name in $(kubectl get challenges -o "jsonpath={.items[*].metadata.name}"); do
+          echo "deleting challenge ${challenge_name}"
           kubectl delete "challenge/${challenge_name}"
         done
-        for f in *; do
-          if [ "$f" == "kctf" ]; then
-            continue
-          fi
-          pushd $f
+        for template in $(ls kctf/challenge-templates/); do
+          kctf chal create --template $template $template
+          echo "entering challenge directory ${template}"
+          pushd $template
+            sed -i "s/public: false/public: true/" challenge.yaml
             CHALLENGE_NAME="$("${KCTF_BIN}/yq" eval '.metadata.name' challenge.yaml)"
+            echo "starting challenge ${CHALLENGE_NAME}"
             kctf chal start
+            echo "challenge started, waiting for it to become available"
             # We want to wait for the deployment to be available, but it
             # might not have been created yet by the operator and wait will fail.
             # So try to "kubectl get" the challenge a few times to make sure it exists.
@@ -193,6 +191,7 @@ jobs:
               sleep 5
             done
             kubectl wait --for=condition=available --timeout=5m "deployment/${CHALLENGE_NAME}"
+            echo "challenge availble, stopping"
             kctf chal stop
           popd
         done

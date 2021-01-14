@@ -11,30 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM gcr.io/kctf-docker/healthcheck@sha256:4fe2c9a9bb536d8f9209424648433a456aee6cea60e1ce6a093eddffe7dcf659
 
-# See options available at https://github.com/google/nsjail/blob/master/config.proto
+COPY healthz.py /home/user/
+COPY doit.py /home/user/
+COPY run.sh /home/user/
+COPY env /home/user/
 
-name: "default-nsjail-configuration"
-description: "Default nsjail configuration for pwnable-style CTF task."
-
-mode: ONCE
-uidmap {inside_id: "1000"}
-gidmap {inside_id: "1000"}
-mount_proc: true
-rlimit_as_type: HARD
-rlimit_cpu_type: HARD
-rlimit_nofile_type: HARD
-rlimit_nproc_type: HARD
-
-mount: [
-  {
-    src: "/chroot"
-    dst: "/"
-    is_bind: true
-  },
-  {
-    src: "/etc/resolv.conf"
-    dst: "/etc/resolv.conf"
-    is_bind: true
-  }
-]
+CMD kctf_drop_privs /home/user/run.sh & /home/user/healthz.py
