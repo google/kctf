@@ -22,6 +22,7 @@ import (
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -77,7 +78,35 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		}
 	}
 
-	return nil
+	log := logf.Log.WithName(name)
+	// Notify all challenges when there are updates in secrets in kctf-system
+	err = c.Watch(
+		&source.Kind{Type: &corev1.Secret{}},
+		&handler.EnqueueRequestsFromMapFunc{
+			ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
+				if a.Meta.GetNamespace() == "kctf-system" {
+					challengeList := &kctfv1alpha1.ChallengeList{}
+					err := mgr.GetClient().List(context.Background(), challengeList)
+					if err != nil {
+						log.Error(err, "Failed to obtain a list of all challenges for updating a secret")
+						return nil
+					}
+					requestList := []reconcile.Request{}
+					for i := range challengeList.Items {
+						requestList = append(requestList, reconcile.Request{
+							NamespacedName: types.NamespacedName{
+								Name: challengeList.Items[i].Name,
+								Namespace: challengeList.Items[i].Namespace,
+							}})
+					}
+					return requestList
+				}
+				return nil
+			}),
+		},
+	)
+
+	return err
 }
 
 // ReconcileChallenge reconciles a Challenge object
