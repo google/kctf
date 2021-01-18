@@ -141,13 +141,13 @@ jobs:
       if: needs.build-docker.outputs.gcsfuse-modified
       run: |
         IMAGE="gcr.io/kctf-docker/gcsfuse@${{ needs.build-docker.outputs.gcsfuse-digest }}"
-        sed -i 's/DOCKER_GCSFUSE_IMAGE := .*/DOCKER_GCSFUSE_IMAGE := "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
+        sed -i 's/const DOCKER_GCSFUSE_IMAGE = .*/DOCKER_GCSFUSE_IMAGE := "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
 
     - name: Update certbot image
       if: needs.build-docker.outputs.certbot-modified
       run: |
         IMAGE="gcr.io/kctf-docker/certbot@${{ needs.build-docker.outputs.certbot-digest }}"
-        sed -i 's/DOCKER_CERTBOT_IMAGE := .*/DOCKER_CERTBOT_IMAGE := "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
+        sed -i 's/const DOCKER_CERTBOT_IMAGE = .*/DOCKER_CERTBOT_IMAGE := "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
 
     - name: Update operator
       if: needs.build-docker.outputs.kctf-operator-modified
