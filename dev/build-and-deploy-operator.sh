@@ -40,8 +40,8 @@ CERTBOT_IMAGE_ID=$(docker build -t "${CERTBOT_IMAGE_URL}" -q "${DIR}/docker-imag
 docker push "${GCSFUSE_IMAGE_URL}"
 docker push "${CERTBOT_IMAGE_URL}"
 
-sed -i 's/DOCKER_GCSFUSE_IMAGE := .*/DOCKER_GCSFUSE_IMAGE := "${GCSFUSE_IMAGE_URL}@${GCSFUSE_IMAGE_ID}"/' pkg/resources/constants.go
-sed -i 's/DOCKER_CERTBOT_IMAGE := .*/DOCKER_CERTBOT_IMAGE := "${CERTBOT_IMAGE_URL}@${CERTBOT_IMAGE_ID}"/' pkg/resources/constants.go
+sed -i 's/const DOCKER_GCSFUSE_IMAGE = .*/DOCKER_GCSFUSE_IMAGE := "${GCSFUSE_IMAGE_URL}@${GCSFUSE_IMAGE_ID}"/' pkg/resources/constants.go
+sed -i 's/const DOCKER_CERTBOT_IMAGE = .*/DOCKER_CERTBOT_IMAGE := "${CERTBOT_IMAGE_URL}@${CERTBOT_IMAGE_ID}"/' pkg/resources/constants.go
 
 set +x
 
