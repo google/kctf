@@ -69,8 +69,11 @@ func generateIngress(domainName string, challenge *kctfv1alpha1.Challenge) *netv
 			Annotations: map[string]string{"networking.gke.io/managed-certificates": challenge.Name},
 		},
 		Spec: netv1beta1.IngressSpec{
+			TLS: []netv1beta1.IngressTLS{{
+				SecretName: "tls-cert",
+			}},
 			Rules: []netv1beta1.IngressRule{{
-				Host: "www." + challenge.Name + "." + domainName,
+				Host: challenge.Name + "-web." + domainName,
 			}},
 		},
 	}

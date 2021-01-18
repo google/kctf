@@ -113,6 +113,7 @@ function kctf {
         export REGISTRY
         export CLUSTER_NAME
         export DOMAIN_NAME
+        export EMAIL_ADDRESS
         KCTF_CONFIG="${CONFIG_NAME}"
       else
         "${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@
@@ -165,6 +166,7 @@ function _kctf_error_cleanup {
   unset REGISTRY
   unset CLUSTER_NAME
   unset DOMAIN_NAME
+  unset EMAIL_ADDRESS
 }
 
 function _kctf_set_active_challenge {

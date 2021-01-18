@@ -16,6 +16,11 @@ func NewExternalDnsClusterRole() runtime.Object {
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "create", "update", "patch", "list"},
+			},
+			{
+				APIGroups: []string{""},
 				Resources: []string{"services", "endpoints", "pods", "nodes"},
 				Verbs:     []string{"get", "watch", "list"},
 			},
@@ -67,24 +72,58 @@ func NewExternalDnsDeployment() runtime.Object {
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "external-dns-sa",
-					Containers: []corev1.Container{{
-						Image: "us.gcr.io/k8s-artifacts-prod/external-dns/external-dns:v0.7.2",
-						Name:  "external-dns",
-						Env: []corev1.EnvVar{{
-							Name: "DOMAIN_NAME",
-							ValueFrom: &corev1.EnvVarSource{
-								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "external-dns",
+					Containers: []corev1.Container{
+						{
+							Image: "us.gcr.io/k8s-artifacts-prod/external-dns/external-dns:v0.7.2",
+							Name:  "external-dns",
+							Env: []corev1.EnvVar{{
+								Name: "DOMAIN_NAME",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "external-dns",
+										},
+										Key: "DOMAIN_NAME",
 									},
-									Key: "DOMAIN_NAME",
+								},
+							}},
+							Args: []string{"--log-level=debug", "--source=service", "--source=ingress",
+								"--provider=google", "--domain-filter=$(DOMAIN_NAME)", "--registry=txt",
+								"--txt-owner-id=kctf-cloud-dns"},
+						},
+						{
+							Image: "eu.gcr.io/sdcpocs1/certbot",
+							Name: "certbot",
+							Env: []corev1.EnvVar{
+								{
+									Name: "DOMAIN",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "external-dns",
+											},
+											Key: "DOMAIN_NAME",
+										},
+									},
+								},
+								{
+									Name: "SECRET",
+									Value: "tls-cert",
+								},
+								{
+									Name: "EMAIL",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "external-dns",
+											},
+											Key: "EMAIL_ADDRESS",
+										},
+									},
 								},
 							},
-						}},
-						Args: []string{"--log-level=debug", "--source=service", "--source=ingress",
-							"--provider=google", "--domain-filter=$(DOMAIN_NAME)", "--registry=txt",
-							"--txt-owner-id=kctf-cloud-dns"},
-					}},
+						},
+					},
 				},
 			},
 		},

@@ -70,3 +70,19 @@ func NewSecretPowBypass() runtime.Object {
 func NewSecretPowBypassPub() runtime.Object {
 	return secret("pow-bypass-pub", "pow-bypass-key-pub.pem", false)
 }
+
+func NewSecretTls() runtime.Object {
+	// Generate empty secret so ingress works
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tls-cert",
+			Namespace: "kctf-system",
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: map[string][]byte{
+			corev1.TLSCertKey: []byte{},
+			corev1.TLSPrivateKeyKey: []byte{},
+		},
+	}
+	return secret
+}
