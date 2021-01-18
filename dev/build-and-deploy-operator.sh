@@ -24,15 +24,37 @@ fi
 #export GOROOT=$(go env GOROOT)
 #operator-sdk generate k8s
 
-IMAGE_URL="${REGISTRY}/${PROJECT}/kctf-operator"
-echo "building image and pushing to ${IMAGE_URL}"
+IMAGE_BASE="${REGISTRY}/${PROJECT}"
+echo "building images and pushing to ${IMAGE_BASE}"
 
-cd "${DIR}/kctf-operator"
+pushd "${DIR}/kctf-operator"
 
+set -x
+
+GCSFUSE_IMAGE_URL="${IMAGE_BASE}/gcsfuse"
+CERTBOT_IMAGE_URL="${IMAGE_BASE}/certbot"
+
+GCSFUSE_IMAGE_ID=$(docker build -t "${GCSFUSE_IMAGE_URL}" -q "${DIR}/docker-images/gcsfuse")
+CERTBOT_IMAGE_ID=$(docker build -t "${CERTBOT_IMAGE_URL}" -q "${DIR}/docker-images/certbot")
+
+docker push "${GCSFUSE_IMAGE_URL}"
+docker push "${CERTBOT_IMAGE_URL}"
+
+sed -i 's/DOCKER_GCSFUSE_IMAGE := .*/DOCKER_GCSFUSE_IMAGE := "${GCSFUSE_IMAGE_URL}@${GCSFUSE_IMAGE_ID}"/' pkg/resources/constants.go
+sed -i 's/DOCKER_CERTBOT_IMAGE := .*/DOCKER_CERTBOT_IMAGE := "${CERTBOT_IMAGE_URL}@${CERTBOT_IMAGE_ID}"/' pkg/resources/constants.go
+
+set +x
+
+IMAGE_URL="${IMAGE_BASE}/kctf-operator"
 operator-sdk build "${IMAGE_URL}"
 OPERATOR_SHA=$(docker push "${IMAGE_URL}" | egrep -o 'sha256:[0-9a-f]+' | head -n1)
 IMAGE_ID="${IMAGE_URL}@${OPERATOR_SHA}"
+
 echo "pushed to ${IMAGE_ID}"
+
 OPERATOR_YAML="${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
 sed -i "s#image: .*#image: ${IMAGE_ID}#" "${OPERATOR_YAML}"
+
+popd
+
 "${KCTF_BIN}/kctf-cluster" start
