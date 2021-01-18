@@ -40,8 +40,11 @@ CERTBOT_IMAGE_ID=$(docker build -t "${CERTBOT_IMAGE_URL}" -q "${DIR}/docker-imag
 docker push "${GCSFUSE_IMAGE_URL}"
 docker push "${CERTBOT_IMAGE_URL}"
 
-sed -i 's%const DOCKER_GCSFUSE_IMAGE = .*%const DOCKER_GCSFUSE_IMAGE = "'${GCSFUSE_IMAGE_URL}@${GCSFUSE_IMAGE_ID}'"%' pkg/resources/constants.go
-sed -i 's%const DOCKER_CERTBOT_IMAGE = .*%const DOCKER_CERTBOT_IMAGE = "'${CERTBOT_IMAGE_URL}@${CERTBOT_IMAGE_ID}'"%' pkg/resources/constants.go
+GCSFUSE_IMAGE_SHA=$(docker inspect -f '{{index .RepoDigests 0}}' "${GCSFUSE_IMAGE_ID}")
+CERTBOT_IMAGE_SHA=$(docker inspect -f '{{index .RepoDigests 0}}' "${CERTBOT_IMAGE_ID}")
+
+sed -i 's%const DOCKER_GCSFUSE_IMAGE = .*%const DOCKER_GCSFUSE_IMAGE = "'${GCSFUSE_IMAGE_SHA}'"%' pkg/resources/constants.go
+sed -i 's%const DOCKER_CERTBOT_IMAGE = .*%const DOCKER_CERTBOT_IMAGE = "'${CERTBOT_IMAGE_SHA}'"%' pkg/resources/constants.go
 
 set +x
 
