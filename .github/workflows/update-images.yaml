@@ -215,6 +215,7 @@ jobs:
     - name: Commit
       run: |
         # git add returns success for files that exist and haven't been modified
+        git add kctf-operator/pkg/resources/constants.go
         git add dist/resources/operator.yaml
         for dir in dist/challenge-templates/* samples/*; do
           if [[ ! -e "${dir}/challenge.yaml" ]]; then
@@ -226,7 +227,7 @@ jobs:
         done
         git status
         git config user.email ${{ github.event.head_commit.author.email }}
-        git config user.name ${{ github.event.head_commit.author.name }}
+        git config user.name "GitHub Action"
         if git commit -m "Automated commit: update images."; then
           git push
         fi
