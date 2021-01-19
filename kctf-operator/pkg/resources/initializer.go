@@ -17,12 +17,11 @@ var log logr.Logger = logf.Log.WithName("cmd")
 func InitializeOperator(client *client.Client) error {
 	// Creates the objects that enable the DNS, external DNS and etc
 
-	objectFunctions := []func() runtime.Object{NewServiceAccountGcsFuseSa,
-		NewServiceAccountExternalDnsSa, NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
+	objectFunctions := []func() runtime.Object{NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
 		NewExternalDnsDeployment, NewDaemonSetGcsFuse, NewSecretPowBypass,
 		NewSecretPowBypassPub, NewNetworkPolicyBlockInternal, NewAllowDns, NewSecretTls}
 
-	names := []string{"Service Account Gcs Fuse", "Service Account External DNS",
+	names := []string{
 		"External DNS Cluster Role", "External DNS Cluster Role Binding", "External DNS Deployment",
 		"Daemon Set Gcs Fuse", "Secret for PowBypass", "Secret for PowBypassPub",
 		"Network Policy Block Internal", "Allow DNS", "TLS Secret"}

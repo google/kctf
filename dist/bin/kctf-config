@@ -263,7 +263,6 @@ EOF
   # there might be an existing cluster
   # if it already exists, we try to update it
   # otherwise, start it if requested
-  GET_CLUSTER_CREDS_RESULT=$?
   if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
       _kctf_log "Existing cluster found, updating cluster."

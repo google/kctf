@@ -41,16 +41,23 @@ function kctf_cluster_start_gce {
   MAX_NODES="2"
   NUM_NODES="1"
   MACHINE_TYPE="n2-standard-4"
+  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+  NETWORK="kctf-network-${SUFFIX:0:16}"
+
+  EXISTING_NETWORK=$(gcloud compute networks list --filter="name=${NETWORK}" --format 'get(name)')
+  if [ -z "${EXISTING_NETWORK}" ]; then
+    gcloud compute networks create ${NETWORK} --description "kCTF network for cluster ${CLUSTER_NAME}" >/dev/null
+  fi
 
   EXISTING_CLUSTER=$(gcloud container clusters list --filter "name=${CLUSTER_NAME}" --format 'get(name)')
-
   if [ -z "${EXISTING_CLUSTER}" ]; then
-    gcloud container clusters create --release-channel=regular --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --create-subnetwork name=kctf-${CLUSTER_NAME}-subnet --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr 172.16.0.32/28 --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME}
+    CIDR="172.16.0.32/28"
+    gcloud container clusters create --release-channel=regular --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --network ${NETWORK} --create-subnetwork name=kctf-subnet-${NETWORK} --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr ${CIDR} --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME}
   fi
 
   EXISTING_ROUTER=$(gcloud compute routers list --filter "name=kctf-${CLUSTER_NAME}-nat-router" --format 'get(name)')
   if [ -z "${EXISTING_ROUTER}" ]; then
-    gcloud compute routers create "kctf-${CLUSTER_NAME}-nat-router" --network=default --region "${ZONE::-2}"
+    gcloud compute routers create "kctf-${CLUSTER_NAME}-nat-router" --network="${NETWORK}" --region "${ZONE::-2}"
   fi
 
   EXISTING_NAT=$(gcloud compute routers nats list --router "kctf-${CLUSTER_NAME}-nat-router" --router-region "${ZONE::-2}" --format 'get(name)')
@@ -62,7 +69,6 @@ function kctf_cluster_start_gce {
 
   # GCSFUSE
 
-  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
   BUCKET_NAME="kctf-gcsfuse-${SUFFIX:0:16}"
   GCS_GSA_NAME="${BUCKET_NAME}"
   GCS_GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GCS_GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
@@ -76,11 +82,10 @@ function kctf_cluster_start_gce {
     done
   fi
 
-  create_operator
-
   GCS_KSA_NAME="gcsfuse-sa"
 
   gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL}
+  kubectl create serviceaccount --namespace kctf-system ${GCS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f -
   kubectl annotate serviceaccount --namespace kctf-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite
 
   if ! gsutil du "gs://${BUCKET_NAME}/"; then
@@ -122,12 +127,15 @@ function kctf_cluster_start_gce {
     DNS_KSA_NAME="external-dns-sa"
 
     gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${DNS_KSA_NAME}]" ${DNS_GSA_EMAIL}
+    kubectl create serviceaccount --namespace kctf-system ${DNS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f -
     kubectl annotate serviceaccount --namespace kctf-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite
 
     gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin
 
     kubectl create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | kubectl apply -f -
   fi
+
+  create_operator
 }
 
 function kctf_cluster_start {
@@ -167,6 +175,10 @@ function kctf_cluster_stop_gce {
   gcloud compute routers delete "kctf-${CLUSTER_NAME}-nat-router" --region "${ZONE::-2}" --quiet
 
   SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+
+  NETWORK="kctf-network-${SUFFIX:0:16}"
+  gcloud compute networks delete ${NETWORK} --quiet
+
   GSA_NAME="kctf-gcsfuse-${SUFFIX:0:16}"
   GSA_EMAIL=$(gcloud iam service-accounts list --filter "email=${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com" --format 'get(email)' || true)
   if [ -z "${GSA_EMAIL}" ]; then
