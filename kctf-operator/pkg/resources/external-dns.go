@@ -92,7 +92,7 @@ func NewExternalDnsDeployment() runtime.Object {
 								"--txt-owner-id=kctf-cloud-dns"},
 						},
 						{
-							Image: "eu.gcr.io/sdcpocs1/certbot",
+							Image: DOCKER_CERTBOT_IMAGE,
 							Name: "certbot",
 							Env: []corev1.EnvVar{
 								{
@@ -120,6 +120,10 @@ func NewExternalDnsDeployment() runtime.Object {
 											Key: "EMAIL_ADDRESS",
 										},
 									},
+								},
+								{
+									Name: "PROD",
+									Value: "true",
 								},
 							},
 						},

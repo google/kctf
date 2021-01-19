@@ -24,12 +24,16 @@ jobs:
       kctf-operator-modified: ${{ steps.set-modified.outputs.kctf-operator-modified }}
       challenge-modified: ${{ steps.set-modified.outputs.challenge-modified }}
       healthcheck-modified: ${{ steps.set-modified.outputs.healthcheck-modified }}
+      gcsfuse-modified: ${{ steps.set-modified.outputs.gcsfuse-modified }}
+      certbot-modified: ${{ steps.set-modified.outputs.certbot-modified }}
       kctf-operator-digest: ${{ steps.push.outputs.kctf-operator-digest }}
       challenge-digest: ${{ steps.push.outputs.challenge-digest }}
       healthcheck-digest: ${{ steps.push.outputs.healthcheck-digest }}
+      gcsfuse-digest: ${{ steps.push.outputs.gcsfuse-digest }}
+      certbot-digest: ${{ steps.push.outputs.certbot-digest }}
     strategy:
       matrix:
-        image: ["kctf-operator", "challenge", "healthcheck"]
+        image: ["kctf-operator", "challenge", "healthcheck", "gcsfuse", "certbot"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -39,7 +43,7 @@ jobs:
       name: Check for modified paths
       run: |
         if [ "${{ matrix.image }}" == "kctf-operator" ]; then
-          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
+          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**" "docker-images/gcsfuse/**" "docker-images/certbot/**")
         else
           PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
         fi
@@ -132,6 +136,18 @@ jobs:
             sed -i "s#FROM gcr.io/kctf-docker/healthcheck.*#FROM ${IMAGE}#" "${dir}/healthcheck/Dockerfile"
           fi
         done
+
+    - name: Update gcsfuse image
+      if: needs.build-docker.outputs.gcsfuse-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/gcsfuse@${{ needs.build-docker.outputs.gcsfuse-digest }}"
+        sed -i 's/const DOCKER_GCSFUSE_IMAGE = .*/const DOCKER_GCSFUSE_IMAGE = "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
+
+    - name: Update certbot image
+      if: needs.build-docker.outputs.certbot-modified
+      run: |
+        IMAGE="gcr.io/kctf-docker/certbot@${{ needs.build-docker.outputs.certbot-digest }}"
+        sed -i 's/const DOCKER_CERTBOT_IMAGE = .*/const DOCKER_CERTBOT_IMAGE = "${IMAGE}"/' kctf-operator/pkg/resources/constants.go
 
     - name: Update operator
       if: needs.build-docker.outputs.kctf-operator-modified

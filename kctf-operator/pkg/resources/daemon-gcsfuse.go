@@ -32,12 +32,10 @@ func NewDaemonSetGcsFuse() runtime.Object {
 					}},
 					Containers: []corev1.Container{{
 						Name:  "ctf-daemon",
-						Image: "ubuntu:20.04",
+						Image: DOCKER_GCSFUSE_IMAGE,
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: &privileged,
 						},
-						Command: []string{"sh", "-c",
-							"apt-get update && apt-get install -y wget fuse && wget -q https://github.com/GoogleCloudPlatform/gcsfuse/releases/download/v0.29.0/gcsfuse_0.29.0_amd64.deb && dpkg -i gcsfuse_0.29.0_amd64.deb && mkdir -p /mnt/disks/gcs && ((test -f /config/gcs_bucket && gcsfuse --foreground --debug_fuse --debug_gcs --stat-cache-ttl 0 -type-cache-ttl 0 -o allow_other -o nonempty --file-mode 0777 --dir-mode 0777 --uid 1000 --gid 1000 $(cat /config/gcs_bucket) /mnt/disks/gcs))"},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:             "mnt-disks-gcs",
