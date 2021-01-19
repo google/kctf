@@ -21,7 +21,7 @@ if [ -z "${PROD}" ]; then
   echo Making a test certificate because PROD environment variable is not set.
 else
   echo Making a valid certificate because PROD environment variable is set.
-  TEST=""
+  TEST="--break-my-certs"
 fi
 
 function request_certificate() {
