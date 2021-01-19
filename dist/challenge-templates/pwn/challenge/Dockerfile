@@ -26,7 +26,7 @@ RUN /usr/sbin/useradd --no-create-home -u 1000 user
 COPY flag /
 COPY --from=build /build/chal /home/user/
 
-FROM gcr.io/kctf-docker/challenge@sha256:b2a1adddbe60a7bce7c4ee94361ae0c9b7367a459570ccccdb87743effb1c971
+FROM gcr.io/kctf-docker/challenge@sha256:56954dbdf2a0c6b2d288734afea2ae5a36a91a0e28a037d84bc883eb3c7cf0d0
 
 COPY --from=chroot / /chroot
 

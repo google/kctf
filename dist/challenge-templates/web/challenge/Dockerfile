@@ -31,7 +31,7 @@ RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add
 
 RUN mkdir -p /home/user/chroot
 
-FROM gcr.io/kctf-docker/challenge@sha256:b2a1adddbe60a7bce7c4ee94361ae0c9b7367a459570ccccdb87743effb1c971
+FROM gcr.io/kctf-docker/challenge@sha256:56954dbdf2a0c6b2d288734afea2ae5a36a91a0e28a037d84bc883eb3c7cf0d0
 
 COPY --from=chroot / /chroot
 
