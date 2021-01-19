@@ -17,7 +17,7 @@ spec:
       containers:
         - name: kctf-operator
           # TODO: Replace this with the built image name
-          image: gcr.io/kctf-docker/kctf-operator@sha256:fa19cf3ee6ff356d60beee45c15951bce473594ed3037fca7cf22d9ff6457702
+          image: gcr.io/kctf-docker/kctf-operator@sha256:a2dc4b0a16c0a1accf9bf365729ef99ab54dc6d29f10713fc376d69b0569d95b
           command:
           - kctf-operator
           imagePullPolicy: Always
