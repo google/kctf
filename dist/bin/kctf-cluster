@@ -16,6 +16,9 @@ set -Eeuo pipefail
 
 source "${KCTF_BIN}/kctf-log"
 
+KCTF_CLOUD_BASE_URL="https://kctf-cloud-staging.appspot.com"
+KCTF_CLOUD_API_KEY="AIzaSyAAzuNBG_dsBTVori26YFmYE-FcNsz-A20"
+
 function create_operator {
   # Creating CRD, rbac and operator
   kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml"
@@ -34,6 +37,23 @@ function create_operator {
     fi
     sleep 3
   done
+}
+
+function wait_for_nameserver {
+  nameserver="$1"
+  initial_timeout=180
+  timeout=$initial_timeout
+  sleep_time=10
+  while [[ "${timeout}" -gt 0 ]]; do
+    if nslookup -nosearch -norecurse -type=NS "${DOMAIN_NAME}." "${nameserver}" >/dev/null 2>/dev/null; then
+      return 0
+    fi
+    _kctf_log "nameserver didn't serve NS record yet, sleeping for ${sleep_time}s"
+    sleep ${sleep_time}
+    timeout=$(($timeout - $sleep_time))
+  done
+  _kctf_log_err "nameserver didn't serve NS record after ${initial_timeout}s"
+  return 1
 }
 
 function kctf_cluster_start_gce {
@@ -115,6 +135,30 @@ function kctf_cluster_start_gce {
       fi
       gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
     fi
+
+    DNS_ZONE_NAMESERVERS=$(gcloud dns managed-zones describe kctf-cluster-dns-zone --format 'value[delimiter="\n"](nameServers)')
+    if [[ "${DOMAIN_NAME}" == *".kctf.cloud" ]]; then
+      _kctf_log "waiting for nameservers to be updated (should take roughly 1m)"
+      for nameserver in ${DNS_ZONE_NAMESERVERS}; do
+        wait_for_nameserver "${nameserver}"
+      done
+      KCTF_CLOUD_URL="${KCTF_CLOUD_BASE_URL}/subdomain?name=${DOMAIN_NAME%.kctf.cloud}&nameservers=$(paste -sd ',' <(echo "${DNS_ZONE_NAMESERVERS}"))"
+      _kctf_log 'requesting kctf.cloud subdomain'
+      kctf_cloud_tries=3
+      kctf_cloud_timeout=10
+      while true; do
+        curl --fail -X POST -H "x-api-key: ${KCTF_CLOUD_API_KEY}" "${KCTF_CLOUD_URL}" >/dev/null && break
+        kctf_cloud_tries=$(($kctf_cloud_tries - 1))
+        if [[ $kctf_cloud_tries -le 0 ]]; then
+          _kctf_log_err 'could not register kctf.cloud subdomain'
+          exit 1
+        fi
+        _kctf_log_warn "registering kctf.cloud subdomain failed, retrying in ${kctf_cloud_timeout}s"
+        sleep "${kctf_cloud_timeout}"
+      done
+    else
+      # print in red for attention
+      _kctf_log $'\001\e[0;31m\002'"ATTENTION: "$'\001\e[0m\002'"You need to add the following NS entries for your domain \"${DOMAIN_NAME}\":"$'\n'"${DNS_ZONE_NAMESERVERS}"
     fi
 
     DNS_GSA_NAME="kctf-cloud-dns"
