@@ -126,17 +126,14 @@ function kctf_cluster_start_gce {
   # Cloud DNS
 
   if [ ! -z "${DOMAIN_NAME}" ]; then
-    DNS_ZONE=$(gcloud dns managed-zones list --filter "dns_name:${DOMAIN_NAME}" --format 'get(name)')
+    ZONE_NAME="$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')-dns-zone"
+
+    DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')
     if [ -z "${DNS_ZONE}" ]; then
-      ZONE_NAME="${CLUSTER_NAME}-dns-zone"
-      if [ ! -z "$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')" ]; then
-        _kctf_log "Conflicting dns managed-zone found. Deleting before recreating it."
-        gcloud dns managed-zones delete "${ZONE_NAME}"
-      fi
       gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
     fi
 
-    DNS_ZONE_NAMESERVERS=$(gcloud dns managed-zones describe kctf-cluster-dns-zone --format 'value[delimiter="\n"](nameServers)')
+    DNS_ZONE_NAMESERVERS=$(gcloud dns managed-zones describe "${ZONE_NAME}" --format 'value[delimiter="\n"](nameServers)')
     if [[ "${DOMAIN_NAME}" == *".kctf.cloud" ]]; then
       _kctf_log "waiting for nameservers to be updated (should take roughly 1m)"
       for nameserver in ${DNS_ZONE_NAMESERVERS}; do
