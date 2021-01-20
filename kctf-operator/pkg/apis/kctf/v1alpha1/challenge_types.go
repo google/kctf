@@ -31,9 +31,6 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=false
 	Public bool `json:"public,omitempty"`
 
-	// +kubebuilder:default:=false
-	Dns bool `json:"dns,omitempty"`
-
 	// By default, one port is set with default values
 	Ports []PortSpec `json:"ports,omitempty"`
 }
@@ -88,7 +85,7 @@ type ChallengeSpec struct {
 	// +kubebuilder:default:=0
 	PowDifficultySeconds int `json:"powDifficultySeconds,omitempty"`
 
-	// The network specifications: if it's public or not, if it uses dns or not and specifications about ports
+	// The network specifications: if it's public or not and specifications about ports
 	Network NetworkSpec `json:"network,omitempty"`
 
 	// Healthcheck checks if the challenge works

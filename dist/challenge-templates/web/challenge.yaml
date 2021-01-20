@@ -7,7 +7,6 @@ spec:
   powDifficultySeconds: 0
   network:
     public: false
-    dns: true
     ports:
     - protocol: "HTTPS"
       targetPort: 1337

@@ -93,12 +93,8 @@ spec:
                 description: Image used by the deployment
                 type: string
               network:
-                description: 'The network specifications: if it''s public or not,
-                  if it uses dns or not and specifications about ports'
+                description: 'The network specifications: if it''s public or not and specifications about ports'
                 properties:
-                  dns:
-                    default: false
-                    type: boolean
                   ports:
                     description: By default, one port is set with default values
                     items:

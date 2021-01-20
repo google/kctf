@@ -7,6 +7,5 @@ spec:
   powDifficultySeconds: 0
   network:
     public: false
-    dns: true
   healthcheck:
     enabled: true
