@@ -105,11 +105,16 @@ function kctf_cluster_start_gce {
 
   # Cloud DNS
 
-  if [ ! -z "${DOMAIN_NAME}" ]
-  then
+  if [ ! -z "${DOMAIN_NAME}" ]; then
     DNS_ZONE=$(gcloud dns managed-zones list --filter "dns_name:${DOMAIN_NAME}" --format 'get(name)')
     if [ -z "${DNS_ZONE}" ]; then
-      gcloud dns managed-zones create "${CLUSTER_NAME}-dns-zone" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
+      ZONE_NAME="${CLUSTER_NAME}-dns-zone"
+      if [ ! -z "$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')" ]; then
+        _kctf_log "Conflicting dns managed-zone found. Deleting before recreating it."
+        gcloud dns managed-zones delete "${ZONE_NAME}"
+      fi
+      gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
+    fi
     fi
 
     DNS_GSA_NAME="kctf-cloud-dns"
