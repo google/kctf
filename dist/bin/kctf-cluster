@@ -16,7 +16,7 @@ set -Eeuo pipefail
 
 source "${KCTF_BIN}/kctf-log"
 
-KCTF_CLOUD_BASE_URL="https://kctf-cloud.appspot.com"
+KCTF_CLOUD_BASE_URL="https://kctf-cloud.appspot.com/v1"
 KCTF_CLOUD_API_KEY="AIzaSyC7Jgu4e0IygmImZNPmJHrcfZ3lJA9ZrZs"
 
 function create_operator {
