@@ -241,7 +241,7 @@ function kctf_config_create {
   mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
   if [ -e "${CONFIG_PATH}" ]; then
-    _kctf_warn "Overwriting existing config file. Old content:"
+    _kctf_log_warn "Overwriting existing config file. Old content:"
     cat "${CONFIG_PATH}" >&2
     rm "${CONFIG_PATH}" >&2
   fi
