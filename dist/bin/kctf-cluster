@@ -42,7 +42,7 @@ function create_operator {
 
 function wait_for_nameserver {
   nameserver="$1"
-  initial_timeout=180
+  initial_timeout=300
   timeout=$initial_timeout
   sleep_time=10
   while [[ "${timeout}" -gt 0 ]]; do
