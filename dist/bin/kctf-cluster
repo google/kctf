@@ -131,7 +131,29 @@ function kctf_cluster_start_gce {
 
     DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')
     if [ -z "${DNS_ZONE}" ]; then
+      _kctf_log "creating new managed-zone \"${ZONE_NAME}\""
       gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}."
+      soa_ttl="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(ttl)')"
+      soa_data="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(DATA)')"
+      new_soa=($soa_data)
+      # update the serial no
+      new_soa[2]=$((${new_soa[2]} + 1))
+      # change the ttl
+      new_soa[6]="60"
+
+      _kctf_log "changing the SOA entry to reduce TTL"
+      gcloud dns record-sets transaction start --zone="${ZONE_NAME}"
+      gcloud dns record-sets transaction remove --zone="${ZONE_NAME}" --name "${DOMAIN_NAME}." --ttl "${soa_ttl}" --type "SOA" "${soa_data}"
+      gcloud dns record-sets transaction add --zone="${ZONE_NAME}" --name "${DOMAIN_NAME}." --ttl "60" --type "SOA" "${new_soa[*]}"
+      gcloud dns record-sets transaction describe --zone="${ZONE_NAME}"
+      if ! gcloud dns record-sets transaction execute --zone="${ZONE_NAME}"; then
+        gcloud dns record-sets transaction abort --zone="${ZONE_NAME}"
+        _kctf_log_err 'updating the SOA entry failed'
+        exit 1
+      fi
+      _kctf_log "SOA updated"
+    else
+      _kctf_log "managed-zone \"${ZONE_NAME}\" exists, reusing"
     fi
 
     DNS_ZONE_NAMESERVERS=$(gcloud dns managed-zones describe "${ZONE_NAME}" --format 'value[delimiter="\n"](nameServers)')
