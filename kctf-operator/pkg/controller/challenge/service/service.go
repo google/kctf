@@ -141,10 +141,8 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Chal
 		service.Spec.Ports = append(service.Spec.Ports, servicePort)
 	}
 
-	if challenge.Spec.Network.Dns == true {
-		service.ObjectMeta.Annotations =
-			map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name + "." + domainName}
-	}
+	service.ObjectMeta.Annotations =
+		map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name + "." + domainName}
 
 	return service
 }

@@ -23,7 +23,7 @@ function _kctf_log {
   echo "$@" >&2
 }
 
-function _kctf_warn {
+function _kctf_log_warn {
   echo -n "${_KCTF_COLOR_YELLOW}[W]${_KCTF_COLOR_END} " >&2
   echo "$@" >&2
 }

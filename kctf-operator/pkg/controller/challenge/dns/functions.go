@@ -68,10 +68,9 @@ func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 		"challengeName", challenge.Name,
 		"certificateExists", certificateExists,
 		"ingressExists", ingressExists,
-		"domainName", domainName,
-		"challenge.Spec.Network.Dns", challenge.Spec.Network.Dns)
+		"domainName", domainName)
 
-	if !ingressExists || !challenge.Spec.Network.Dns || domainName == "" {
+	if !ingressExists || domainName == "" {
 		// No certificate required.
 		// Note that we don't delete the certificate here since creation takes a long time so we might want to reuse it in the future.
 		return false, nil

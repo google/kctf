@@ -101,22 +101,28 @@ function kctf_config_list {
 }
 
 function kctf_config_create_usage {
-  echo -e "usage: kctf config create [args] config_name" >&2
-  echo -e "  -h|--help       print this help" >&2
-  echo -e "  --type          what kind of cluster to create " >&2
-  echo -e "                  currently supported values: gce (remote) and kind (local)" >&2
-  echo -e "  --project       Google Cloud Platform project name" >&2
-  echo -e "  --zone          GCP Zone (default: europe-west4-b)" >&2
-  echo -e "                  For a list of zones run:" >&2
-  echo -e "                    gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
-  echo -e "  --registry      Container Registry (default: eu.gcr.io)" >&2
-  echo -e "                  Possible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
-  echo -e "  --cluster-name  Name of the kubernetes cluster (default: kctf-cluster)" >&2
-  echo -e "  --domain-name   Optional domain name to host challenges under" >&2
-  echo -e "  --email-address Optional email address for LetsEncrypt registration (for wildcard certificates)" >&2
-  echo -e "                  To use it, please read and agree to the ACME Subscriber Agreement:" >&2
-  echo -e "                    https://letsencrypt.org/repository/" >&2
-  echo -e "  --start-cluster Start the cluster if it's not running yet" >&2
+  echo "usage: kctf config create [args] config_name" >&2
+  echo "  -h|--help       print this help" >&2
+  echo "  --type          what kind of cluster to create (default: gce)" >&2
+  echo "                  supported values: \"gce\" (remote cluster) and \"kind\" (local cluster)" >&2
+  echo "  --project       Required (gce): Google Cloud Platform project name" >&2
+  echo "  --zone          GCP Zone (default: europe-west4-b)" >&2
+  echo "                  For a list of zones run:" >&2
+  echo "                    gcloud compute machine-types list --filter=\"name=( n2-standard-4 )\" --format 'value(zone)'" >&2
+  echo "  --registry      Container Registry (default: eu.gcr.io)" >&2
+  echo "                  Possible values are us.gcr.io, asia.gcr.io, and eu.gcr.io" >&2
+  echo "  --cluster-name  Name of the kubernetes cluster (default: kctf-cluster)" >&2
+  echo "  --domain-name   Required (gce): domain name to host challenges under" >&2
+  echo "                  Please make sure not to put anything secret in the challenge name." >&2
+  echo "                  Supported options:" >&2
+  echo "                    \"none\": disable DNS support (might break some functionality)" >&2
+  echo "                    \"your.domain.com\": use your own domain. You will have to follow some" >&2
+  echo "                                         additional steps to configure your nameserver." >&2
+  echo "                    \"yourname.kctf.cluster\": automatically get a subdomain under kctf.cluster" >&2
+  echo "  --email-address Optional email address for LetsEncrypt registration (for wildcard certificates)" >&2
+  echo "                  To use it, please read and agree to the ACME Subscriber Agreement:" >&2
+  echo "                    https://letsencrypt.org/repository/" >&2
+  echo "  --start-cluster Start the cluster if it's not running yet" >&2
 }
 
 function kctf_config_create {
@@ -213,6 +219,11 @@ function kctf_config_create {
         kctf_config_create_usage
         return 1
       fi
+      if [[ -z "${DOMAIN_NAME}" ]]; then
+        _kctf_log_err "Missing required argument \"--domain-name\"."
+        kctf_config_create_usage
+        return 1
+      fi
       ;;
     kind)
       ;;
@@ -222,10 +233,15 @@ function kctf_config_create {
       ;;
   esac
 
+  if [[ "${DOMAIN_NAME}" == "none" ]]; then
+    DOMAIN_NAME=""
+  fi
+
+
   mkdir -p "${KCTF_CTF_DIR}/kctf/config"
 
   if [ -e "${CONFIG_PATH}" ]; then
-    _kctf_warn "Overwriting existing config file. Old content:"
+    _kctf_log_warn "Overwriting existing config file. Old content:"
     cat "${CONFIG_PATH}" >&2
     rm "${CONFIG_PATH}" >&2
   fi

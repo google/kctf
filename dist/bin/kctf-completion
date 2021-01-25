@@ -143,6 +143,10 @@ function _kctf_complete_config() {
           COMPREPLY=($(compgen -W "${GCP_REGISTRIES}" -- "${COMP_WORDS[${COMP_CWORD}]}"))
           return
         fi
+        if [ "${PREV_WORD}" == "--domain-name" ]; then
+          COMPREPLY=($(compgen -W "none" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+          return
+        fi
         return 0
       fi
       COMPREPLY=($(compgen -W "--help --type --project --zone --registry --cluster-name --domain-name --start-cluster" -- "${COMP_WORDS[${COMP_CWORD}]}"))
