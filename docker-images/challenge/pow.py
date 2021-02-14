@@ -24,7 +24,7 @@ VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
-SOLVER_URL = 'https://github.com/google/kctf/raw/master/base/nsjail-docker/files/proof_of_work/pow.py'
+SOLVER_URL = 'https://raw.githubusercontent.com/google/kctf/beta/docker-images/challenge/pow.py'
 
 def sloth_root(x, diff, p):
     for i in range(diff):
