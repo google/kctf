@@ -1,6 +1,6 @@
 # kCTF VRP Setup
 
-We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page.
+We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page. Successful demonstrations are eligible for rewards between 5,000 to 10,000 USD as defined in https://g.co/vrp.
 
 [kCTF](https://github.com/google/kctf) is an open source infrastructure for CTF competitions. You can find details on how it works in the [kCTF documentation](https://google.github.io/kctf/introduction.html), but in short, it’s running on a hardened Kubernetes cluster with the following security features:
 
