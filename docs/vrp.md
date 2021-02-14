@@ -48,7 +48,7 @@ KCTF{$CHAL_NAME-$TIMESTAMP:$MAC}
 ```
 
 
-As you can see, the flags include a timestamp and are rotated frequently. You can send us the flag [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform) before you are ready to disclose the exploit as we can use it to resolve the timing in case of an exploit collision (we will reward whoever was the first to obtain and record the submission of a flag). Otherwise, once the vulnerability is fixed, please contact us at [g.co/vulnz](g.co/vulnz).
+As you can see, the flags include a timestamp and are rotated frequently. You can send us the flag [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform) before you are ready to disclose the exploit as we can use it to resolve the timing in case of an exploit collision (we will reward whoever was the first to obtain and record the submission of a flag). Otherwise, once the vulnerability is fixed, please contact us at [g.co/vulnz](https://g.co/vulnz).
 
 
 ### Notes
