@@ -23,7 +23,7 @@ Additional documentation resources are:
 
 ## Samples
 
-The [samples](https://github.com/google/kctf/tree/master/samples) directory contains two examples:
+The [samples](https://github.com/google/kctf/tree/beta/dist/challenge-templates/) directory contains two examples:
 * A web challenge that acts like an XSS bot.
 * A web challenge that acts like a vulnerable PHP application with support for sessions and file uploads.
 
