@@ -25,6 +25,7 @@ As such, the risks in this area are:
 
 Ways to limit these risks are:
  - Players could connect to the tasks through HTTPS. However, there are currently no plans to implement this functionality.
+ - Players may 'tunnel' via VPN/SSH to a protected proxy device from which they then access the CTF.
 
 The compromise of the players themselves is out of scope of kCTF's threat model.
 
