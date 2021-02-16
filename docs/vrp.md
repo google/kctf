@@ -26,7 +26,7 @@ The “kctf” challenge is the only entry point to the cluster. You can connect
 
 
 ```
-nc kctf.vrp.ctfcompetition.com 1
+nc kctf.vrp.ctfcompetition.com 1337
 ```
 
 
