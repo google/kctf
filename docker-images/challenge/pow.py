@@ -24,7 +24,7 @@ VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
-SOLVER_URL = 'https://raw.githubusercontent.com/google/kctf/beta/docker-images/challenge/pow.py'
+SOLVER_URL = 'https://goo.gle/kctf-pow'
 
 def sloth_root(x, diff, p):
     for i in range(diff):
