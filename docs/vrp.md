@@ -30,7 +30,7 @@ nc kctf.vrp.ctfcompetition.com 1337
 ```
 
 
-It will ask you to solve a proof-of-work and then gives you access to a bash running in a setup similar to the [kCTF bash example challenge](https://github.com/google/kctf/tree/master/samples/bash). The only difference is that the flag is not accessible inside of the nsjail sandbox and you will need to break out of the chroot in order to read it.
+It will ask you to solve a proof-of-work and then gives you access to a bash running in a setup similar to the [kCTF pwn template challenge](https://github.com/google/kctf/tree/beta/dist/challenge-templates/pwn). The only difference is that the flag is not accessible inside of the nsjail sandbox and you will need to break out of the chroot in order to read it.
 
 
 ## full-chain challenge
