@@ -177,7 +177,7 @@ jobs:
         mkdir /tmp/samples
         cp -R dist /tmp/samples/kctf
         source /tmp/samples/kctf/activate
-        kctf config create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name kctf-ci.kctf.cloud --start-cluster test
+        kctf cluster create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name kctf-ci.kctf.cloud --start-cluster test
 
     - name: Deploy all tasks
       run: |
