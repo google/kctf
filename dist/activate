@@ -71,9 +71,8 @@ function _kctf_cleanup {
 function _kctf_usage {
   echo -e "usage: kctf command subcommand [args]" >&2
   echo -e "available commands:" >&2
-  echo -e "  chal:    commands around challenges (creating, deploying, etc.)" >&2
-  echo -e "  cluster: commands for managing the cluster " >&2
-  echo -e "  config:  create/load a cluster config" >&2
+  echo -e "  chal:    commands for challenges (creating, deploying, etc.)" >&2
+  echo -e "  cluster: commands for clusters (creating, managing, etc.) " >&2
 }
 
 # Implemented as a function so that we can set environment variables where needed
@@ -96,13 +95,8 @@ function kctf {
       ;;
     cluster)
       shift
-      "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
-      return
-      ;;
-    config)
-      shift
       if [[ "$1" == "create" ]] || [[ "$1" == "load" ]]; then
-        CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@)
+        CONFIG_NAME=$("${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@)
         if [[ $? -ne 0 ]]; then
           return 1
         fi
@@ -116,7 +110,7 @@ function kctf {
         export EMAIL_ADDRESS
         KCTF_CONFIG="${CONFIG_NAME}"
       else
-        "${KCTF_CTF_DIR}/kctf/bin/kctf-config" $@
+        "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
       fi
       return
       ;;
@@ -220,10 +214,10 @@ function _kctf_activate {
   _kctf_enable_completion || echo "loading shell completion failed" >&2
   SAVED_PS1="${PS1}"
   _kctf_log "kCTF environment activated. Run \"deactivate\" to exit."
-  if kctf config load .lastconfig >/dev/null 2>/dev/null; then
+  if kctf cluster load .lastconfig >/dev/null 2>/dev/null; then
     _kctf_log "automatically loaded last config"
   else
-    _kctf_log "To create a cluster config, run \"kctf config\""
+    _kctf_log "To create a cluster config, run \"kctf cluster create\""
   fi
   PS1="${PS1}${_KCTF_COLOR1}kCTF[ctf=${_KCTF_COLOR2}${KCTF_CTF_NAME}\$(_kctf_config_string)\$(_kctf_chal_string)${_KCTF_COLOR1}] >${_KCTF_COLOR_END} "
 }
