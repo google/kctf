@@ -143,7 +143,7 @@ function kctf_cluster_create {
   START_CLUSTER="0"
 
   OPTS="h"
-  LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,email-address:,start-cluster"
+  LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,email-address:,start:"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_create_usage
