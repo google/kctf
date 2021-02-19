@@ -128,7 +128,7 @@ function kctf_cluster_create_usage {
   echo "  --email-address Optional email address for LetsEncrypt registration (for wildcard certificates)" >&2
   echo "                  To use it, please read and agree to the ACME Subscriber Agreement:" >&2
   echo "                    https://letsencrypt.org/repository/" >&2
-  echo "  --start-cluster Start the cluster if it's not running yet" >&2
+  echo "  --start         Start the cluster if it's not running yet" >&2
 }
 
 function kctf_cluster_create {
@@ -185,7 +185,7 @@ function kctf_cluster_create {
         EMAIL_ADDRESS="$2"
         shift 2
         ;;
-      --start-cluster)
+      --start)
         START_CLUSTER="1"
         shift
         ;;
