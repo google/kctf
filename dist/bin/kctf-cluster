@@ -261,6 +261,7 @@ CLUSTER_NAME=${CLUSTER_NAME}
 DOMAIN_NAME=${DOMAIN_NAME}
 EMAIL_ADDRESS=${EMAIL_ADDRESS}
 EOF
+  if [[ $? -ne 0 ]]; then return 1; fi
 
   case "${CLUSTER_TYPE}" in
     gce)
