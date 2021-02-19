@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM gcr.io/kctf-docker/challenge@sha256:1537e3af2c280d7723e71462bd7d91d3f1074a097e75ddfc51f93b8c4cf3d609
+FROM gcr.io/kctf-docker/challenge@sha256:eb5b4fca1739db8c78379bd31cdbeee62e6c0265a57563b8e491a5b163ed1aa4
 
 RUN apt-get update && apt-get install -y gnupg2
 
