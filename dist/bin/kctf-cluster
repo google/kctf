@@ -90,7 +90,7 @@ function kctf_cluster_load {
 
   _kctf_log "loaded config"
 
-  set_lastconfig_link || return
+  set_lastconfig_link
 
   echo "${CONFIG_NAME}"
 }
@@ -244,7 +244,7 @@ function kctf_cluster_create {
   fi
 
 
-  mkdir -p "${KCTF_CTF_DIR}/kctf/config"
+  mkdir -p "${KCTF_CTF_DIR}/kctf/config" || return
 
   if [ -e "${CONFIG_PATH}" ]; then
     _kctf_log_warn "Overwriting existing cluster config file. Old content:"
@@ -745,6 +745,8 @@ case "$1" in
     shift
     check_cluster_name
     kctf_cluster_start $@
+    # This is used for printing DNS settings once again at the end
+    echo $BYE_MSG
     ;;
   stop)
     shift
