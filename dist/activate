@@ -15,8 +15,8 @@
 KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
 KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
 
-KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.9.0/kind-linux-amd64"
-KCTF_KIND_HASH="35a640e0ca479192d86a51b6fd31c657403d2cf7338368d62223938771500dc8"
+KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64"
+KCTF_KIND_HASH="74767776488508d847b0bb941212c1cb76ace90d9439f4dee256d8a04f1309c6"
 
 export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 export KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
