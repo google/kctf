@@ -286,7 +286,7 @@ EOF
   # there might be an existing cluster
   # if it already exists, we try to update it
   # otherwise, start it if requested
-  if [[ "${START_CLUSTER}" == "1" ]] || [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
+  if [[ "${START_CLUSTER}" == "1" ]]; then
     if [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
       _kctf_log "Existing cluster found, updating cluster."
     else
@@ -300,6 +300,8 @@ EOF
     export DOMAIN_NAME
     export EMAIL_ADDRESS
     "${KCTF_BIN}/kctf-cluster" start >&2 || return
+  elif [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
+    _kctf_log_warn "Existing cluster found. If it's running an old version of kCTF, remember to upgrade it with cluster start."
   fi
 
   set_lastconfig_link || return
