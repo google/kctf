@@ -16,7 +16,6 @@ import (
 	"github.com/google/kctf/pkg/apis"
 	"github.com/google/kctf/pkg/controller"
 	"github.com/google/kctf/pkg/resources"
-	"github.com/google/kctf/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
