@@ -18,6 +18,9 @@ KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
 KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64"
 KCTF_KIND_HASH="74767776488508d847b0bb941212c1cb76ace90d9439f4dee256d8a04f1309c6"
 
+KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl"
+KCTF_KUBECTL_HASH="98e8aea149b00f653beeb53d4bd27edda9e73b48fed156c4a0aa1dabe4b1794c"
+
 export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 export KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
 source "${KCTF_BIN}/kctf-log"
@@ -48,6 +51,12 @@ function _kctf_download_dependencies {
     curl -Lo "${KCTF_BIN}/kind" "${KCTF_KIND_URL}" || return 1
     sha256sum --status -c <(echo "${KCTF_KIND_HASH}  ${KCTF_BIN}/kind") || return 1
     chmod u+x "${KCTF_BIN}/kind"
+  fi
+
+  if [[ ! -x "${KCTF_BIN}/kubectl" ]]; then
+    curl -Lo "${KCTF_BIN}/kubectl" "${KCTF_KUBECTL_URL}" || return 1
+    sha256sum --status -c <(echo "${KCTF_KUBECTL_HASH}  ${KCTF_BIN}/kubectl") || return 1
+    chmod u+x "${KCTF_BIN}/kubectl"
   fi
 }
 
