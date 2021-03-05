@@ -1,3 +1,4 @@
 dist/bin/kind
+dist/bin/kubectl
 dist/bin/yq
 dist/config/*
