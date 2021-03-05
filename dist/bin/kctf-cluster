@@ -311,9 +311,9 @@ EOF
 
 function create_operator {
   # Creating CRD, rbac and operator
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml" || return
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml" || return
-  kubectl apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
 
   OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
   if [[ $? -ne 0 ]]; then
@@ -323,10 +323,10 @@ function create_operator {
 
   # The operator needs to create some subresources, e.g. the gcsfuse service account
   for i in {1..100}; do
-    kubectl get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
+    "${KCTF_BIN}/kubectl" get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
     if [ "$i" == "100" ]; then
       _kctf_log_err "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes"
-      kubectl get pods --namespace kctf-system -o=yaml >&2
+      "${KCTF_BIN}/kubectl" get pods --namespace kctf-system -o=yaml >&2
       exit 1
     fi
     sleep 3
@@ -379,7 +379,7 @@ function kctf_cluster_start_gce {
     gcloud compute routers nats create "kctf-${CLUSTER_NAME}-nat-config" --router-region "${ZONE::-2}" --router kctf-${CLUSTER_NAME}-nat-router --nat-all-subnet-ip-ranges --auto-allocate-nat-external-ips || return
   fi
 
-  kubectl create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
+  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
 
   # GCSFUSE
 
@@ -398,8 +398,8 @@ function kctf_cluster_start_gce {
   GCS_KSA_NAME="gcsfuse-sa"
 
   gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL} || return
-  kubectl create serviceaccount --namespace kctf-system ${GCS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
-  kubectl annotate serviceaccount --namespace kctf-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite || return
+  "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${GCS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
+  "${KCTF_BIN}/kubectl" annotate serviceaccount --namespace kctf-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite || return
 
   if ! gsutil du "gs://${BUCKET_NAME}/"; then
     gsutil mb -l eu "gs://${BUCKET_NAME}/" || return
@@ -412,9 +412,9 @@ function kctf_cluster_start_gce {
     gsutil acl ch -u "${GCS_GSA_EMAIL}:O" "gs://${BUCKET_NAME}" || return
   fi
 
-  kubectl create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kctf-system --dry-run=client -o yaml | kubectl apply -f - || return
+  "${KCTF_BIN}/kubectl" create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kctf-system --dry-run=client -o yaml | kubectl apply -f - || return
 
-  kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" || return
+  "${KCTF_BIN}/kubectl" patch ServiceAccount default --patch "automountServiceAccountToken: false" || return
 
   # Cloud DNS
 
@@ -491,12 +491,12 @@ function kctf_cluster_start_gce {
     DNS_KSA_NAME="external-dns-sa"
 
     gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${DNS_KSA_NAME}]" ${DNS_GSA_EMAIL} || return
-    kubectl create serviceaccount --namespace kctf-system ${DNS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
-    kubectl annotate serviceaccount --namespace kctf-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite || return
+    "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${DNS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
+    "${KCTF_BIN}/kubectl" annotate serviceaccount --namespace kctf-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite || return
 
     gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin || return
 
-    kubectl create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | kubectl apply -f - || return
+    "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | kubectl apply -f - || return
   fi
 
   create_operator || return
@@ -521,13 +521,13 @@ function kctf_cluster_start {
 
 function kctf_cluster_stop_gce {
   _kctf_log "deleting all challenges so that load balancers etc can be cleaned up"
-  CHALLENGES=$(kubectl get challenge --all-namespaces -o=jsonpath='{range .items[*]}{@.metadata.namespace}{"/"}{@.metadata.name}{" "}{end}')
+  CHALLENGES=$("${KCTF_BIN}/kubectl" get challenge --all-namespaces -o=jsonpath='{range .items[*]}{@.metadata.namespace}{"/"}{@.metadata.name}{" "}{end}')
   if [[ ! -z "${CHALLENGES}" ]]; then
     for chal_and_ns in ${CHALLENGES}; do
       IFS='/' read -r -a chal_and_ns_array <<< "$chal_and_ns"
       chal_namespace="${chal_and_ns_array[0]}"
       chal_name="${chal_and_ns_array[1]}"
-      kubectl delete "challenge/${chal_name}" --namespace "${chal_namespace}"
+      "${KCTF_BIN}/kubectl" delete "challenge/${chal_name}" --namespace "${chal_namespace}"
     done
   fi
 
@@ -555,11 +555,11 @@ function kctf_cluster_start_kind {
     "${KCTF_BIN}/kind" create cluster --name "${CLUSTER_NAME}" || return
   fi
 
-  kubectl create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
+  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
 
   create_operator
 
-  kubectl patch ServiceAccount default --patch "automountServiceAccountToken: false" || return
+  "${KCTF_BIN}/kubectl" patch ServiceAccount default --patch "automountServiceAccountToken: false" || return
 }
 
 function kctf_cluster_stop_kind {
@@ -702,13 +702,13 @@ function kctf_cluster_resize {
     --max-nodes="${MAX_NODES}" || return
 
   _kctf_log 'Cordoning old nodes'
-  for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
-    kubectl cordon "$node" || return
+  for node in $("${KCTF_BIN}/kubectl" get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
+    "${KCTF_BIN}/kubectl" cordon "$node" || return
   done
 
   _kctf_log 'Draining old nodes'
-  for node in $(kubectl get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
-    kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 "$node" || return
+  for node in $("${KCTF_BIN}/kubectl" get nodes -l cloud.google.com/gke-nodepool="${OLD_POOL_NAME}" -o=name); do
+    "${KCTF_BIN}/kubectl" drain --force --ignore-daemonsets --delete-local-data --grace-period=10 "$node" || return
   done
 
   _kctf_log "Deleting old node pool \"${OLD_POOL_NAME}\""
