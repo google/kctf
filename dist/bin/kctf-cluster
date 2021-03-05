@@ -124,7 +124,7 @@ function kctf_cluster_create_usage {
   echo "                    \"none\": disable DNS support (might break some functionality)" >&2
   echo "                    \"your.domain.com\": use your own domain. You will have to follow some" >&2
   echo "                                         additional steps to configure your nameserver." >&2
-  echo "                    \"yourname.kctf.cluster\": automatically get a subdomain under kctf.cluster" >&2
+  echo "                    \"yourname.kctf.cloud\": automatically get a subdomain under kctf.cloud" >&2
   echo "  --email-address Optional email address for LetsEncrypt registration (for wildcard certificates)" >&2
   echo "                  To use it, please read and agree to the ACME Subscriber Agreement:" >&2
   echo "                    https://letsencrypt.org/repository/" >&2
