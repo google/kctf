@@ -379,7 +379,7 @@ function kctf_cluster_start_gce {
     gcloud compute routers nats create "kctf-${CLUSTER_NAME}-nat-config" --router-region "${ZONE::-2}" --router kctf-${CLUSTER_NAME}-nat-router --nat-all-subnet-ip-ranges --auto-allocate-nat-external-ips || return
   fi
 
-  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
+  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | "${KCTF_BIN}/kubectl" apply -f - >&2 || return
 
   # GCSFUSE
 
@@ -398,7 +398,7 @@ function kctf_cluster_start_gce {
   GCS_KSA_NAME="gcsfuse-sa"
 
   gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${GCS_KSA_NAME}]" ${GCS_GSA_EMAIL} || return
-  "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${GCS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
+  "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${GCS_KSA_NAME} --save-config --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
   "${KCTF_BIN}/kubectl" annotate serviceaccount --namespace kctf-system ${GCS_KSA_NAME} iam.gke.io/gcp-service-account=${GCS_GSA_EMAIL} --overwrite || return
 
   if ! gsutil du "gs://${BUCKET_NAME}/"; then
@@ -412,7 +412,7 @@ function kctf_cluster_start_gce {
     gsutil acl ch -u "${GCS_GSA_EMAIL}:O" "gs://${BUCKET_NAME}" || return
   fi
 
-  "${KCTF_BIN}/kubectl" create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kctf-system --dry-run=client -o yaml | kubectl apply -f - || return
+  "${KCTF_BIN}/kubectl" create configmap gcsfuse-config --from-literal=gcs_bucket="${BUCKET_NAME}" --namespace kctf-system --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
 
   "${KCTF_BIN}/kubectl" patch ServiceAccount default --patch "automountServiceAccountToken: false" || return
 
@@ -491,12 +491,12 @@ function kctf_cluster_start_gce {
     DNS_KSA_NAME="external-dns-sa"
 
     gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:${PROJECT}.svc.id.goog[kctf-system/${DNS_KSA_NAME}]" ${DNS_GSA_EMAIL} || return
-    "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${DNS_KSA_NAME} --save-config --dry-run=client -o yaml | kubectl apply -f - || return
+    "${KCTF_BIN}/kubectl" create serviceaccount --namespace kctf-system ${DNS_KSA_NAME} --save-config --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
     "${KCTF_BIN}/kubectl" annotate serviceaccount --namespace kctf-system ${DNS_KSA_NAME} iam.gke.io/gcp-service-account=${DNS_GSA_EMAIL} --overwrite || return
 
     gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin || return
 
-    "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | kubectl apply -f - || return
+    "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
   fi
 
   create_operator || return
@@ -555,7 +555,7 @@ function kctf_cluster_start_kind {
     "${KCTF_BIN}/kind" create cluster --name "${CLUSTER_NAME}" || return
   fi
 
-  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | kubectl apply -f - >&2 || return
+  "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | "${KCTF_BIN}/kubectl" apply -f - >&2 || return
 
   create_operator
 
