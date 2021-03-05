@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-_KCTF_COLOR_RED=$'\001\e[0;31m\002'
-_KCTF_COLOR_GREEN=$'\001\e[0;32m\002'
-_KCTF_COLOR_YELLOW=$'\001\e[0;33m\002'
-_KCTF_COLOR_END=$'\001\e[0m\002'
+_KCTF_COLOR_RED=$'\e[0;31m'
+_KCTF_COLOR_GREEN=$'\e[0;32m'
+_KCTF_COLOR_YELLOW=$'\e[0;33m'
+_KCTF_COLOR_END=$'\e[0m'
 
 function _kctf_log {
   echo -n "${_KCTF_COLOR_GREEN}[*]${_KCTF_COLOR_END} " >&2
