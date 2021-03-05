@@ -8,4 +8,5 @@ spec:
   network:
     public: false
   healthcheck:
+    # TIP: disable the healthcheck during development
     enabled: true
