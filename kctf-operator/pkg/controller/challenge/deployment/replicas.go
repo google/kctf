@@ -1,8 +1,8 @@
 package deployment
 
-import kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+import kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 
-func numReplicas(challenge *kctfv1alpha1.Challenge) int32 {
+func numReplicas(challenge *kctfv1.Challenge) int32 {
 	if challenge.Spec.Deployed == false {
 		return 0
 	}
@@ -18,7 +18,7 @@ func numReplicas(challenge *kctfv1alpha1.Challenge) int32 {
 	return 1
 }
 
-func updateNumReplicas(currentReplicas *int32, challenge *kctfv1alpha1.Challenge) bool {
+func updateNumReplicas(currentReplicas *int32, challenge *kctfv1.Challenge) bool {
 	// Updates the number of replicas according to being deployed or not and considering the autoscaling
 	replicas := numReplicas(challenge)
 

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
 	"github.com/google/kctf/pkg/controller/challenge/dns"
@@ -57,7 +57,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Challenge
-	err = c.Watch(&source.Kind{Type: &kctfv1alpha1.Challenge{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &kctfv1.Challenge{}}, &handler.EnqueueRequestForObject{})
 
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	for _, obj := range objs {
 		err = c.Watch(&source.Kind{Type: obj}, &handler.EnqueueRequestForOwner{
 			IsController: true,
-			OwnerType:    &kctfv1alpha1.Challenge{},
+			OwnerType:    &kctfv1.Challenge{},
 		})
 		if err != nil {
 			return err
@@ -85,7 +85,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&handler.EnqueueRequestsFromMapFunc{
 			ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
 				if a.Meta.GetNamespace() == "kctf-system" {
-					challengeList := &kctfv1alpha1.ChallengeList{}
+					challengeList := &kctfv1.ChallengeList{}
 					err := mgr.GetClient().List(context.Background(), challengeList)
 					if err != nil {
 						log.Error(err, "Failed to obtain a list of all challenges for updating a secret")
@@ -130,7 +130,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	reqLogger.Info("Reconciling Challenge")
 
 	// Fetch the Challenge instance
-	challenge := &kctfv1alpha1.Challenge{}
+	challenge := &kctfv1.Challenge{}
 	requeue, err := r.fetchChallenge(challenge, request, ctx)
 	if err != nil || requeue {
 		return reconcile.Result{}, err
@@ -156,7 +156,7 @@ func (r *ReconcileChallenge) Reconcile(request reconcile.Request) (reconcile.Res
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
+func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1.Challenge,
 	request reconcile.Request, ctx context.Context) (bool, error) {
 	err := r.client.Get(ctx, request.NamespacedName, challenge)
 
@@ -178,10 +178,10 @@ func (r *ReconcileChallenge) fetchChallenge(challenge *kctfv1alpha1.Challenge,
 	return false, nil
 }
 
-func updateConfigurations(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func updateConfigurations(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// We check if there's an error in each update
-	updateFunctions := []func(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+	updateFunctions := []func(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 		log logr.Logger, ctx context.Context) (bool, error){network.Update, volumes.Update,
 		pow.Update, secrets.Update, deployment.Update, service.Update, dns.Update,
 		autoscaling.Update}

@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
@@ -48,7 +48,7 @@ func copyPorts(found *corev1.Service, wanted *corev1.Service) {
 	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
 }
 
-func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
+func updateInternalService(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	newService := generateNodePortService(challenge)
 	existingService := &corev1.Service{}
 
@@ -90,7 +90,7 @@ func updateInternalService(challenge *kctfv1alpha1.Challenge, client client.Clie
 	return true, nil
 }
 
-func updateIngress(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	existingIngress := &netv1beta1.Ingress{}
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingIngress)
@@ -131,7 +131,7 @@ func updateIngress(challenge *kctfv1alpha1.Challenge, client client.Client, sche
 	return true, err
 }
 
-func updateLoadBalancerService(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateLoadBalancerService(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Service is created in challenge_controller and here we just ensure that everything is alright
 	// Creates the service if it doesn't exist
@@ -178,7 +178,7 @@ func updateLoadBalancerService(challenge *kctfv1alpha1.Challenge, client client.
 	return true, err
 }
 
-func checkPortsValid(challenge *kctfv1alpha1.Challenge) error {
+func checkPortsValid(challenge *kctfv1.Challenge) error {
 	seenHTTPSPort := false
 	ports := make(map[int32]int32)
 	for _, port := range challenge.Spec.Network.Ports {
@@ -201,7 +201,7 @@ func checkPortsValid(challenge *kctfv1alpha1.Challenge) error {
 	return nil
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 
 	changed := false

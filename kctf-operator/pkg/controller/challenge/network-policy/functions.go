@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,7 +18,7 @@ func isEqual(existingPolicy *netv1.NetworkPolicy, newPolicy *netv1.NetworkPolicy
 	return reflect.DeepEqual(existingPolicy.Spec, newPolicy.Spec)
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	requeue := false
 	var err error
@@ -33,7 +33,7 @@ func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime
 	return requeue, nil
 }
 
-func updatePolicy(ctx context.Context, policy netv1.NetworkPolicy, challenge *kctfv1alpha1.Challenge,
+func updatePolicy(ctx context.Context, policy netv1.NetworkPolicy, challenge *kctfv1.Challenge,
 	cl client.Client, scheme *runtime.Scheme, log logr.Logger) (bool, error) {
 	existingPolicy := &netv1.NetworkPolicy{}
 	err := cl.Get(ctx, types.NamespacedName{Name: policy.ObjectMeta.Name,

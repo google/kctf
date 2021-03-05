@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Update(requeue bool, err error, challenge *kctfv1alpha1.Challenge, cl client.Client,
+func Update(requeue bool, err error, challenge *kctfv1.Challenge, cl client.Client,
 	log logr.Logger, ctx context.Context) error {
 
 	pods := &corev1.PodList{}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +25,7 @@ func mapNameIdx(persistentVolumeClaimsFound *corev1.PersistentVolumeClaimList) m
 }
 
 // Calls creation of persistent volume claim and persistent volume
-func create(challenge *kctfv1alpha1.Challenge, claim string,
+func create(challenge *kctfv1.Challenge, claim string,
 	client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	pvc := persistentVolumeClaim(claim, challenge)
 
@@ -93,7 +93,7 @@ func deleteVolumes(persistentVolumeClaim *corev1.PersistentVolumeClaim,
 }
 
 // Function that updates the persistent volume claim list and the persistent volumes
-func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Check if all persistent volume claims are correctly set and update them if necessary
 	// We get all persistentVolumeClaims in the same namespace as the challenge

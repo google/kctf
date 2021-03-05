@@ -1,12 +1,12 @@
 package autoscaling
 
 import (
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func generate(challenge *kctfv1alpha1.Challenge) *autoscalingv1.HorizontalPodAutoscaler {
+func generate(challenge *kctfv1.Challenge) *autoscalingv1.HorizontalPodAutoscaler {
 	// We create the autoscaling object
 	autoscaling := &autoscalingv1.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{

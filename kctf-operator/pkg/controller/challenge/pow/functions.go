@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,7 +20,7 @@ func isEqual(configmapFound *corev1.ConfigMap, configmap *corev1.ConfigMap) bool
 }
 
 // Create the configmaps
-func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func create(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates pow if it doesn't exist yet
 	configmap := generate(challenge)
@@ -42,7 +42,7 @@ func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *run
 	return true, nil
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	configmapFound := &corev1.ConfigMap{}
 	err := cl.Get(ctx, types.NamespacedName{Name: "pow",

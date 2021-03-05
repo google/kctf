@@ -5,7 +5,7 @@ import (
 
 	netgkev1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1"
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +19,7 @@ func isEqual(certificateFound *netgkev1.ManagedCertificate,
 	return certificateFound.Spec.Domains[0] == certificate.Spec.Domains[0]
 }
 
-func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func create(domainName string, challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
 	certificate := generate(domainName, challenge)
@@ -42,7 +42,7 @@ func create(domainName string, challenge *kctfv1alpha1.Challenge, client client.
 	return true, nil
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Creates certificate object
 	existingCertificate := &netgkev1.ManagedCertificate{}
