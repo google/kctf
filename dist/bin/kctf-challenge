@@ -226,7 +226,10 @@ function kctf_chal_status {
   echo "Challenge external status"
   echo "This shows you if the challenge is exposed externally."
   echo
-  "${KCTF_BIN}/kubectl" get services -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
+  echo "SERVICES:"
+  "${KCTF_BIN}/kubectl" get services -l "app=${CHALLENGE_NAME}" -o custom-columns="NAME:.metadata.name,TYPE:.spec.type,EXTERNAL-IP:.status.loadBalancer.ingress[*]['ip'],PORT:.spec.ports[*].port,DNS:.metadata.annotations['external-dns\\.alpha\\.kubernetes\\.io/hostname']" --namespace "${CHALLENGE_NAMESPACE}"
+  echo
+  echo "Ingresses:"
   "${KCTF_BIN}/kubectl" get ingress -l "app=${CHALLENGE_NAME}" -o wide --namespace "${CHALLENGE_NAMESPACE}"
 }
 
