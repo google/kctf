@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+  autoload -U bashcompinit
+  bashcompinit
+fi
+
 function _kctf_complete_chal_debug() {
   if [ "$COMP_CWORD" == "3" ]; then
     COMPREPLY=($(compgen -W "--help logs ssh port-forward docker" -- "${COMP_WORDS[${COMP_CWORD}]}"))
