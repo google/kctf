@@ -11,4 +11,5 @@ spec:
     - protocol: "HTTPS"
       targetPort: 1337
   healthcheck:
+    # TIP: disable the healthcheck during development
     enabled: true
