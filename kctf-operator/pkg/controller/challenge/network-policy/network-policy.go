@@ -3,12 +3,12 @@ package network
 import (
 	"fmt"
 
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func generatePolicies(challenge *kctfv1alpha1.Challenge) []netv1.NetworkPolicy {
+func generatePolicies(challenge *kctfv1.Challenge) []netv1.NetworkPolicy {
 	var egressRules = make([]netv1.NetworkPolicyEgressRule, len(challenge.Spec.AllowConnectTo))
 	for i, targetName := range challenge.Spec.AllowConnectTo {
 		egressRules[i] = netv1.NetworkPolicyEgressRule{

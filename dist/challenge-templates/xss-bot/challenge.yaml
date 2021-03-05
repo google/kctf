@@ -1,4 +1,4 @@
-apiVersion: kctf.dev/v1alpha1
+apiVersion: kctf.dev/v1
 kind: Challenge
 metadata:
   name: xss-bot

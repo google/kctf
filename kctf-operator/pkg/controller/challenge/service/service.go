@@ -3,14 +3,14 @@ package service
 import (
 	"strconv"
 
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func generateNodePortService(challenge *kctfv1alpha1.Challenge) *corev1.Service {
+func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
@@ -59,7 +59,7 @@ func generateNodePortService(challenge *kctfv1alpha1.Challenge) *corev1.Service 
 	return service
 }
 
-func generateIngress(domainName string, challenge *kctfv1alpha1.Challenge) *netv1beta1.Ingress {
+func generateIngress(domainName string, challenge *kctfv1.Challenge) *netv1beta1.Ingress {
 	// Ingress object
 	ingress := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
@@ -101,7 +101,7 @@ func generateIngress(domainName string, challenge *kctfv1alpha1.Challenge) *netv
 	return ingress
 }
 
-func generateLoadBalancerService(domainName string, challenge *kctfv1alpha1.Challenge) *corev1.Service {
+func generateLoadBalancerService(domainName string, challenge *kctfv1.Challenge) *corev1.Service {
 	// Service object
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

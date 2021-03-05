@@ -1,9 +1,9 @@
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1alpha1 contains API Schema definitions for the kctf v1alpha1 API group
+// Package v1 contains API Schema definitions for the kctf v1 API group
 // +k8s:deepcopy-gen=package,register
 // +groupName=kctf.dev
-package v1alpha1
+package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,7 +12,7 @@ import (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "kctf.dev", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "kctf.dev", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

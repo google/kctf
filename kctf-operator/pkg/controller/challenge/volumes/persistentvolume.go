@@ -1,13 +1,13 @@
 package volumes
 
 import (
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func persistentVolume(persistentVolumeClaim *corev1.PersistentVolumeClaim,
-	challenge *kctfv1alpha1.Challenge) *corev1.PersistentVolume {
+	challenge *kctfv1.Challenge) *corev1.PersistentVolume {
 	// returns persistent volume correspondent to persistentvolumeclaim
 	persistentVolume := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{

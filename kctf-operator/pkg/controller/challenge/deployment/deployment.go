@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,7 +10,7 @@ import (
 )
 
 // Deployment without Healthcheck
-func deployment(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	var replicas int32 = 1
 	if challenge.Spec.Replicas != nil {
 		replicas = *challenge.Spec.Replicas

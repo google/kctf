@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -12,7 +12,7 @@ import (
 )
 
 // We get the configmap that contains the domain name and returns it
-func GetDomainName(challenge *kctfv1alpha1.Challenge, client client.Client,
+func GetDomainName(challenge *kctfv1.Challenge, client client.Client,
 	log logr.Logger, ctx context.Context) string {
 	domainName := ""
 	configmap := &corev1.ConfigMap{}

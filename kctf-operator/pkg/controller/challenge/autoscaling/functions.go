@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,7 +21,7 @@ func isEqual(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler,
 	return reflect.DeepEqual(autoscalingFound.Spec, autoscaling.Spec)
 }
 
-func create(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func create(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// creates autoscaling if it doesn't exist yet
 	autoscaling := generate(challenge)
@@ -58,7 +58,7 @@ func delete(autoscalingFound *autoscalingv1.HorizontalPodAutoscaler, client clie
 	return true, nil
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Creates autoscaling object
 	// Checks if an autoscaling was configured

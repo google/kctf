@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1alpha1 "github.com/google/kctf/pkg/apis/kctf/v1alpha1"
+	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,7 +23,7 @@ func isEqual(deploymentFound *appsv1.Deployment,
 		deployment.Spec.Template.Spec)
 }
 
-func containerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
+func containerPorts(challenge *kctfv1.Challenge) []corev1.ContainerPort {
 	ports := []corev1.ContainerPort{}
 
 	for _, port := range challenge.Spec.Network.Ports {
@@ -37,7 +37,7 @@ func containerPorts(challenge *kctfv1alpha1.Challenge) []corev1.ContainerPort {
 }
 
 // deploymentForChallenge returns a challenge Deployment object
-func generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
+func generate(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	if challenge.Spec.Healthcheck.Enabled == true {
 		return withHealthcheck(challenge)
 	} else {
@@ -45,7 +45,7 @@ func generate(challenge *kctfv1alpha1.Challenge) *appsv1.Deployment {
 	}
 }
 
-func create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime.Scheme,
+func create(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	dep := generate(challenge)
 	log.Info("Creating a new Deployment", "Deployment.Namespace",
@@ -66,7 +66,7 @@ func create(challenge *kctfv1alpha1.Challenge, cl client.Client, scheme *runtime
 	return true, nil
 }
 
-func Update(challenge *kctfv1alpha1.Challenge, client client.Client, scheme *runtime.Scheme,
+func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	// Flags if there was a change
 	change := false
