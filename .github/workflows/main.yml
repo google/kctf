@@ -24,6 +24,7 @@ jobs:
       - name: Create archive
         run: |
           mv dist kctf
+          echo ${{ github.event.inputs.version }} > kctf/VERSION
           tar -cz kctf > kctf.tgz
 
       - name: Create Release
