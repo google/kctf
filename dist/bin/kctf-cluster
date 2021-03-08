@@ -74,7 +74,7 @@ function kctf_cluster_load {
     gce)
       update_gcloud_config || return
       # try to fetch the creds of the k8s cluster
-      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
+      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
       ;;
     kind)
       kube_config=$("${KCTF_BIN}/kind" get kubeconfig --name "${CLUSTER_NAME}" 2>/dev/null)
