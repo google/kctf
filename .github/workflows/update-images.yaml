@@ -177,7 +177,12 @@ jobs:
         mkdir /tmp/samples
         cp -R dist /tmp/samples/kctf
         source /tmp/samples/kctf/activate
-        kctf cluster create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name kctf-ci.kctf.cloud --start test
+        kctf cluster create --project $GKE_PROJECT --zone $GKE_ZONE --registry $GKE_REGISTRY --cluster-name $GKE_CLUSTER --domain-name kctf-ci.kctf.cloud test
+        # Try to delete any existing CRD in case this branch is older than what's running on the cluster
+        # Though, this is just a hotfix. We don't support downgrading and we should rather test using
+        # KIND in this workflow and then do a full cluster delete/create during merge.
+        kubectl delete crd/challenges.kctf.dev || true
+        kctf cluster start
 
     - name: Deploy all tasks
       run: |

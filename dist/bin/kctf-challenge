@@ -244,7 +244,36 @@ function kctf_chal_debug_ssh {
   require_cluster_config
   COMMAND="debug ssh" parse_container_name $@ || return
 
-  "${KCTF_BIN}/kubectl" exec "deployment/${CHALLENGE_NAME}" --namespace "${CHALLENGE_NAMESPACE}" -c "${CONTAINER}" -it -- /bin/bash
+  pods=($("${KCTF_BIN}/kubectl" get pods -o jsonpath='{.items[*].metadata.name}'))
+
+  if [[ ${#pods[@]} -eq 0 ]]; then
+    _kctf_log_err 'No pods found. Is the challenge running?'
+    return 1
+  fi
+
+  pod="${pods[0]}"
+  if [[ ${#pods[@]} -ne 1 ]]; then
+    _kctf_log "Found ${#pods[@]} pods, connecting to the most recent one."
+    _kctf_log "You can list the other pods with 'kubectl get pods'"
+    _kctf_log "and connect to them using 'kubectl exec pod/PODNAME --namespace ${CHALLENGE_NAMESPACE} -c ${CONTAINER} -it -- /bin/bash'"
+
+    latestStartTime=$(date -d "$("${KCTF_BIN}/kubectl" get "pods/${pod}" -o jsonpath='{.status.startTime}')" '+%s')
+    for (( i=1;  i < ${#pods[@]};  i++ )); do
+      otherPod="${pods[$i]}"
+      otherStartTime=$(date -d "$("${KCTF_BIN}/kubectl" get "pods/${otherPod}" -o jsonpath='{.status.startTime}')" '+%s')
+      if [[ -z "$(kubectl get "pod/${otherPod}" -o jsonpath="{.status.containerStatuses[?(@.name==\"${CONTAINER}\")].state.running}")" ]]; then
+        _kctf_log_warn "skipping pod/${otherPod} since the container \"${CONTAINER}\" is not running"
+        continue
+      fi
+      if [[ "${otherStartTime}" -gt "${latestStartTime}" ]]; then
+        latestStartTime="${otherStartTime}"
+        pod="${otherPod}"
+      fi
+    done
+  fi
+
+  _kctf_log "Connecting to pod ${pod}"
+  "${KCTF_BIN}/kubectl" exec "pod/${pod}" --namespace "${CHALLENGE_NAMESPACE}" -c "${CONTAINER}" -it -- /bin/bash
 }
 
 function kctf_chal_debug_port_forward_usage {
