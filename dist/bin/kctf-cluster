@@ -21,19 +21,15 @@ KCTF_CLOUD_BASE_URL="https://kctf-cloud.appspot.com/v1"
 KCTF_CLOUD_API_KEY="AIzaSyC7Jgu4e0IygmImZNPmJHrcfZ3lJA9ZrZs"
 
 function update_gcloud_config {
-  if command -v gcloud >/dev/null 2>&1; then
-    _kctf_log "Updating gcloud config."
-    ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
-    if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
-          gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
-    fi
-    gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null || return
-    gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null || return
-    gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null || return
-    gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
-  else
-    _kctf_log_warn "Configuration created only locally. Gcloud not installed."
+  _kctf_log "Updating gcloud config."
+  ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
+  if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
+        gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
   fi
+  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null || return
+  gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null || return
+  gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null || return
+  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
 }
 
 function set_lastconfig_link {
@@ -72,7 +68,12 @@ function kctf_cluster_load {
 
   case "${CLUSTER_TYPE}" in
     gce)
+      if ! command -v gcloud >/dev/null 2>&1; then
+        _kctf_log_err "gcloud not installed"
+        return 1
+      fi
       update_gcloud_config || return
+
       # try to fetch the creds of the k8s cluster
       gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
       ;;
@@ -265,6 +266,15 @@ EOF
 
   case "${CLUSTER_TYPE}" in
     gce)
+      if ! command -v gcloud >/dev/null 2>&1; then
+        if [[ "${START_CLUSTER}" == "1" ]]; then
+          _kctf_log_err "Can't start cluster, configuration created only locally. Gcloud not installed."
+          return 1
+        else
+          _kctf_log_warn "Configuration created only locally. Gcloud not installed."
+          return 0
+        fi
+      fi
       update_gcloud_config || return
       # try to fetch the creds of the k8s cluster
       gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null

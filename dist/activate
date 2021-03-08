@@ -111,6 +111,9 @@ function kctf {
         if [[ $? -ne 0 ]]; then
           return 1
         fi
+        if [[ -z "${CONFIG_NAME}" ]]; then
+          return 0
+        fi
         source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
         export CLUSTER_TYPE
         export PROJECT
