@@ -155,6 +155,7 @@ function _kctf_error_cleanup {
   unset -f kctf
   unset -f deactivate
 
+  unset KCTF_CONFIG
   unset KCTF_CONFIG_DIR
   unset KCTF_CTF_DIR
   unset KCTF_CTF_NAME
@@ -163,6 +164,9 @@ function _kctf_error_cleanup {
   unset KCTF_YQ_URL
   unset KCTF_YQ_HASH
   unset KUBECONFIG
+  unset CHALLENGE_NAMESPACE
+  unset CHALLENGE_NAME
+  unset CHALLENGE_DIR
 
   unset _KCTF_PROMPT_COLOR1
   unset _KCTF_PROMPT_COLOR2
