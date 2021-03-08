@@ -23,6 +23,7 @@ KCTF_CLOUD_API_KEY="AIzaSyC7Jgu4e0IygmImZNPmJHrcfZ3lJA9ZrZs"
 function update_gcloud_config {
   _kctf_log "Updating gcloud config."
   ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
+  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
   if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
         gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
   fi
