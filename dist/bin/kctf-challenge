@@ -251,7 +251,8 @@ function kctf_chal_debug_ssh {
   pod="${pods[0]}"
   if [[ ${#pods[@]} -ne 1 ]]; then
     _kctf_log "Found ${#pods[@]} pods, connecting to the most recent one."
-    _kctf_log "To connect to another pod, run 'kubectl exec pod/PODNAME --namespace ${CHALLENGE_NAMESPACE} -c ${CONTAINER} -it -- /bin/bash'"
+    _kctf_log "You can list the other pods with 'kubectl get pods'"
+    _kctf_log "and connect to them using 'kubectl exec pod/PODNAME --namespace ${CHALLENGE_NAMESPACE} -c ${CONTAINER} -it -- /bin/bash'"
 
     latestStartTime=$(date -d "$("${KCTF_BIN}/kubectl" get "pods/${pod}" -o jsonpath='{.status.startTime}')" '+%s')
     for (( i=1;  i < ${#pods[@]};  i++ )); do
