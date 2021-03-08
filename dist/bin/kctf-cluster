@@ -361,6 +361,19 @@ function wait_for_nameserver {
   return 1
 }
 
+required_apis=("containerregistry.googleapis.com" "compute.googleapis.com" "container.googleapis.com" "dns.googleapis.com")
+
+function check_required_apis {
+  GCP_APIS="$(gcloud services list --format 'get(config.name)')"
+  for required_api in "${required_apis[@]}"; do
+    if [[ ! "${GCP_APIS}" =~ "${required_api}" ]]; then
+      _kctf_log_err "Required GCP API \"${required_api}\" is not enabled"
+      return 1
+    fi
+  done
+  return 0
+}
+
 function kctf_cluster_start_gce {
   MIN_NODES="1"
   MAX_NODES="2"
@@ -368,6 +381,11 @@ function kctf_cluster_start_gce {
   MACHINE_TYPE="n2-standard-4"
   SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
   NETWORK="kctf-network-${SUFFIX:0:16}"
+
+  if ! check_required_apis; then
+    _kctf_log_err "Please enable the required APIs by running 'gcloud services enable ${required_apis[@]}'"
+    return 1
+  fi
 
   EXISTING_NETWORK=$(gcloud compute networks list --filter="name=${NETWORK}" --format 'get(name)')
   if [ -z "${EXISTING_NETWORK}" ]; then
