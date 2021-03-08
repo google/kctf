@@ -201,8 +201,8 @@ if [[ -n "${ZSH_VERSION:-}" ]]; then
   _KCTF_PROMPT_COLOR2=$'%F{cyan}'
   _KCTF_PROMPT_COLOR_END=$'%f'
 else
-  _KCTF_PROMPT_COLOR1=$'\e[0;32m'
-  _KCTF_PROMPT_COLOR2=$'\e[0;36m'
+  _KCTF_PROMPT_COLOR1=$'\001\e[0;32m\002'
+  _KCTF_PROMPT_COLOR2=$'\001\e[0;36m\002'
   _KCTF_PROMPT_COLOR_END=$'\001\e[0m\002'
 fi
 
