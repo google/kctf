@@ -208,14 +208,14 @@ fi
 
 function _kctf_config_string {
   if [ ! -z "${KCTF_CONFIG}" ]; then
-    echo "\[${_KCTF_PROMPT_COLOR1}\],config=\[${_KCTF_PROMPT_COLOR2}\]${KCTF_CONFIG}"
+    echo "${_KCTF_PROMPT_COLOR1},config=${_KCTF_PROMPT_COLOR2}${KCTF_CONFIG}"
   fi
 }
 
 function _kctf_chal_string {
   _kctf_set_active_challenge
   if [ ! -z "${CHALLENGE_NAME}" ]; then
-    echo "\[${_KCTF_PROMPT_COLOR1}\],chal=\[${_KCTF_PROMPT_COLOR2}\]${CHALLENGE_NAME}"
+    echo "${_KCTF_PROMPT_COLOR1},chal=${_KCTF_PROMPT_COLOR2}${CHALLENGE_NAME}"
   fi
 }
 
