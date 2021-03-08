@@ -264,6 +264,8 @@ EMAIL_ADDRESS=${EMAIL_ADDRESS}
 EOF
   if [[ $? -ne 0 ]]; then return 1; fi
 
+  set_lastconfig_link || return
+
   case "${CLUSTER_TYPE}" in
     gce)
       if ! command -v gcloud >/dev/null 2>&1; then
@@ -313,8 +315,6 @@ EOF
   elif [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     _kctf_log_warn "Existing cluster found. If it's running an old version of kCTF, remember to upgrade it with cluster start."
   fi
-
-  set_lastconfig_link || return
 
   echo "${CONFIG_NAME}"
 }
