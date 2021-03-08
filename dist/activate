@@ -201,21 +201,21 @@ if [[ -n "${ZSH_VERSION:-}" ]]; then
   _KCTF_PROMPT_COLOR2=$'%F{cyan}'
   _KCTF_PROMPT_COLOR_END=$'%f'
 else
-  _KCTF_PROMPT_COLOR1=$'\e[0;32m'
-  _KCTF_PROMPT_COLOR2=$'\e[0;36m'
+  _KCTF_PROMPT_COLOR1=$'\001\e[0;32m\002'
+  _KCTF_PROMPT_COLOR2=$'\001\e[0;36m\002'
   _KCTF_PROMPT_COLOR_END=$'\001\e[0m\002'
 fi
 
 function _kctf_config_string {
   if [ ! -z "${KCTF_CONFIG}" ]; then
-    echo "\[${_KCTF_PROMPT_COLOR1}\],config=\[${_KCTF_PROMPT_COLOR2}\]${KCTF_CONFIG}"
+    echo "${_KCTF_PROMPT_COLOR1},config=${_KCTF_PROMPT_COLOR2}${KCTF_CONFIG}"
   fi
 }
 
 function _kctf_chal_string {
   _kctf_set_active_challenge
   if [ ! -z "${CHALLENGE_NAME}" ]; then
-    echo "\[${_KCTF_PROMPT_COLOR1}\],chal=\[${_KCTF_PROMPT_COLOR2}\]${CHALLENGE_NAME}"
+    echo "${_KCTF_PROMPT_COLOR1},chal=${_KCTF_PROMPT_COLOR2}${CHALLENGE_NAME}"
   fi
 }
 
