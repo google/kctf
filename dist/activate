@@ -31,9 +31,8 @@ function _kctf_setup_environment {
     return 1
   fi
   export KCTF_CTF_NAME=$(basename "${KCTF_CTF_DIR}")
-  KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
+  export KCTF_SESSION="$(dd if=/dev/urandom bs=1 count=10 2>/dev/null | xxd -ps -c 10)"
 
-  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
   export KUBECONFIG="${KCTF_CONFIG_DIR}/kube.conf"
 }
 
@@ -111,6 +110,9 @@ function kctf {
         if [[ $? -ne 0 ]]; then
           return 1
         fi
+        if [[ -z "${CONFIG_NAME}" ]]; then
+          return 0
+        fi
         source "${KCTF_CTF_DIR}/kctf/config/${CONFIG_NAME}"
         export CLUSTER_TYPE
         export PROJECT
@@ -119,6 +121,9 @@ function kctf {
         export CLUSTER_NAME
         export DOMAIN_NAME
         export EMAIL_ADDRESS
+        if [[ "${CLUSTER_TYPE}" == "gce" ]]; then
+          export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
+        fi
         KCTF_CONFIG="${CONFIG_NAME}"
       else
         "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
@@ -152,6 +157,7 @@ function _kctf_error_cleanup {
   unset -f kctf
   unset -f deactivate
 
+  unset KCTF_CONFIG
   unset KCTF_CONFIG_DIR
   unset KCTF_CTF_DIR
   unset KCTF_CTF_NAME
@@ -160,6 +166,9 @@ function _kctf_error_cleanup {
   unset KCTF_YQ_URL
   unset KCTF_YQ_HASH
   unset KUBECONFIG
+  unset CHALLENGE_NAMESPACE
+  unset CHALLENGE_NAME
+  unset CHALLENGE_DIR
 
   unset _KCTF_PROMPT_COLOR1
   unset _KCTF_PROMPT_COLOR2

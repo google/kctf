@@ -21,19 +21,16 @@ KCTF_CLOUD_BASE_URL="https://kctf-cloud.appspot.com/v1"
 KCTF_CLOUD_API_KEY="AIzaSyC7Jgu4e0IygmImZNPmJHrcfZ3lJA9ZrZs"
 
 function update_gcloud_config {
-  if command -v gcloud >/dev/null 2>&1; then
-    _kctf_log "Updating gcloud config."
-    ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
-    if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
-          gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
-    fi
-    gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null || return
-    gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null || return
-    gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null || return
-    gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
-  else
-    _kctf_log_warn "Configuration created only locally. Gcloud not installed."
+  _kctf_log "Updating gcloud config."
+  ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
+  export CLOUDSDK_ACTIVE_CONFIG_NAME="kctf-${KCTF_SESSION}"
+  if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
+        gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
   fi
+  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null || return
+  gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null || return
+  gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null || return
+  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
 }
 
 function set_lastconfig_link {
@@ -72,9 +69,14 @@ function kctf_cluster_load {
 
   case "${CLUSTER_TYPE}" in
     gce)
+      if ! command -v gcloud >/dev/null 2>&1; then
+        _kctf_log_err "gcloud not installed"
+        return 1
+      fi
       update_gcloud_config || return
+
       # try to fetch the creds of the k8s cluster
-      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
+      gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
       ;;
     kind)
       kube_config=$("${KCTF_BIN}/kind" get kubeconfig --name "${CLUSTER_NAME}" 2>/dev/null)
@@ -263,8 +265,19 @@ EMAIL_ADDRESS=${EMAIL_ADDRESS}
 EOF
   if [[ $? -ne 0 ]]; then return 1; fi
 
+  set_lastconfig_link || return
+
   case "${CLUSTER_TYPE}" in
     gce)
+      if ! command -v gcloud >/dev/null 2>&1; then
+        if [[ "${START_CLUSTER}" == "1" ]]; then
+          _kctf_log_err "Can't start cluster, configuration created only locally. Gcloud not installed."
+          return 1
+        else
+          _kctf_log_warn "Configuration created only locally. Gcloud not installed."
+          return 0
+        fi
+      fi
       update_gcloud_config || return
       # try to fetch the creds of the k8s cluster
       gcloud container clusters get-credentials "${CLUSTER_NAME}" >/dev/null 2>/dev/null
@@ -303,8 +316,6 @@ EOF
   elif [[ ${GET_CLUSTER_CREDS_RESULT} -eq 0 ]]; then
     _kctf_log_warn "Existing cluster found. If it's running an old version of kCTF, remember to upgrade it with cluster start."
   fi
-
-  set_lastconfig_link || return
 
   echo "${CONFIG_NAME}"
 }
@@ -350,6 +361,19 @@ function wait_for_nameserver {
   return 1
 }
 
+required_apis=("containerregistry.googleapis.com" "compute.googleapis.com" "container.googleapis.com" "dns.googleapis.com")
+
+function check_required_apis {
+  GCP_APIS="$(gcloud services list --format 'get(config.name)')"
+  for required_api in "${required_apis[@]}"; do
+    if [[ ! "${GCP_APIS}" =~ "${required_api}" ]]; then
+      _kctf_log_err "Required GCP API \"${required_api}\" is not enabled"
+      return 1
+    fi
+  done
+  return 0
+}
+
 function kctf_cluster_start_gce {
   MIN_NODES="1"
   MAX_NODES="2"
@@ -357,6 +381,11 @@ function kctf_cluster_start_gce {
   MACHINE_TYPE="n2-standard-4"
   SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
   NETWORK="kctf-network-${SUFFIX:0:16}"
+
+  if ! check_required_apis; then
+    _kctf_log_err "Please enable the required APIs by running 'gcloud services enable ${required_apis[@]}'"
+    return 1
+  fi
 
   EXISTING_NETWORK=$(gcloud compute networks list --filter="name=${NETWORK}" --format 'get(name)')
   if [ -z "${EXISTING_NETWORK}" ]; then
