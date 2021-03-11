@@ -1,9 +1,5 @@
-Example XSS Bot
+= Example XSS Bot =
 
-This is based on the challenge skeleton with a few modifications:
-* Disable nsjail in the cmd line (Dockerfile) and remove the nsjail config
-* It needs a tmpfs at /tmp, we can add this from the command line
-* Modify the Dockerfile to install puppeteer
-* Replace the flag with a cookie
-* Add the puppeteer script in `challenge/image/bot.js`
-* Implement a healthcheck
+This bot will read a url from the user and then connect to it using chrome (puppeteer).
+For the simplest setup, it should be enough to modify the `challenge/cookie`
+file and deploy.
