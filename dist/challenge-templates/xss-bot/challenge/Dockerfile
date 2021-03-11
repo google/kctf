@@ -66,6 +66,12 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 
 COPY bot.js /home/user/
 COPY cookie /home/user/
-RUN cd /home/user && npm install puppeteer proof-of-work
+RUN cd /home/user && npm install puppeteer
 
-CMD kctf_setup && mount -t tmpfs none /tmp && kctf_drop_privs /usr/bin/bash -c 'while true; do /usr/bin/node /home/user/bot.js; done'
+CMD kctf_setup && \
+    mount -t tmpfs none /tmp && \
+    while true; do kctf_drop_privs /usr/bin/node /home/user/bot.js; done & \
+    kctf_drop_privs \
+    socat \
+      TCP-LISTEN:1337,reuseaddr,fork \
+      EXEC:"kctf_pow socat STDIN TCP\:localhost\:1338"
