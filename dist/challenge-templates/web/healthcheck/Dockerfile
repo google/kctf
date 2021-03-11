@@ -13,9 +13,6 @@
 # limitations under the License.
 FROM gcr.io/kctf-docker/healthcheck@sha256:64aec023da1b95d108cf3c065b6167ac47c054ef0936be42d7c6d14115cefa73
 
-COPY healthz.py /home/user/
-COPY doit.py /home/user/
-COPY run.sh /home/user/
-COPY env /home/user/
+COPY healthcheck_loop.sh healthcheck.py healthz_webserver.py /home/user/
 
-CMD kctf_drop_privs /home/user/run.sh & /home/user/healthz.py
+CMD kctf_drop_privs /home/user/healthcheck_loop.sh & /home/user/healthz_webserver.py

@@ -21,9 +21,8 @@ export TERM=linux
 export TERMINFO=/etc/terminfo
 
 while true; do
-  source /home/user/env
   echo -n "[$(date)] "
-  if timeout "${TIMEOUT}" /home/user/doit.py; then
+  if timeout "${TIMEOUT}" /home/user/healthcheck.py; then
     echo 'ok' | tee /tmp/healthz
   else
     echo -n "$? "
