@@ -1,9 +1,6 @@
 const puppeteer = require('puppeteer');
-const process = require('process');
 const fs = require('fs');
 const net = require('net');
-const pow = require('proof-of-work');
-const crypto = require("crypto");
 
 (async function(){
   const browser = await puppeteer.launch();
@@ -11,39 +8,6 @@ const crypto = require("crypto");
   function ask_for_url(socket) {
       socket.state = 'URL';
       socket.write('Please send me a URL to open.\n');
-  }
-
-  function ask_for_pow(socket) {
-    let pow_difficulty = Number.parseInt(fs.readFileSync('/kctf/pow/pow.conf'));
-    if (socket.address().address == "::ffff:127.0.0.1") {
-      pow_difficulty = 0;
-    }
-    if (pow_difficulty) {
-      socket.write('Proof-of-work enabled.\n');
-      verifier = new pow.Verifier({
-        size: 1024,
-        n: 16,
-        complexity: pow_difficulty,
-        prefix: crypto.randomBytes(2),
-        validity: 180000
-      });
-      socket.state = 'POW';
-      socket.write(`Please solve a proof-of work with difficulty ${pow_difficulty} and prefix ${verifier.prefix.toString('hex')} using https://www.npmjs.com/package/proof-of-work\n`);
-    } else {
-      socket.write('Proof-of-work disabled.\n');
-      ask_for_url(socket);
-    }
-  }
-
-  function validate_pow(socket, data) {
-    if (verifier.check(Buffer.from(data.toString().trim(), 'hex'))) {
-      socket.write('Proof-of-work verified.\n');
-      ask_for_url(socket);
-    } else {
-      socket.state = 'ERROR';
-      socket.write('Proof-of-work invalid.\n');
-      socket.destroy();
-    }
   }
 
   async function load_url(socket, data) {
@@ -75,17 +39,13 @@ const crypto = require("crypto");
   }
 
   var server = net.createServer();
-  server.listen(1337);
-  console.log('listening on port 1337');
+  server.listen(1338);
+  console.log('listening on port 1338');
 
   server.on('connection', socket=>{
-    socket.captcha = 'foo';
-
     socket.on('data', data=>{
       try {
-        if (socket.state == 'POW') {
-          validate_pow(socket, data);
-        } else if (socket.state == 'URL') {
+        if (socket.state == 'URL') {
           load_url(socket, data);
         }
       } catch (err) {
@@ -94,7 +54,7 @@ const crypto = require("crypto");
     });
 
     try {
-      ask_for_pow(socket);
+      ask_for_url(socket);
     } catch (err) {
       console.log(`err: ${err}`);
     }
