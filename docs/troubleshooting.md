@@ -3,11 +3,13 @@
 Users are reporting a challenge is down, the author is offline, and you don't know how long the challenge has been broken. The challenge had no healthcheck configured, and there's no documentation. Someone forgot to test the task. A nightmare come true.
 
 This guide will show you how to troubleshoot a broken challenge, assuming you don't know how the challenge works. The guide is divided into three parts that take you through troubleshooting a task in different environments:
-* [In Docker](#troubleshooting-with-docker) – Testing locally with `make test-docker` is the easiest and fastest way to troubleshoot challenges, and you don't need to know much apart from some basic Docker commands presented in the following section.
-* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes) – Troubleshooting with Kubernetes requires more setup, but is needed only on rare occasions, as it is only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF.
+* [In Docker](#troubleshooting-with-docker) – Testing locally with `kctf chal debug docker` is the easiest and fastest way to troubleshoot challenges, and you don't need to know much apart from some basic Docker commands presented in the following section.
+* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes) – Troubleshooting with Kubernetes requires a little bit more setup, is needed only on rare occasions, as it is only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF.
 * [Remotely](#troubleshooting-remotely) – Troubleshooting remotely is trivial, although it runs the risk of the user leaving the remote state in an inconsistent state, however it's a good last-resort.
 
 Note: The commands in this guide use the `kctf-chal-troubleshooting` placeholder as the name of the broken challenge, replace this placeholder with the actual name of your challenge.
+
+Remember to run `source kctf/activate` on your CTF directory before running any of the following commands.
 
 ## Troubleshooting with Docker
 
@@ -17,14 +19,11 @@ A good place to start is to check if the Docker image works. It can happen that 
 
 To build the Docker image, run:
 ```
-make docker
+kctf chal debug docker
 ```
 
 This will output any errors when *building* the image, but the image won't actually be run. If you would like to run the image, run:
 
-```
-make test-docker
-```
 
 This will output something like this towards the end:
 ```
@@ -187,22 +186,22 @@ The commands available for kCTF are similar to the ones available for Docker and
 
 To get the status of a challenge, run:
 ```
-make status
+kctf chal status
 ```
 
 To shell into a challenge, run:
 ```
-make ssh
+kctf chal debug ssh
 ```
 
 To shell into the healthcheck, run:
 ```
-make healthcheck-ssh
+kctf chal debug ssh --container=healthcheck
 ```
 
 To obtain remote logs, run:
 ```
-make logs
+kctf chal debug logs
 ```
 
 In addition, you can run any kubectl command under the kCTF cluster using kctf-kubectl.
@@ -211,7 +210,7 @@ Again, make sure to use the right namespace by running:
 ```
 kctf-kubectl config set-context --current --namespace=kctf-chal-troubleshooting
 ```
-This will be done automatically if you interact with a challenge using the Makefile, e.g. via `make status`.
+This will be done automatically if you interact with a challenge using the Makefile, e.g. via `kctf chal status`.
 
 ### Restarting or redeploying
 
@@ -223,7 +222,7 @@ Note: To make Kubernetes automatically restart flaky challenges, you should have
 
 To redeploy the challenge (for example, if the challenge works well locally in a local cluster), run:
 ```
-make start
+kctf chal start
 ```
 This will deploy the local challenge to the remote cluster. 
 
