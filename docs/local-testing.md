@@ -6,7 +6,7 @@ In detail, this means:
 
 1. [First-time setup](#first-time-setup): Setting the right `umask`, installing dependencies, enabling user namespaces.
 2. [Using kCTF](#using-kctf): Downloading the SDK, creating a local cluster and creating tasks.
-3. [Troubleshooting](#Troubleshooting) any errors. 
+3. [Troubleshooting](#Troubleshooting): Basic `kctf chal debug` commands, and `kubectl` usage.
 
 ## First-time setup
 
