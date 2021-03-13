@@ -30,7 +30,7 @@ If you forget to set the right umask, the SDK will warn you.
 ### Install dependencies
 Most people should have `wget`, `curl` and `xxd` installed already, but if you are running on a fresh Debian run:
 ```
-apt install xxd wget curl netcat
+sudo apt install xxd wget curl netcat
 ```
 
 ### Install Docker
