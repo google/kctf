@@ -20,7 +20,7 @@ Set up billing, and enable the compute API:
 1. <walkthrough-enable-apis apis="compute.googleapis.com,container.googleapis.com,containerregistry.googleapis.com">Enable the compute API.</walkthrough-enable-apis>
 
 You can enable APIs from the command line with:
-```
+```bash
 gcloud services enable compute container containerregistry.googleapis.com dns
 ```
 
@@ -30,29 +30,31 @@ Perform the following steps to configure your project.
 
 ### Make sure your umask allows copying executable files
 
-```
+```bash
 umask 0022
 ```
 
 ### Enable docker integration with Google Container Registry
 
-```
+```bash
 gcloud auth configure-docker
 ```
 
 ## Setup kCTF
 
 ### Download and activate kCTF
-```
+```bash
 mkdir kctf-demo && cd kctf-demo
 curl -sSL https://kctf.dev/sdk_1_0_0 | tar xz
 source kctf/activate
 ```
 
 ### Create the GKE cluster
-```
+```bash
 kctf config create --project {{project-id}} --domain-name {{project-id}}-codelab.kctf.cloud --start remote-cluster
 ```
+
+Note that this will register a domain name for you (`{{project-id}}-codelab.kctf.cloud`) - that means your project ID will be public, and all challenge names you put will be public as well (through DNS records). Every challenge you get gets mapped with DNS to the challenge backend.
 
 After configuring the project, the cluster is created automatically. This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
 
@@ -87,11 +89,13 @@ In this step, you'll learn how to:
 
 **Note**: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding step. Continue with the next steps if you already created a cluster.
 
-## Call kctf-chal-create.sh to copy the skeleton
+## Call kctf chal create to copy the skeleton
 Run the following command to create a challenge called "demo-challenge":
-```
+```bash
 kctf chal create demo-challenge && cd demo-challenge
 ```
+
+This will create a default `pwn` style challenge. We also have a `web` and `xss-bot` template challenges which you can choose with the `--template` parameter.
 
 This creates a directory called `demo-challenge` under the `kctf-demo` directory.
 
@@ -103,22 +107,22 @@ In the next step you'll find out how to deploy the newly created challenge.
 
 To deploy the challenge, run the following command, which builds and deploys the challenge, **but doesn't expose it to the internet**:
 
-```
+```bash
 kctf chal start
 ```
 
 This command deploys the image to your cluster, which will soon start consuming CPU resources. The challenge automatically scales based on CPU usage.
 
 ## Expose your challenge to the internet
-Run the following command to make the challenge public:
 
-```
+In order to expose your challenge to the internet, you must mark it as public. Edit the `challenge.yaml` file, or run the command below:
+```bash
 sed -i s/public:\ false/public:\ true/ challenge.yaml
 ```
 
 Then run the following command:
 
-```
+```bash
 kctf chal start
 ```
 
@@ -126,7 +130,7 @@ This step can take a minute. It reserves an IP address for your challenge and re
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.
+ * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing you can use the `kubectl chal debug port-forward` command to connect to it.
 
 # Step 3 – Test the challenge
 
@@ -139,7 +143,7 @@ Now that you have a challenge up and running, you need to test it to make sure i
 
 Run the following command to connect to your challenge:
 
-```
+```bash
 telnet demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
@@ -158,18 +162,18 @@ In the next step we'll see how to edit the challenge, add a proof of work to pre
 To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
 1. Open `challenge.yaml` and change the `powDifficultySeconds` from 0 to 10.
-    ```
+    ```bash
     emacs challenge.yaml
     ```
 1. Run the following command to enable the proof of work:
-    ```
+    ```bash
     kctf chal start
     ```
 
   **Note**: This is a very weak proof of work (strength of 0.1 seconds). For it to be useful in a real CTF, you probably want to set it to 1337 for 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 10.
 
 Once the challenge is updated, run:
-```
+```bash
 telnet demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
@@ -182,15 +186,13 @@ This is the last step of this walkthrough. Performing this step helps save resou
 
 ## Delete the challenge
 To delete a challenge, run:
-```
+```bash
 kctf chal stop
 ```
 
-If deletion worked correctly, the connection will fail and an error is returned instead.
-
 ### Stop the cluster
 To avoid being charged for the VMs any longer, stop the cluster by running:
-```
+```bash
 kctf cluster stop
 ```
 
