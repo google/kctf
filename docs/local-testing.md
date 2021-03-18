@@ -19,12 +19,6 @@ Since nsjail will run commands as another user, the challenge files need to be r
 umask a+rx
 ```
 
-This should also be setup in our `.bashrc` and `.bash_profile` to ensure you never forget to set it.
-
-```bash
-echo umask a+rx | tee -a ~/.bashrc ~/.bash_profile
-```
-
 If you forget to set the right umask, the SDK will warn you.
 
 ### Install dependencies
@@ -51,6 +45,8 @@ Some Linux distributions don't have user namespaces by default, to enable them i
 echo 'kernel.unprivileged_userns_clone=1' | sudo tee -a /etc/sysctl.d/00-local-userns.conf
 sudo service procps restart
 ```
+
+Note this has some security implications via increased kernel attack surface, which is why Debian and Ubuntu don't enable them by default.
 
 ## Using kCTF
 ### Downloading and activating kCTF
