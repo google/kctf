@@ -244,7 +244,7 @@ function kctf_chal_debug_ssh {
   require_cluster_config
   COMMAND="debug ssh" parse_container_name $@ || return
 
-  pods=($("${KCTF_BIN}/kubectl" get pods -o jsonpath='{.items[*].metadata.name}'))
+  pods=($("${KCTF_BIN}/kubectl" get pods -l "app=${CHALLENGE_NAME}" -o jsonpath='{.items[*].metadata.name}'))
 
   if [[ ${#pods[@]} -eq 0 ]]; then
     _kctf_log_err 'No pods found. Is the challenge running?'
