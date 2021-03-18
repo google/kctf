@@ -237,7 +237,18 @@ function kctf_chal_debug_logs {
   require_cluster_config
   COMMAND="debug logs" parse_container_name $@ || return
 
-  "${KCTF_BIN}/kubectl" logs -l "app=${CHALLENGE_NAME}" -c "${CONTAINER}" --namespace "${CHALLENGE_NAMESPACE}"
+  pods=($("${KCTF_BIN}/kubectl" get pods -l "app=${CHALLENGE_NAME}" -o jsonpath='{.items[*].metadata.name}'))
+
+  if [[ ${#pods[@]} -eq 0 ]]; then
+    _kctf_log_err 'No pods found. Is the challenge running?'
+    return 1
+  fi
+
+  for pod in "${pods[@]}"; do
+    startTime=$("${KCTF_BIN}/kubectl" get "pods/${pod}" -o jsonpath='{.status.startTime}')
+    _kctf_log "== ${pod} (started @ ${startTime}) =="
+    "${KCTF_BIN}/kubectl" logs "pods/${pod}" --tail=50 -c "${CONTAINER}" --namespace "${CHALLENGE_NAMESPACE}"
+  done
 }
 
 function kctf_chal_debug_ssh {
