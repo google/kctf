@@ -234,7 +234,7 @@ function kctf_chal_status {
 }
 
 function kctf_chal_debug_logs_usage {
-  echo -e "usage: kctf chal logs [args]" >&2
+  echo -e "usage: kctf chal debug logs [args]" >&2
   echo -e "  -h|--help        print this help" >&2
   echo -e "  --container      name of the container to interact with, e.g. challenge (default) or healthcheck" >&2
   echo -e "  --tail           how many lines to print per pod (default 20)" >&2
