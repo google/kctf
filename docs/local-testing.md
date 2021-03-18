@@ -85,6 +85,8 @@ To create a challenge from a skelleton you can run the following command:
 kctf chal create chal-sample && cd chal-sample
 ```
 
+This creates a sample `pwn` challenge, but you can create `web` or `xss-bot` templates as well with the `--template` parameter.
+
 You should then notice the prompt detected you are inside a challenge directory (notice `chal=chal-sample`):
 ```
 evn@evn:~/ctf-directory/chal-sample$ kCTF[ctf=ctf-directory,config=local-cluster,chal=chal-sample] > 
