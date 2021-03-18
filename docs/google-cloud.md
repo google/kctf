@@ -17,12 +17,7 @@ The first step consists of setting up the cluster and the related infrastructure
 ## Enable the necessary GCP features
 Set up billing, and enable the compute API:
 1. <walkthrough-project-billing-setup>Select a project and enable billing.</walkthrough-project-billing-setup>
-1. <walkthrough-enable-apis apis="compute.googleapis.com,container.googleapis.com,containerregistry.googleapis.com">Enable the compute API.</walkthrough-enable-apis>
-
-You can enable APIs from the command line with:
-```bash
-gcloud services enable compute container containerregistry.googleapis.com dns
-```
+1. <walkthrough-enable-apis apis="compute.googleapis.com,container.googleapis.com,containerregistry.googleapis.com,dns">Enable the compute API.</walkthrough-enable-apis>
 
 ## Configure the project
 
@@ -40,6 +35,12 @@ umask 0022
 gcloud auth configure-docker
 ```
 
+### Install netcat
+
+```bash
+sudo apt install netcat
+```
+
 ## Setup kCTF
 
 ### Download and activate kCTF
@@ -47,6 +48,11 @@ gcloud auth configure-docker
 mkdir kctf-demo && cd kctf-demo
 curl -sSL https://kctf.dev/sdk_1_0_0 | tar xz
 source kctf/activate
+```
+
+If you have not done this already, you should enable APIs with:
+```bash
+gcloud services enable compute container containerregistry.googleapis.com dns
 ```
 
 ### Create the GKE cluster
@@ -144,7 +150,7 @@ Now that you have a challenge up and running, you need to test it to make sure i
 Run the following command to connect to your challenge:
 
 ```bash
-telnet demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
+nc demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
 If all went well, you should see the flag.
@@ -174,7 +180,7 @@ To add a proof of work, edit the configuration of the challenge in `config/pow.c
 
 Once the challenge is updated, run:
 ```bash
-telnet demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
+nc demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
 This connects you to the challenge with a proof of work in front.
