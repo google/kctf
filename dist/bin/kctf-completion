@@ -33,6 +33,10 @@ function _kctf_complete_chal_debug() {
         fi
         return 0
       fi
+      if [ "${COMP_WORDS[3]}" = "logs" ]; then
+        COMPREPLY=($(compgen -W "--help --container --tail" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+        return
+      fi
       COMPREPLY=($(compgen -W "--help --container" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
