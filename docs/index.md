@@ -13,7 +13,9 @@ kCTF is CTF infrastructure written on top of Kubernetes. It allows you to manage
 
 ## Preview
 You can have a local challenge running in 5 minutes.
+
 [<img src="https://user-images.githubusercontent.com/33089/111788876-df83fe80-88c0-11eb-8485-f147bc23d7ca.gif" width="600">](https://asciinema.org/a/sePuQKLBHaO3JOtQj9gWayWvU)
+
 
 [Get started](local-testing.md)
 
@@ -24,7 +26,7 @@ To try this out in a real server try out Google Cloudshell codelab.
 
 ## Online demo
 We have a fake challenge running, you can see what an isolated challenge would look like by connecting directly to:
-```
+```bash
 nc kctf.vrp.ctfcompetition.com 1337
 ```
 
