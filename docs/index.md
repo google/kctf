@@ -8,7 +8,6 @@ The following documentation resources are available:
 * [kCTF in 8 Minutes](introduction.md) – A quick 8-minute summary of what kCTF is and how it interacts with Kubernetes.
 * [Google Cloud Walkthrough](google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud. 
 * [Troubleshooting](troubleshooting.md) – Help with fixing broken challenges.
-* [DNS Setup](dns.md) – Information on setting up DNS for the CTF.
 * [Security Threat Model](security-threat-model.md) – Security considerations regarding kCTF including information on assets, risks, and potential attackers.
 * [kCTF VRP Setup](vrp.md) – Demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page.
 
