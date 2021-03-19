@@ -15,10 +15,4 @@ The following documentation resources are available:
 
 * [gcloud](https://cloud.google.com/sdk/install)
 * [docker](https://docs.docker.com/install/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.17+
 
-## Samples
-
-The [samples](https://github.com/google/kctf/tree/master/samples) directory contains two examples:
-* A web challenge that acts like an XSS bot.
-* A web challenge that acts like a vulnerable PHP application with support for sessions and file uploads.
