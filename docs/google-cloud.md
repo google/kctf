@@ -57,7 +57,7 @@ gcloud services enable compute container containerregistry.googleapis.com dns
 
 ### Create the GKE cluster
 ```bash
-kctf config create --project {{project-id}} --domain-name {{project-id}}-codelab.kctf.cloud --start remote-cluster
+kctf cluster create --project {{project-id}} --domain-name {{project-id}}-codelab.kctf.cloud --start remote-cluster
 ```
 
 Note that this will register a domain name for you (`{{project-id}}-codelab.kctf.cloud`) – this means your project ID will be public, and all challenge names you add will be public as well (through DNS records). Every challenge you receive gets mapped to the challenge backend with DNS.
