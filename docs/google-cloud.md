@@ -136,7 +136,7 @@ This step can take a minute. It reserves an IP address for your challenge and re
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing, you can use the `kubectl chal debug port-forward` command to connect to it.
+ * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing, you can use the `kctf chal debug port-forward` command to connect to it.
 
 # Step 3 – Test the challenge
 
