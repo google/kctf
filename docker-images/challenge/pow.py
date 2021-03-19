@@ -83,9 +83,9 @@ def usage():
     sys.stdout.write('Usage:\n')
     sys.stdout.write('Solve pow: {} solve $challenge\n')
     sys.stdout.write('Check pow: {} ask $difficulty\n')
-    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU):')
-    sys.stdout.write('             1337: 10 secs')
-    sys.stdout.write('             31337: 5 mins')
+    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU):\n')
+    sys.stdout.write('             1337: 10 secs\n')
+    sys.stdout.write('             31337: 5 mins\n')
     sys.stdout.flush()
     sys.exit(1)
 
