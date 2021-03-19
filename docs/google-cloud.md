@@ -10,21 +10,14 @@ The purpose of this walkthrough is to guide you through the configuration of the
 
   **Note**: If not already doing so, you can also open this walkthrough directly in [Google Cloud Shell](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/google/kctf&tutorial=docs/google-cloud.md&shellonly=true).
 
-# Step 1 – Set up the cluster
+# Step 1 – Set up the environment
 
 The first step consists of setting up the cluster and the related infrastructure.
 
 ## Enable the necessary GCP features
 Set up billing, and enable the compute API:
 1. <walkthrough-project-billing-setup>Select a project and enable billing.</walkthrough-project-billing-setup>
-1. <walkthrough-enable-apis apis="compute.googleapis.com,container.googleapis.com,containerregistry.googleapis.com">Enable the compute API.</walkthrough-enable-apis>
-
-You can enable APIs from the command line with:
-```
-gcloud services enable compute container containerregistry.googleapis.com
-gcloud services enable compute container compute.googleapis.com
-gcloud services enable compute container container.googleapis.com
-```
+1. <walkthrough-enable-apis apis="compute.googleapis.com,container.googleapis.com,containerregistry.googleapis.com,dns">Enable the compute API.</walkthrough-enable-apis>
 
 ## Configure the project
 
@@ -32,29 +25,42 @@ Perform the following steps to configure your project.
 
 ### Make sure your umask allows copying executable files
 
-```
+```bash
 umask 0022
 ```
 
 ### Enable docker integration with Google Container Registry
 
-```
+```bash
 gcloud auth configure-docker
 ```
 
-### Add the bin directory to your PATH
+### Install netcat
 
-```
-PATH="$PATH:$(pwd)/bin"
+```bash
+sudo apt install netcat
 ```
 
-## Create the cluster
+## Setup kCTF
 
-### Run the configuration script
+### Download and activate kCTF
+```bash
+mkdir kctf-demo && cd kctf-demo
+curl -sSL https://kctf.dev/sdk_1_0_0 | tar xz
+source kctf/activate
+```
 
+If you have not done this already, you should enable APIs with:
+```bash
+gcloud services enable compute container containerregistry.googleapis.com dns
 ```
-kctf-config-create --chal-dir ~/kctf-demo --project {{project-id}} --start-cluster
+
+### Create the GKE cluster
+```bash
+kctf config create --project {{project-id}} --domain-name {{project-id}}-codelab.kctf.cloud --start remote-cluster
 ```
+
+Note that this will register a domain name for you (`{{project-id}}-codelab.kctf.cloud`) – this means your project ID will be public, and all challenge names you add will be public as well (through DNS records). Every challenge you receive gets mapped to the challenge backend with DNS.
 
 After configuring the project, the cluster is created automatically. This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
 
@@ -89,47 +95,48 @@ In this step, you'll learn how to:
 
 **Note**: The cluster must be created before you continue, otherwise the following commands won't work. To create a cluster, see the preceding step. Continue with the next steps if you already created a cluster.
 
-## Call kctf-chal-create.sh to copy the skeleton
+## Call kctf chal create to copy the skeleton
 Run the following command to create a challenge called "demo-challenge":
+```bash
+kctf chal create demo-challenge && cd demo-challenge
 ```
-kctf-chal-create demo-challenge
-```
+
+This will create a default `pwn`-style challenge. We also have `web` and `xss-bot` template challenges which you can select with the `--template` parameter.
 
 This creates a directory called `demo-challenge` under the `kctf-demo` directory.
 
-If you look inside `demo-challenge`, you can see the challenge configuration. The file in `challenge/image/chal` is the entry-point, which means that it is executed every time a TCP connection is established. While this demo challenge just prints the flag, a real challenge would instead expose a an actual challenge.
+If you look inside `demo-challenge`, you can see the challenge configuration. While this demo challenge just prints the flag, a real challenge would instead expose a more complex service.
 
-In the next step you'll find out how to create a docker image with the newly created challenge.
+In the next step, you'll find out how to deploy the newly created challenge.
 
 ## Deploy the challenge
 
 To deploy the challenge, run the following command, which builds and deploys the challenge, **but doesn't expose it to the internet**:
 
-```
-cd ~/kctf-demo/demo-challenge
-make start
+```bash
+kctf chal start
 ```
 
 This command deploys the image to your cluster, which will soon start consuming CPU resources. The challenge automatically scales based on CPU usage.
 
 ## Expose your challenge to the internet
-Run the following command to create a new file:
 
-```
-emacs ~/kctf-demo/demo-challenge/config/chal.conf
+In order to expose your challenge to the internet, you must mark it as public. To do so, edit the `challenge.yaml` file, or run the command below:
+```bash
+sed -i s/public:\ false/public:\ true/ challenge.yaml
 ```
 
-Modify the file by entering `PUBLIC=true`, then run the following command:
+Then run the following command:
 
-```
-make start
+```bash
+kctf chal start
 ```
 
 This step can take a minute. It reserves an IP address for your challenge and redirects traffic to your docker containers when someone connects to it. Wait for it to finish before continuing.
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The port exposed by the challenge is configured by nsjail (see `config/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally on port 1**.
+ * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing, you can use the `kubectl chal debug port-forward` command to connect to it.
 
 # Step 3 – Test the challenge
 
@@ -142,8 +149,8 @@ Now that you have a challenge up and running, you need to test it to make sure i
 
 Run the following command to connect to your challenge:
 
-```
-telnet $(make ip) 1
+```bash
+nc demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
 If all went well, you should see the flag.
@@ -160,49 +167,39 @@ In the next step we'll see how to edit the challenge, add a proof of work to pre
 ## Add a proof of work
 To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
-1. Open `config/pow.conf` and change the 0 to 1.
-    ```
-    emacs config/pow.conf
+1. Open `challenge.yaml` and change `powDifficultySeconds` from 0 to 10.
+    ```bash
+    emacs challenge.yaml
     ```
 1. Run the following command to enable the proof of work:
-    ```
-    make start
+    ```bash
+    kctf chal start
     ```
 
-  **Note**: This is a very weak proof of work (strength of 1). For it to be useful in a real CTF, you probably want to set it to 1337 for 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 1.
+  **Note**: This is a very weak proof of work (strength of 0.1 seconds). For it to be useful in a real CTF, you probably want to set it to 1337 for 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 10.
 
 Once the challenge is updated, run:
-```
-telnet $(make ip) 1
+```bash
+nc demo-challenge.{{project-id}}-codelab.kctf.cloud 1337
 ```
 
 This connects you to the challenge with a proof of work in front.
 
 And that's it. Now that you saw how to push a challenge and update it, let's see how you can debug the Kubernetes deployment.
 
-## Inspect the Kubernetes deployment
-To debug the Kubernetes deployment, you can use `kctf-kubectl` with [kubectl commands](https://kubernetes.io/docs/reference/kubectl/cheatsheet/).
-
 # Step 4 – Clean the challenge
 This is the last step of this walkthrough. Performing this step helps save resources after the end of the CTF.
 
 ## Delete the challenge
 To delete a challenge, run:
+```bash
+kctf chal stop
 ```
-make stop
-```
-
-To test the deletion, run:
-```
-telnet $(make ip) 1
-```
-
-If deletion worked correctly, the connection will fail and an error is returned instead.
 
 ### Stop the cluster
 To avoid being charged for the VMs any longer, stop the cluster by running:
-```
-kctf-cluster-stop
+```bash
+kctf cluster stop
 ```
 
   **Note**: This stops the cluster, and all the challenges with it. Only stop the cluster if you really want to stop it permanently.
