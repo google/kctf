@@ -60,7 +60,7 @@ gcloud services enable compute container containerregistry.googleapis.com dns
 kctf config create --project {{project-id}} --domain-name {{project-id}}-codelab.kctf.cloud --start remote-cluster
 ```
 
-Note that this will register a domain name for you (`{{project-id}}-codelab.kctf.cloud`) - that means your project ID will be public, and all challenge names you put will be public as well (through DNS records). Every challenge you get gets mapped with DNS to the challenge backend.
+Note that this will register a domain name for you (`{{project-id}}-codelab.kctf.cloud`) – this means your project ID will be public, and all challenge names you add will be public as well (through DNS records). Every challenge you receive gets mapped to the challenge backend with DNS.
 
 After configuring the project, the cluster is created automatically. This is only done once per CTF. A "cluster" is essentially a group of VMs with a "master" that defines what to run there.
 
@@ -101,13 +101,13 @@ Run the following command to create a challenge called "demo-challenge":
 kctf chal create demo-challenge && cd demo-challenge
 ```
 
-This will create a default `pwn` style challenge. We also have a `web` and `xss-bot` template challenges which you can choose with the `--template` parameter.
+This will create a default `pwn`-style challenge. We also have `web` and `xss-bot` template challenges which you can select with the `--template` parameter.
 
 This creates a directory called `demo-challenge` under the `kctf-demo` directory.
 
 If you look inside `demo-challenge`, you can see the challenge configuration. While this demo challenge just prints the flag, a real challenge would instead expose a more complex service.
 
-In the next step you'll find out how to deploy the newly created challenge.
+In the next step, you'll find out how to deploy the newly created challenge.
 
 ## Deploy the challenge
 
@@ -121,7 +121,7 @@ This command deploys the image to your cluster, which will soon start consuming 
 
 ## Expose your challenge to the internet
 
-In order to expose your challenge to the internet, you must mark it as public. Edit the `challenge.yaml` file, or run the command below:
+In order to expose your challenge to the internet, you must mark it as public. To do so, edit the `challenge.yaml` file, or run the command below:
 ```bash
 sed -i s/public:\ false/public:\ true/ challenge.yaml
 ```
@@ -136,7 +136,7 @@ This step can take a minute. It reserves an IP address for your challenge and re
 
 While you wait, some important information to be aware of:
  * You should only expose your challenge to the internet once the challenge is ready to be released to the public. Don't expose your challenge too early or the challenge will leak.
- * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing you can use the `kubectl chal debug port-forward` command to connect to it.
+ * The port exposed by the challenge is configured by nsjail (see `challenge/nsjail.cfg`). **By default, the internal nsjail port 1337 is exposed externally**.  For testing, you can use the `kubectl chal debug port-forward` command to connect to it.
 
 # Step 3 – Test the challenge
 
@@ -167,7 +167,7 @@ In the next step we'll see how to edit the challenge, add a proof of work to pre
 ## Add a proof of work
 To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
 
-1. Open `challenge.yaml` and change the `powDifficultySeconds` from 0 to 10.
+1. Open `challenge.yaml` and change `powDifficultySeconds` from 0 to 10.
     ```bash
     emacs challenge.yaml
     ```
