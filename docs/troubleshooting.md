@@ -4,7 +4,7 @@ Users are reporting a challenge is down, the author is offline, and you don't kn
 
 This guide will show you how to troubleshoot a broken challenge, assuming you don't know how the challenge works. The guide is divided into three parts that take you through troubleshooting a task in different environments:
 * [In Docker](#troubleshooting-with-docker) – Testing locally with `kctf chal debug docker` is the easiest and fastest way to troubleshoot challenges, and you don't need to know much apart from some basic Docker commands presented in the following section.
-* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes) – Troubleshooting with Kubernetes requires a little bit more setup, is needed only on rare occasions, as it is only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF.
+* [In a local (Kubernetes) cluster](#troubleshooting-with-kubernetes) – Troubleshooting with Kubernetes requires a few extra setup steps. However, this is needed only on rare occasions, as it is only relevant if the author made changes to the Kubernetes setup, or if there's a bug in kCTF.
 * [Remotely](#troubleshooting-remotely) – Troubleshooting remotely is trivial, although it runs the risk of the user leaving the remote state in an inconsistent state, however it's a good last-resort.
 
 Note: The commands in this guide use the `kctf-chal-troubleshooting` placeholder as the name of the broken challenge, replace this placeholder with the actual name of your challenge.
