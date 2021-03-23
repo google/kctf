@@ -88,9 +88,15 @@ You should then notice that the prompt detected that you are inside of a challen
 evn@evn:~/ctf-directory/chal-sample$ kCTF[ctf=ctf-directory,config=local-cluster,chal=chal-sample] > 
 ```
 
+The pwn template comes with a Makefile to build the challenge binary. This is
+recommended if you want to hand out the binary as an attachment to players,
+e.g. since the layout might matter for ROP gadgets. If the layout doesn't
+matter, you could also build it in an intermediate container as part of your
+Dockerfile.
+
 To start the challenge, run:
 ```bash
-kctf chal start
+make -C challenge && kctf chal start
 ```
 
 Once the challenge is built and deployed, you will see `challenge.kctf.dev/chal-sample created`.
@@ -119,7 +125,7 @@ To test what would happen if the challenge broke, we can modify the task, and se
 
 Run the following command to replace `cat /flag` with `echo /flag` in `challenge/chal.c`:
 ```bash
-sed -i s/cat/echo/ challenge/chal.c 
+sed -i s/cat/echo/ challenge/chal.c && make -C challenge
 ```
 
 If you try to connect again, you will notice that the old version is still running (you will still see `CTF{TestFlag}`).

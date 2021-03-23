@@ -114,10 +114,16 @@ In the next step, you'll find out how to deploy the newly created challenge.
 To deploy the challenge, run the following command, which builds and deploys the challenge, **but doesn't expose it to the internet**:
 
 ```bash
-kctf chal start
+make -C challenge && kctf chal start
 ```
 
 This command deploys the image to your cluster, which will soon start consuming CPU resources. The challenge automatically scales based on CPU usage.
+
+Note that the pwn template comes with a Makefile to build the challenge binary.
+This is recommended if you want to hand out the binary as an attachment to
+players, e.g. since the layout might matter for ROP gadgets. If the layout
+doesn't matter, you could also build it in an intermediate container as part
+of your Dockerfile.
 
 ## Expose your challenge to the internet
 

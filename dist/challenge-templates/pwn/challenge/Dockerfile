@@ -11,22 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM ubuntu:20.04 as build
-
-RUN apt-get update && apt-get install -yq --no-install-recommends build-essential
-
-RUN mkdir /build
-COPY chal.c /build/
-RUN make -C /build chal
-
 FROM ubuntu:20.04 as chroot
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
 COPY flag /
-COPY --from=build /build/chal /home/user/
+COPY chal /home/user/
 
-FROM gcr.io/kctf-docker/challenge@sha256:460c2fdc4467e4aac23d3efe7a91a42049bef0fe788e6fed15f8acf018ad94ca
+FROM gcr.io/kctf-docker/challenge@sha256:e550af5df266cb89a26ace1ba5dcc685981f01d1cb61e45a898cce0c9753de7a
 
 COPY --from=chroot / /chroot
 

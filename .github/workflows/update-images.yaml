@@ -196,6 +196,9 @@ jobs:
           kctf chal create --template $template $template
           echo "entering challenge directory ${template}"
           pushd $template
+            if [[ -e "challenge/Makefile" ]]; then
+              make -C "challenge"
+            fi
             sed -i "s/public: false/public: true/" challenge.yaml
             CHALLENGE_NAME="$("${KCTF_BIN}/yq" eval '.metadata.name' challenge.yaml)"
             echo "starting challenge ${CHALLENGE_NAME}"
