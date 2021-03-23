@@ -6,6 +6,7 @@ The basic steps when preparing a challenge are:
 * Edit `challenge/Dockerfile` to change the commandline or the files you want to include.
 * To try the challenge locally, you will need to
   * create a a local cluster with `kctf cluster create --type kind --start $configname`
+  * build the challenge binary with `make -C challenge`
   * and then deploy the challenge with `kctf chal start`
 * To access the challenge, create a port forward with `kctf chal debug port-forward` and connect to it via `nc localhost PORT` using the printed port.
 * Check out `kctf chal <tab>` for more commands.
@@ -25,8 +26,11 @@ For documentation on the available fields, you can run `kubectl explain challeng
 ### /challenge
 
 The `challenge` directory contains a Dockerfile that describes the challenge and
-any challenge files. You can use the Dockerfile to build your challenge as well
-if required.
+any challenge files. This template comes with a Makefile to build the challenge,
+which is the recommended way for pwnables if the deployed binary matters, e.g.
+if you hand it out as an attachment for ROP gadgets.
+If the binary layout doesn't matter, you can build it using an intermediate
+container as part of the Dockerfile similar to how the chroot is created.
 
 ### /healthcheck
 
