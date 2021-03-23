@@ -16,7 +16,7 @@ spec:
       serviceAccountName: kctf-operator
       containers:
         - name: kctf-operator
-          image: gcr.io/kctf-docker/kctf-operator@sha256:9abd4559a3a5cc3e9d64b3e7314bdf93fb749f49c112af83868dfd9d216316d0
+          image: gcr.io/kctf-docker/kctf-operator@sha256:f16c645a40d31aa72fd21c21c60d4b8ae517338575455310368239361f77804e
           command:
           - kctf-operator
           imagePullPolicy: Always
