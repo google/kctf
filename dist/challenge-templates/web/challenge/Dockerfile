@@ -17,7 +17,7 @@ RUN /usr/sbin/useradd -u 1000 user
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends \
-       curl ca-certificates socat gnupg lsb-release software-properties-common \
+       curl ca-certificates socat gnupg lsb-release software-properties-common php-cgi \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
@@ -29,35 +29,44 @@ RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add
     && apt-get install -yq --no-install-recommends nodejs socat \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /home/user/chroot
+VOLUME /mnt/disks/sessions
+VOLUME /mnt/disks/uploads
+
+COPY web-apps /web-apps
+COPY web-servers /web-servers
+
+COPY flag /
 
 FROM gcr.io/kctf-docker/challenge@sha256:e550af5df266cb89a26ace1ba5dcc685981f01d1cb61e45a898cce0c9753de7a
 
-COPY --from=chroot / /chroot
-
-RUN touch /chroot/dev/null
-
-COPY flag /chroot/
-
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends tzdata \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends tzdata apache2 \
     && ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -yq --no-install-recommends apache2 && rm -rf /var/lib/apt/lists/*
-
 RUN service apache2 start
 
+COPY --from=chroot / /chroot
+
+# For Proxy
 RUN ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/
 RUN ln -s /etc/apache2/mods-available/proxy_http.load /etc/apache2/mods-enabled/
-COPY apache2-nsjail-others.conf /etc/apache2/conf-enabled/
 
-COPY chroot /home/user/chroot
-COPY node /home/user/node
-COPY nsjail.cfg /home/user/nsjail.cfg
+# For CGI sandboxing
+RUN ln -s /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/cgi.load
+RUN ln -s /etc/apache2/mods-available/actions.load /etc/apache2/mods-enabled/actions.load
+RUN ln -s /chroot/web-apps /web-apps
+COPY cgi-bin /usr/lib/cgi-bin
+
+COPY apache2-kctf-nsjail.conf /etc/apache2/conf-enabled/
+
+COPY web-servers.nsjail.cfg /home/user/web-servers.nsjail.cfg
+COPY cgi-bin.nsjail.cfg /home/user/cgi-bin.nsjail.cfg
+
+VOLUME /var/log/apache2
+VOLUME /var/run/apache2
 
 CMD kctf_setup \
-    && /home/user/node/start.sh \
-    && mount -t tmpfs none /var/run/apache2 \
+    && (kctf_drop_privs nsjail --config /home/user/web-servers.nsjail.cfg --port 8081 -- /web-servers/nodejs.sh &) \
     && bash -c 'source /etc/apache2/envvars && APACHE_RUN_USER=user APACHE_RUN_GROUP=user /usr/sbin/apache2 -D FOREGROUND'
