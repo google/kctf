@@ -10,6 +10,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, hostname, () => {
-  // Send something to STDOUT to signal we are ready to accept connections
   console.log(`Server running at http://${hostname}:${port}/`);
 });
