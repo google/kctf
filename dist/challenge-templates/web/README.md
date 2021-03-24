@@ -22,6 +22,29 @@ proof-of-work difficulty etc.
 For documentation on the available fields, you can run `kubectl explain challenge` and
 `kubectl explain challenge.spec`.
 
+If you would like to have a shared directory (for sessions, or uploads), you can mount it using:
+
+```yaml
+spec:
+  persistentVolumeClaims:
+  - name: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
+    size: 21Gi
+  podTemplate:
+    containers:
+    - name: challenge
+      volumeMounts:
+      - name: gcsfuse
+        subPath: sessions # this this a folder inside volume
+        mountPath: /where-to-mount/sessions
+      - name: gcsfuse
+        subPath: uploads
+        mountPath: /where-to-mount/uploads
+    volumes:
+    - name: gcsfuse
+      persistentVolumeClaim:
+        claimName: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
+```
+
 ### /challenge
 
 The `challenge` directory contains a Dockerfile that describes the challenge and
