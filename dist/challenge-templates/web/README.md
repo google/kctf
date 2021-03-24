@@ -10,6 +10,16 @@ The basic steps when preparing a challenge are:
 * To access the challenge, create a port forward with `kctf chal debug port-forward` and connect to it via `nc localhost PORT` using the printed port.
 * Check out `kctf chal <tab>` for more commands.
 
+## Sandboxing
+
+In order to make it possible to have RCE-style web challenges, kCTF provides two ways to sandbox a web server:
+ 1. **CGI-sandbox**: You can configure PHP (or any other CGI) to be sandboxed.
+ 2. **Proxy sandbox**: You can configure an HTTP server that sandboxes every HTTP request.
+
+A Proxy sandbox is a bit expensive, it starts an HTTP server on every TCP connection, hence it is a bit slow. A CGI sandbox is cheaper, and it just calls the normal CGI endpoint but with nsjail.
+
+The template challenge has an example of both (NodeJS running as a proxy, and PHP running as CGI). It is recommended that static resources are served with only Apache, as to save CPU and RAM.
+
 ## Directory layout
 
 The following files/directories are available:
@@ -44,7 +54,7 @@ spec:
         claimName: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
 ```
 
-This will mount a file across all challenges in that directory.
+This will mount a file across all challenges in that directory. You can test this setup on a remote cluster using the PHP/CGI sandbox.
 
 ### /challenge
 
