@@ -23,7 +23,6 @@ For documentation on the available fields, you can run `kubectl explain challeng
 `kubectl explain challenge.spec`.
 
 If you would like to have a shared directory (for sessions, or uploads), you can mount it using:
-
 ```yaml
 spec:
   persistentVolumeClaims:
@@ -35,15 +34,17 @@ spec:
       volumeMounts:
       - name: gcsfuse
         subPath: sessions # this this a folder inside volume
-        mountPath: /where-to-mount/sessions
+        mountPath: /mnt/disks/sessions
       - name: gcsfuse
         subPath: uploads
-        mountPath: /where-to-mount/uploads
+        mountPath: /mnt/disks/uploads
     volumes:
     - name: gcsfuse
       persistentVolumeClaim:
         claimName: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
 ```
+
+This will mount a file across all challenges in that directory.
 
 ### /challenge
 
