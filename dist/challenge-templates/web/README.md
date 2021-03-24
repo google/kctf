@@ -33,6 +33,8 @@ For documentation on the available fields, you can run `kubectl explain challeng
 `kubectl explain challenge.spec`.
 
 If you would like to have a shared directory (for sessions, or uploads), you can mount it using:
+
+
 ```yaml
 spec:
   persistentVolumeClaims:
