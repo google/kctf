@@ -16,6 +16,8 @@ At present, we’re interested in two attack scenarios against this infrastructu
 2. Breaking the isolation that Kubernetes provides and accessing the flags of other challenges.
 
 For this purpose, we set up two kCTF challenges with secret flags: “kctf” and “full-chain”. You can demonstrate a working exploit by leaking the flags of either of these.
+You can find the code for the challenges
+[here](https://github.com/google/google-ctf/tree/master/vrp).
 
 ![drawing showing the location of the flags](./images/flag-locations.png)
 
@@ -26,7 +28,7 @@ The “kctf” challenge is the only entry point to the cluster. You can connect
 
 
 ```
-nc kctf.vrp.ctfcompetition.com 1337
+socat FILE:`tty`,raw,echo=0 TCP:kctf.vrp.ctfcompetition.com:1337
 ```
 
 
