@@ -15,7 +15,7 @@ func generate(challenge *kctfv1.Challenge) *corev1.ConfigMap {
 	}
 	configmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "pow",
+			Name:      challenge.Name + "-pow",
 			Namespace: challenge.Namespace,
 		},
 		Data: data,

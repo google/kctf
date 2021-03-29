@@ -79,16 +79,18 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	volumeMounts := []corev1.VolumeMount{{
-		Name:      "pow",
-		ReadOnly:  true,
-		MountPath: "/kctf/pow",
-	},
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "pow",
+			ReadOnly:  true,
+			MountPath: "/kctf/pow",
+		},
 		{
 			Name:      "pow-bypass-pub",
 			ReadOnly:  true,
 			MountPath: "/kctf/pow-bypass",
-		}}
+		},
+	}
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts =
 		append(deployment.Spec.Template.Spec.Containers[idx_challenge].VolumeMounts, volumeMounts...)
@@ -98,7 +100,7 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: "pow",
+					Name: challenge.Name + "-pow",
 				},
 			},
 		},
