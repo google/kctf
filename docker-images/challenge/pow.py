@@ -116,7 +116,12 @@ def main():
         sys.stdout.flush()
         solution = ''
         while not solution:
-            solution = sys.stdin.readline().strip()
+            line = sys.stdin.readline()
+            if not line:
+                sys.stdout.write("EOF")
+                sys.stdout.flush()
+                sys.exit(1)
+            solution = line.strip()
 
         if verify_challenge(challenge, solution):
             sys.stdout.write("Correct\n")
