@@ -45,7 +45,7 @@ func create(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.S
 func Update(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	configmapFound := &corev1.ConfigMap{}
-	err := cl.Get(ctx, types.NamespacedName{Name: "pow",
+	err := cl.Get(ctx, types.NamespacedName{Name: challenge.Name + "-pow",
 		Namespace: challenge.Namespace}, configmapFound)
 
 	// Just enters here if it's a new configmap
@@ -55,7 +55,7 @@ func Update(challenge *kctfv1.Challenge, cl client.Client, scheme *runtime.Schem
 
 	} else if err != nil {
 		log.Error(err, "Couldn't get the ConfigMap of Proof of work", "Configmap Name: ",
-			"pow", " with namespace ", challenge.Namespace)
+			challenge.Name + "-pow", " with namespace ", challenge.Namespace)
 		return false, err
 	}
 
