@@ -46,7 +46,7 @@ sudo apt install netcat
 ### Download and activate kCTF
 ```bash
 mkdir kctf-demo && cd kctf-demo
-curl -sSL https://kctf.dev/sdk_1_0_0 | tar xz
+curl -sSL https://kctf.dev/sdk_1_0 | tar xz
 source kctf/activate
 ```
 
