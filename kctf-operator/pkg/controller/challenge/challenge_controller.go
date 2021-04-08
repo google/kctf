@@ -8,7 +8,6 @@ import (
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	"github.com/google/kctf/pkg/controller/challenge/autoscaling"
 	"github.com/google/kctf/pkg/controller/challenge/deployment"
-	"github.com/google/kctf/pkg/controller/challenge/dns"
 	"github.com/google/kctf/pkg/controller/challenge/network-policy"
 	"github.com/google/kctf/pkg/controller/challenge/pow"
 	"github.com/google/kctf/pkg/controller/challenge/secrets"
@@ -183,8 +182,7 @@ func updateConfigurations(challenge *kctfv1.Challenge, cl client.Client, scheme 
 	// We check if there's an error in each update
 	updateFunctions := []func(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 		log logr.Logger, ctx context.Context) (bool, error){network.Update, volumes.Update,
-		pow.Update, secrets.Update, deployment.Update, service.Update, dns.Update,
-		autoscaling.Update}
+		pow.Update, secrets.Update, deployment.Update, service.Update, autoscaling.Update}
 
 	for _, updateFunction := range updateFunctions {
 		requeue, err := updateFunction(challenge, cl, scheme, log, ctx)
