@@ -29,6 +29,9 @@ RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add
     && apt-get install -yq --no-install-recommends nodejs socat \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /mnt/disks/sessions
+RUN mkdir -p /mnt/disks/uploads
+
 VOLUME /mnt/disks/sessions
 VOLUME /mnt/disks/uploads
 
