@@ -30,11 +30,11 @@ function request_certificate() {
 }
 
 function update_tls_secret() {
-  ./kubectl create secret tls "${SECRET}" --cert /etc/letsencrypt/live/"${DOMAIN}"/fullchain.pem --key /etc/letsencrypt/live/"${DOMAIN}"/privkey.pem --dry-run=client --save-config -o yaml | ./kubectl apply -f -
+  ./kubectl create secret tls "${SECRET}" --cert /etc/letsencrypt/live/"${DOMAIN}"/fullchain.pem --key /etc/letsencrypt/live/"${DOMAIN}"/privkey.pem --namespace kctf-system --dry-run=client --save-config -o yaml | ./kubectl apply -f -
 }
 
 function check_tls_validity() {
-  ./kubectl get secret "${SECRET}" -o 'jsonpath={.data}' | jq -r '.["tls.crt"]' | base64 -d | openssl x509 -checkend 2592000 -noout -in -
+  ./kubectl get secret "${SECRET}" --namespace kctf-system -o 'jsonpath={.data}' | jq -r '.["tls.crt"]' | base64 -d | openssl x509 -checkend 2592000 -noout -in -
 }
 
 while true; do

@@ -50,8 +50,17 @@ KCTF{$CHAL_NAME-$TIMESTAMP:$MAC}
 ```
 
 
-As you can see, the flags include a timestamp and are rotated frequently. You can send us the flag [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform) before you are ready to disclose the exploit as we can use it to resolve the timing in case of an exploit collision (we will reward whoever was the first to obtain and record the submission of a flag). Otherwise, once the vulnerability is fixed, please contact us at [g.co/vulnz](https://g.co/vulnz).
+As you can see, the flags include a timestamp and are rotated frequently.
 
+### Submission
+
+We want to avoid learning about unfixed vulnerabilities, so the process to submit reports is:
+  1. Test your exploit - we recommend you to test it locally first, and run a GKE cluster to debug.
+  2. Once you have a working exploit, test it on the [lab environment](#kctf-challenge). If you have troubles let us know [here](https://github.com/google/kctf/issues) and we'll help you figure out any problems.
+  3. Once you get the flag, send it [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform). You won't share any technical details about the vulnerability, you will just record the fact you found something (as we only reward the first person that writes an exploit for a given bug, we use it to resolve the timing in case of an exploit collision).
+  4. Once the vulnerability is fixed, please contact us at [g.co/vulnz](https://g.co/vulnz) and include:
+     1. The patch that fixed the vulnerability.
+     2. The exploit you used to trigger it.
 
 ### Notes
 
