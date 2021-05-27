@@ -317,7 +317,7 @@ function kctf_chal_debug_ssh {
     for (( i=1;  i < ${#pods[@]};  i++ )); do
       otherPod="${pods[$i]}"
       otherStartTime=$(date -d "$("${KCTF_BIN}/kubectl" get "pods/${otherPod}" -o jsonpath='{.status.startTime}')" '+%s')
-      if [[ -z "$(kubectl get "pod/${otherPod}" -o jsonpath="{.status.containerStatuses[?(@.name==\"${CONTAINER}\")].state.running}")" ]]; then
+      if [[ -z "$("${KCTF_BIN}/kubectl" get "pod/${otherPod}" -o jsonpath="{.status.containerStatuses[?(@.name==\"${CONTAINER}\")].state.running}")" ]]; then
         _kctf_log_warn "skipping pod/${otherPod} since the container \"${CONTAINER}\" is not running"
         continue
       fi
