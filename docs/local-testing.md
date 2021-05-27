@@ -53,7 +53,7 @@ Note that this has some security implications due to an increased kernel attack 
 kCTF has an SDK that requires you to install kCTF in a directory. All challenges should be under the directory where the kCTF SDK is installed.
 ```bash
 mkdir ctf-directory && cd ctf-directory
-curl -sSL https://kctf.dev/sdk_1_0 | tar xz
+curl -sSL https://kctf.dev/sdk | tar xz
 source kctf/activate
 ```
 
