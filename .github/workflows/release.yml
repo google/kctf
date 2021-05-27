@@ -51,5 +51,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
           asset_path: kctf.tgz
-          asset_name: kctf_${{ github.event.inputs.version }}.tgz
+          asset_name: kctf.tgz
           asset_content_type: application/gzip
