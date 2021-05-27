@@ -16,12 +16,13 @@
 FROM ubuntu:20.04 as nsjail
 
 ENV BUILD_PACKAGES build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev ca-certificates
+ENV NSJAIL_COMMIT 4be95952340bd1339889174d3a9158d636985813
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends $BUILD_PACKAGES \
     && rm -rf /var/lib/apt/lists/* \
     && git clone https://github.com/google/nsjail.git \
-    && cd /nsjail && make -j && cp nsjail /usr/bin/ \
+    && cd /nsjail && git checkout $NSJAIL_COMMIT && make -j && cp nsjail /usr/bin/ \
     && rm -R /nsjail && apt-get remove --purge -y $BUILD_PACKAGES $(apt-mark showauto)
 
 # challenge image
