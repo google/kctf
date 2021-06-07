@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import base64
+import os
 import secrets
 import socket
 import sys
@@ -115,13 +116,14 @@ def main():
         sys.stdout.write("Solution? ")
         sys.stdout.flush()
         solution = ''
-        while not solution:
-            line = sys.stdin.readline()
-            if not line:
-                sys.stdout.write("EOF")
-                sys.stdout.flush()
-                sys.exit(1)
-            solution = line.strip()
+        with os.fdopen(0, "rb", 0) as f:
+            while not solution:
+                line = f.readline().decode("utf-8")
+                if not line:
+                    sys.stdout.write("EOF")
+                    sys.stdout.flush()
+                    sys.exit(1)
+                solution = line.strip()
 
         if verify_challenge(challenge, solution):
             sys.stdout.write("Correct\n")
