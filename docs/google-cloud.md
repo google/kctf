@@ -171,7 +171,7 @@ If there were any errors deploying the challenge, they should be visible here.
 In the next step we'll see how to edit the challenge, add a proof of work to prevent abuse, and push an update.
 
 ## Add a proof of work
-To add a proof of work, edit the configuration of the challenge in `config/pow.conf`:
+To add a proof of work, edit the configuration of the challenge:
 
 1. Open `challenge.yaml` and change `powDifficultySeconds` from 0 to 10.
     ```bash
