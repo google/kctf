@@ -68,9 +68,33 @@ COPY bot.js /home/user/
 COPY cookie /home/user/
 RUN cd /home/user && npm install puppeteer
 
+ENV DOMAIN="www.example.com"
+# Hosting multiple web challenges same-site to each other can lead to
+# unintended solutions. E.g. an xss on a.foo.com will be able to overwrite
+# cookies on b.foo.com.
+# To prevent this, we can block chrome from accessing any subdomains under
+# foo.com except for the real challenge domain using a PAC script.
+# Unfortunately, PAC will not work in chrome headless mode, so this will use
+# more resources.
+ENV BLOCK_SUBORIGINS="1"
+ENV REGISTERED_DOMAIN="example.com"
+
+RUN if [ "${BLOCK_SUBORIGINS}" = "1" ]; then \
+      apt-get update \
+      && apt-get install -yq --no-install-recommends xvfb \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN sed -i -e "s/DOMAIN_SET_IN_DOCKERFILE/${DOMAIN}/" /home/user/cookie
+
 CMD kctf_setup && \
     mount -t tmpfs none /tmp && \
-    while true; do kctf_drop_privs /usr/bin/node /home/user/bot.js; done & \
+    while true; do \
+      if [ "${BLOCK_SUBORIGINS}" = "1" ]; then \
+        kctf_drop_privs env BLOCK_SUBORIGINS="${BLOCK_SUBORIGINS}" DOMAIN="${DOMAIN}" REGISTERED_DOMAIN="${REGISTERED_DOMAIN}" xvfb-run /usr/bin/node /home/user/bot.js; \
+      else \
+        kctf_drop_privs env BLOCK_SUBORIGINS="${BLOCK_SUBORIGINS}" DOMAIN="${DOMAIN}" REGISTERED_DOMAIN="${REGISTERED_DOMAIN}" /usr/bin/node /home/user/bot.js; \
+      fi; \
+    done & \
     kctf_drop_privs \
     socat \
       TCP-LISTEN:1337,reuseaddr,fork \
