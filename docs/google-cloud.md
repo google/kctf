@@ -173,7 +173,7 @@ In the next step we'll see how to edit the challenge, add a proof of work to pre
 ## Add a proof of work
 To add a proof of work, edit the configuration of the challenge:
 
-1. Open `challenge.yaml` and change `powDifficultySeconds` from 0 to 10.
+1. Open `challenge.yaml` and change `powDifficultySeconds` from 0 to 1.
     ```bash
     emacs challenge.yaml
     ```
@@ -182,7 +182,7 @@ To add a proof of work, edit the configuration of the challenge:
     kctf chal start
     ```
 
-  **Note**: This is a very weak proof of work (strength of 0.1 seconds). For it to be useful in a real CTF, you probably want to set it to 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 10.
+  **Note**: This is a very weak proof of work (strength of 1 second). For it to be useful in a real CTF, you probably want to set it to 10 seconds of work, or more. That said, for this walkthrough, let's take it easy, and leave it at 1.
 
 Once the challenge is updated, run:
 ```bash
