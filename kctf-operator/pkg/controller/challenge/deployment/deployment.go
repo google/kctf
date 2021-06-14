@@ -68,12 +68,11 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem = &readOnlyRootFilesystem
 	}
 	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities == nil {
-		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities = &corev1.Capabilities{
-			Add: []corev1.Capability{
-				"SYS_ADMIN",
-			},
-		}
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities = &corev1.Capabilities{};
 	}
+    
+	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add =
+		append(deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add, "SYS_ADMIN")
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
