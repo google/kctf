@@ -61,13 +61,18 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
 	// Set other container's configurations
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
-	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{
-		Capabilities: &corev1.Capabilities{
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{}
+	}
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem = &readOnlyRootFilesystem
+	}
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities = &corev1.Capabilities{
 			Add: []corev1.Capability{
 				"SYS_ADMIN",
 			},
-		},
-		ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
+		}
 	}
 
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Resources = corev1.ResourceRequirements{
