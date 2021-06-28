@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
+	backendv1 "github.com/google/kctf/pkg/apis/cloud/v1"
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
@@ -20,7 +21,10 @@ import (
 )
 
 func isServiceEqual(serviceFound *corev1.Service, serv *corev1.Service) bool {
-	return equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports)
+	if !equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
+		return false
+	}
+	return reflect.DeepEqual(serviceFound.Spec.LoadBalancerSourceRanges, serv.Spec.LoadBalancerSourceRanges)
 }
 
 func isIngressEqual(ingressFound *netv1beta1.Ingress, ingress *netv1beta1.Ingress) bool {
@@ -48,6 +52,11 @@ func copyPorts(found *corev1.Service, wanted *corev1.Service) {
 	found.Spec.Ports = append(found.Spec.Ports, wanted.Spec.Ports...)
 }
 
+func copyLoadBalancerSourceRanges(existingService *corev1.Service, newService *corev1.Service) {
+	existingService.Spec.LoadBalancerSourceRanges = []string{}
+	existingService.Spec.LoadBalancerSourceRanges = append(existingService.Spec.LoadBalancerSourceRanges, newService.Spec.LoadBalancerSourceRanges...)
+}
+
 func updateInternalService(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme, log logr.Logger, ctx context.Context) (bool, error) {
 	newService := generateNodePortService(challenge)
 	existingService := &corev1.Service{}
@@ -65,6 +74,7 @@ func updateInternalService(challenge *kctfv1.Challenge, client client.Client, sc
 		}
 
 		copyPorts(existingService, newService)
+
 		err = client.Update(ctx, existingService)
 		if err != nil {
 			return false, err
@@ -88,6 +98,31 @@ func updateInternalService(challenge *kctfv1.Challenge, client client.Client, sc
 		newService.Name, " with namespace ", newService.Namespace)
 
 	return true, nil
+}
+
+func updateBackendConfig(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+	existingConfig := &backendv1.BackendConfig{}
+	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingConfig)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	configExists := err == nil
+
+	if configExists {
+		// Currently, the config doesn't change. It always just points to the same security policy.
+		// If we allow configuring more features, we will need to implement updating the existing config.
+		return false, nil
+	}
+
+	newConfig := generateBackendConfig(challenge)
+
+	controllerutil.SetControllerReference(challenge, newConfig, scheme)
+
+	err = client.Create(ctx, newConfig)
+
+	return true, err
 }
 
 func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
@@ -161,8 +196,15 @@ func updateLoadBalancerService(challenge *kctfv1.Challenge, client client.Client
 
 		copyPorts(existingService, newService)
 		existingService.ObjectMeta.Annotations = newService.ObjectMeta.Annotations
+		copyLoadBalancerSourceRanges(existingService, newService)
 
 		err := client.Update(ctx, existingService)
+
+		if err == nil {
+			log.Info("Updated load balancer service", " Name: ", newService.Name, " with namespace ", newService.Namespace)
+		} else {
+			log.Error(err, "Failed to update load balancer service", " Name: ", newService.Name, " with namespace ", newService.Namespace)
+		}
 
 		return true, err
 	}
@@ -229,6 +271,14 @@ func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.S
 		return false, err
 	}
 	changed = changed || loadBalancerServiceChanged
+
+	backendConfigChanged, err := updateBackendConfig(challenge, client, scheme, log, ctx)
+	if err != nil {
+		log.Error(err, "Error updating backend config for load balancer", " Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return false, err
+	}
+	changed = changed || backendConfigChanged
 
 	ingressChanged, err := updateIngress(challenge, client, scheme, log, ctx)
 	if err != nil {

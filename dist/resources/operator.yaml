@@ -31,6 +31,8 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "kctf-operator"
+            - name: ALLOWED_IPS
+              value: "0.0.0.0/0"
           readinessProbe:
             exec:
               command:
