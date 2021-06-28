@@ -321,6 +321,11 @@ EOF
 }
 
 function kctf_cluster_get_ip_ranges {
+  if [[ "${CLUSTER_TYPE}" != "gce" ]]; then
+    _kctf_log_err "this command is only supported for GCE clusters"
+    return
+  fi
+
   get_cloud_armor_policy || return
   _kctf_log "Current IP range: \"$ret\""
 }
@@ -332,6 +337,11 @@ function kctf_cluster_ip_ranges_usage {
 }
 
 function kctf_cluster_ip_ranges {
+  if [[ "${CLUSTER_TYPE}" != "gce" ]]; then
+    _kctf_log_err "this command is only supported for GCE clusters"
+    return
+  fi
+
   OPTS="h"
   LONGOPTS="help"
   PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster set-src-ip-ranges" -- "$@")
