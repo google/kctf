@@ -842,8 +842,8 @@ function kctf_cluster_usage {
   echo -e "  start:             start the cluster" >&2
   echo -e "  stop:              stop the cluster" >&2
   echo -e "  resize:            resize the cluster" >&2
-  echo -e "  set-src-ip-ranges: allow a range of IPs to access the services" >&2
-  echo -e "  get-src-ip-ranges: print the current allowed IP range" >&2
+  echo -e "  set-src-ip-ranges: allow ranges of IPs to access the services" >&2
+  echo -e "  get-src-ip-ranges: print the current allowed IP ranges" >&2
 }
 
 function check_cluster_name {
