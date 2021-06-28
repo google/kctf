@@ -396,7 +396,7 @@ function create_cloud_armor_policy {
     gcloud compute security-policies create kctf-policy || return
     gcloud compute security-policies rules create --action allow --security-policy kctf-policy --src-ip-ranges "0.0.0.0/0" 0 || return
 
-    # make sure the default policy is deny
+    # make sure the default policy (2147483647) is deny
     gcloud compute security-policies rules update --action deny-404 --security-policy kctf-policy 2147483647 || return
 
     set_cloud_armor_policy "0.0.0.0/0" || return
