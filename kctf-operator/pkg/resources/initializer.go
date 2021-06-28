@@ -17,14 +17,22 @@ var log logr.Logger = logf.Log.WithName("cmd")
 func InitializeOperator(client *client.Client) error {
 	// Creates the objects that enable the DNS, external DNS and etc
 
+	// Create the tls secret separately since we don't want to overwrite it if it exists
+	tlsSecret := NewSecretTls()
+	err := (*client).Create(context.Background(), tlsSecret)
+	if err != nil && !errors.IsNotFound(err) {
+		log.Error(err, "Could not create TLS secret")
+		return err
+	}
+
 	objectFunctions := []func() runtime.Object{NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
 		NewExternalDnsDeployment, NewDaemonSetGcsFuse, NewSecretPowBypass,
-		NewSecretPowBypassPub, NewNetworkPolicyBlockInternal, NewAllowDns, NewSecretTls}
+		NewSecretPowBypassPub, NewNetworkPolicyBlockInternal, NewAllowDns}
 
 	names := []string{
 		"External DNS Cluster Role", "External DNS Cluster Role Binding", "External DNS Deployment",
 		"Daemon Set Gcs Fuse", "Secret for PowBypass", "Secret for PowBypassPub",
-		"Network Policy Block Internal", "Allow DNS", "TLS Secret"}
+		"Network Policy Block Internal", "Allow DNS"}
 
 	for i, newObject := range objectFunctions {
 
@@ -37,6 +45,7 @@ func InitializeOperator(client *client.Client) error {
 		if err != nil {
 			if errors.IsAlreadyExists(err) {
 				log.Info("This object already exists.", "Name: ", names[i])
+
 				// Try to update the resource instead
 				err = (*client).Update(context.Background(), obj)
 			}

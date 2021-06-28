@@ -42,7 +42,6 @@ while true; do
   sleep 2m
   if check_tls_validity; then
     echo "Certificate is valid for at least 30 days"
-    sleep 1d
   else
     request_certificate && update_tls_secret && echo "TLS cert updated"
   fi
