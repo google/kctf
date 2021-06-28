@@ -1,8 +1,12 @@
 package service
 
 import (
+	"fmt"
+	"os"
 	"strconv"
+	"strings"
 
+	backendv1 "github.com/google/kctf/pkg/apis/cloud/v1"
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
@@ -13,9 +17,10 @@ import (
 func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      challenge.Name,
-			Namespace: challenge.Namespace,
-			Labels:    map[string]string{"app": challenge.Name},
+			Name:        challenge.Name,
+			Namespace:   challenge.Namespace,
+			Labels:      map[string]string{"app": challenge.Name},
+			Annotations: map[string]string{"cloud.google.com/backend-config": fmt.Sprintf("{\"default\": \"%s\"}", challenge.Name)},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": challenge.Name},
@@ -59,13 +64,28 @@ func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 	return service
 }
 
+func generateBackendConfig(challenge *kctfv1.Challenge) *backendv1.BackendConfig {
+	config := &backendv1.BackendConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      challenge.Name,
+			Namespace: challenge.Namespace,
+		},
+		Spec: backendv1.BackendConfigSpec{
+			SecurityPolicy: &backendv1.SecurityPolicyConfig{
+				Name: os.Getenv("SECURITY_POLICY"),
+			},
+		},
+	}
+	return config
+}
+
 func generateIngress(domainName string, challenge *kctfv1.Challenge) *netv1beta1.Ingress {
 	// Ingress object
 	ingress := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        challenge.Name,
-			Namespace:   challenge.Namespace,
-			Labels:      map[string]string{"app": challenge.Name},
+			Name:      challenge.Name,
+			Namespace: challenge.Namespace,
+			Labels:    map[string]string{"app": challenge.Name},
 		},
 		Spec: netv1beta1.IngressSpec{
 			TLS: []netv1beta1.IngressTLS{{
@@ -109,8 +129,9 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1.Challenge)
 			Labels:    map[string]string{"app": challenge.Name},
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": challenge.Name},
-			Type:     "LoadBalancer",
+			Selector:                 map[string]string{"app": challenge.Name},
+			Type:                     "LoadBalancer",
+			LoadBalancerSourceRanges: strings.Split(os.Getenv("ALLOWED_IPS"), ","),
 		},
 	}
 
