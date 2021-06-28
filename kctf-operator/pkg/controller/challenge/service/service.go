@@ -72,7 +72,7 @@ func generateBackendConfig(challenge *kctfv1.Challenge) *backendv1.BackendConfig
 		},
 		Spec: backendv1.BackendConfigSpec{
 			SecurityPolicy: &backendv1.SecurityPolicyConfig{
-				Name: "kctf-policy",
+				Name: os.Getenv("SECURITY_POLICY"),
 			},
 		},
 	}

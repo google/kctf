@@ -389,25 +389,35 @@ function kctf_cluster_ip_ranges {
 function start_operator_gce {
   get_cloud_armor_policy || return
   RANGES=$ret
+  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+  POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
   # restart the operator with the new range
-  "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" | "${KCTF_BIN}/kubectl" apply -f - || return
+  "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
+    | "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"SECURITY_POLICY\")).value = \"${POLICY_NAME}\"" - \
+    | "${KCTF_BIN}/kubectl" apply -f - || return
 }
 
 function set_cloud_armor_policy {
-  gcloud compute security-policies rules update --action allow --security-policy kctf-policy --src-ip-ranges "$1" 0 || return
+  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+  POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
+  gcloud compute security-policies rules update --action allow --security-policy "${POLICY_NAME}" --src-ip-ranges "$1" 0 || return
 }
 
 function get_cloud_armor_policy {
-  ret=$(gcloud compute security-policies rules describe --security-policy kctf-policy 0 --format 'value[delimiter=","](match.config.srcIpRanges)')
+  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+  POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
+  ret=$(gcloud compute security-policies rules describe --security-policy "${POLICY_NAME}" 0 --format 'value[delimiter=","](match.config.srcIpRanges)')
 }
 
 function create_cloud_armor_policy {
-  if [[ -z $(gcloud compute security-policies list --filter "name=kctf-policy" --format 'get(name)') ]]; then
-    gcloud compute security-policies create kctf-policy || return
-    gcloud compute security-policies rules create --action allow --security-policy kctf-policy --src-ip-ranges "0.0.0.0/0" 0 || return
+  SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
+  POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
+  if [[ -z $(gcloud compute security-policies list --filter "name="${POLICY_NAME}"" --format 'get(name)') ]]; then
+    gcloud compute security-policies create "${POLICY_NAME}" || return
+    gcloud compute security-policies rules create --action allow --security-policy "${POLICY_NAME}" --src-ip-ranges "0.0.0.0/0" 0 || return
 
     # make sure the default policy (2147483647) is deny
-    gcloud compute security-policies rules update --action deny-404 --security-policy kctf-policy 2147483647 || return
+    gcloud compute security-policies rules update --action deny-404 --security-policy "${POLICY_NAME}" 2147483647 || return
 
     set_cloud_armor_policy "0.0.0.0/0" || return
   fi

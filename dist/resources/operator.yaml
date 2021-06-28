@@ -33,6 +33,8 @@ spec:
               value: "kctf-operator"
             - name: ALLOWED_IPS
               value: "0.0.0.0/0"
+            - name: SECURITY_POLICY
+              value: "kctf-policy"
           readinessProbe:
             exec:
               command:
