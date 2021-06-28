@@ -320,11 +320,98 @@ EOF
   echo "${CONFIG_NAME}"
 }
 
+function kctf_cluster_get_ip_ranges {
+  get_cloud_armor_policy || return
+  _kctf_log "Current IP range: \"$ret\""
+}
+
+function kctf_cluster_ip_ranges_usage {
+  echo "usage: kctf cluster set-src-ip-ranges ranges" >&2
+  echo "  -h|--help       print this help" >&2
+  echo "  ranges          ip ranges to allow of the form 1.1.1.1/32,2.2.2.0/24" >&2
+}
+
+function kctf_cluster_ip_ranges {
+  OPTS="h"
+  LONGOPTS="help"
+  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster set-src-ip-ranges" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    kctf_cluster_ip_ranges_usage
+    return 1
+  fi
+  eval set -- "$PARSED"
+
+  while true; do
+    case "$1" in
+      -h|--help)
+        kctf_cluster_ip_ranges_usage
+        return 1
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        _kctf_log_err "Unrecognized argument \"$1\"."
+        kctf_cluster_ip_ranges_usage
+        return 1
+        ;;
+    esac
+  done
+
+  if [[ $# -ne 1 ]]; then
+    _kctf_log_err "kctf cluster set-src-ip-ranges: expecting a single range argument"
+    kctf_cluster_ip_ranges_usage
+    return 1
+  fi
+
+  RANGES="$1"
+
+  # update the cloud armor policy
+  set_cloud_armor_policy "${RANGES}" || return
+
+  # stop the operator
+  "${KCTF_BIN}/kubectl" delete -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
+
+  start_operator_gce || return
+}
+
+function start_operator_gce {
+  get_cloud_armor_policy || return
+  RANGES=$ret
+  # restart the operator with the new range
+  "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" | "${KCTF_BIN}/kubectl" apply -f - || return
+}
+
+function set_cloud_armor_policy {
+  gcloud compute security-policies rules update --action allow --security-policy kctf-policy --src-ip-ranges "$1" 0 || return
+}
+
+function get_cloud_armor_policy {
+  ret=$(gcloud compute security-policies rules describe --security-policy kctf-policy 0 --format 'value[delimiter=","](match.config.srcIpRanges)')
+}
+
+function create_cloud_armor_policy {
+  if [[ -z $(gcloud compute security-policies list --filter "name=kctf-policy" --format 'get(name)') ]]; then
+    gcloud compute security-policies create kctf-policy || return
+    gcloud compute security-policies rules create --action allow --security-policy kctf-policy --src-ip-ranges "0.0.0.0/0" 0 || return
+
+    # make sure the default policy is deny
+    gcloud compute security-policies rules update --action deny-404 --security-policy kctf-policy 2147483647 || return
+
+    set_cloud_armor_policy "0.0.0.0/0" || return
+  fi
+}
+
 function create_operator {
   # Creating CRD, rbac and operator
   "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml" || return
   "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml" || return
-  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
+  if [[ "$CLUSTER_TYPE" == "gce" ]]; then
+    start_operator_gce
+  else
+    "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
+  fi
 
   OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
   if [[ $? -ne 0 ]]; then
@@ -449,7 +536,7 @@ function kctf_cluster_start_gce {
 
   if [ ! -z "${DOMAIN_NAME}" ]; then
     ZONE_NAME="$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')-dns-zone"
-    
+
     DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')
     if [ -z "${DNS_ZONE}" ]; then
       _kctf_log "creating new managed-zone \"${ZONE_NAME}\""
@@ -527,6 +614,8 @@ function kctf_cluster_start_gce {
 
     "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
   fi
+
+  create_cloud_armor_policy || return
 
   create_operator || return
 }
@@ -747,12 +836,14 @@ function kctf_cluster_resize {
 function kctf_cluster_usage {
   echo -e "usage: kctf cluster command" >&2
   echo -e "available commands:" >&2
-  echo -e "  create: create a new cluster config" >&2
-  echo -e "  list:   list available cluster configs" >&2
-  echo -e "  load:   load an existing cluster config" >&2
-  echo -e "  start:  start the cluster" >&2
-  echo -e "  stop:   stop the cluster" >&2
-  echo -e "  resize: resize the cluster" >&2
+  echo -e "  create:            create a new cluster config" >&2
+  echo -e "  list:              list available cluster configs" >&2
+  echo -e "  load:              load an existing cluster config" >&2
+  echo -e "  start:             start the cluster" >&2
+  echo -e "  stop:              stop the cluster" >&2
+  echo -e "  resize:            resize the cluster" >&2
+  echo -e "  set-src-ip-ranges: allow a range of IPs to access the services" >&2
+  echo -e "  get-src-ip-ranges: print the current allowed IP range" >&2
 }
 
 function check_cluster_name {
@@ -801,6 +892,14 @@ case "$1" in
   load)
     shift
     kctf_cluster_load $@
+    ;;
+  set-src-ip-ranges)
+    shift
+    kctf_cluster_ip_ranges $@
+    ;;
+  get-src-ip-ranges)
+    shift
+    kctf_cluster_get_ip_ranges $@
     ;;
   *)
     _kctf_log_err "unknown command"
