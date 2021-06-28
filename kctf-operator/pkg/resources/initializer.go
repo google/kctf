@@ -20,7 +20,7 @@ func InitializeOperator(client *client.Client) error {
 	// Create the tls secret separately since we don't want to overwrite it if it exists
 	tlsSecret := NewSecretTls()
 	err := (*client).Create(context.Background(), tlsSecret)
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Error(err, "Could not create TLS secret")
 		return err
 	}
