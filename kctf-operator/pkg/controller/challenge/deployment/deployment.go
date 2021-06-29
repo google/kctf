@@ -5,7 +5,6 @@ import (
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,18 +69,9 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities == nil {
 		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities = &corev1.Capabilities{};
 	}
-    
+
 	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add =
 		append(deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add, "SYS_ADMIN")
-
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			"cpu": *resource.NewMilliQuantity(900, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			"cpu": *resource.NewMilliQuantity(450, resource.DecimalSI),
-		},
-	}
 
 	volumeMounts := []corev1.VolumeMount{
 		{
