@@ -182,6 +182,9 @@ func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *ru
 	ingressExists := err == nil
 
 	port := findHTTPSPort(challenge)
+	// Only one https port is supported at the moment.
+        // To support more, we will need a field to specify the domain name per ingress.
+	
 	if port == nil {
 		if ingressExists {
 			err := client.Delete(ctx, existingIngress)
