@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
+	gkenetv1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1"
 	"github.com/go-logr/logr"
 	backendv1 "github.com/google/kctf/pkg/apis/cloud/v1"
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
@@ -25,6 +26,10 @@ func isServiceEqual(serviceFound *corev1.Service, serv *corev1.Service) bool {
 		return false
 	}
 	return reflect.DeepEqual(serviceFound.Spec.LoadBalancerSourceRanges, serv.Spec.LoadBalancerSourceRanges)
+}
+
+func isCertEqual(existingCert *gkenetv1.ManagedCertificate, newCert *gkenetv1.ManagedCertificate) bool {
+	return reflect.DeepEqual(existingCert.Spec.Domains, newCert.Spec.Domains)
 }
 
 func isIngressEqual(ingressFound *netv1beta1.Ingress, ingress *netv1beta1.Ingress) bool {
@@ -125,6 +130,47 @@ func updateBackendConfig(challenge *kctfv1.Challenge, client client.Client, sche
 	return true, err
 }
 
+func updateManagedCertificate(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+
+	existingCert := &gkenetv1.ManagedCertificate{}
+	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingCert)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
+	}
+	certExists := err == nil
+
+	port := findHTTPSPort(challenge)
+	if port == nil || port.Domains == nil {
+		if certExists {
+			err := client.Delete(ctx, existingCert)
+			return true, err
+		}
+		return false, nil
+	}
+
+	newCert := generateManagedCertificate(challenge, port.Domains)
+
+	if certExists {
+		if isCertEqual(existingCert, newCert) {
+			return false, nil
+		}
+
+		existingCert.Spec.Domains = newCert.Spec.Domains
+
+		err := client.Update(ctx, existingCert)
+
+		return true, err
+	}
+
+	controllerutil.SetControllerReference(challenge, newCert, scheme)
+
+	err = client.Create(ctx, newCert)
+
+	return true, err
+}
+
 func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 	existingIngress := &netv1beta1.Ingress{}
@@ -135,15 +181,22 @@ func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *ru
 	}
 	ingressExists := err == nil
 
-	domainName := utils.GetDomainName(challenge, client, log, ctx)
-	newIngress := generateIngress(domainName, challenge)
-
-	if ingressExists {
-		if newIngress.Spec.Backend == nil || challenge.Spec.Network.Public == false {
+	port := findHTTPSPort(challenge)
+	// Only one https port is supported at the moment.
+        // To support more, we will need a field to specify the domain name per ingress.
+	
+	if port == nil {
+		if ingressExists {
 			err := client.Delete(ctx, existingIngress)
 			return true, err
 		}
+		return false, nil
+	}
 
+	domainName := utils.GetDomainName(challenge, client, log, ctx)
+	newIngress := generateIngress(domainName, challenge, port)
+
+	if ingressExists {
 		if isIngressEqual(existingIngress, newIngress) {
 			return false, nil
 		}
@@ -279,6 +332,14 @@ func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.S
 		return false, err
 	}
 	changed = changed || backendConfigChanged
+
+	managedCertificateChanged, err := updateManagedCertificate(challenge, client, scheme, log, ctx)
+	if err != nil {
+		log.Error(err, "Error updating ManagedCertificate", " Name: ",
+			challenge.Name, " with namespace ", challenge.Namespace)
+		return false, err
+	}
+	changed = changed || managedCertificateChanged
 
 	ingressChanged, err := updateIngress(challenge, client, scheme, log, ctx)
 	if err != nil {
