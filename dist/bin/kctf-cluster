@@ -555,10 +555,10 @@ function kctf_cluster_start_gce {
   # Cloud DNS
 
   if [ ! -z "${DOMAIN_NAME}" ]; then
-    ZONE_NAME="kctf-$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')"
+    ZONE_NAME=$(gcloud dns managed-zones list --filter "dns_name:${DOMAIN_NAME}." --format 'get(name)')
 
-    DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')
-    if [ -z "${DNS_ZONE}" ]; then
+    if [ -z "${ZONE_NAME}" ]; then
+      ZONE_NAME="kctf-$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')"
       _kctf_log "creating new managed-zone \"${ZONE_NAME}\""
       gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}." || return
       soa_ttl="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(ttl)')"
