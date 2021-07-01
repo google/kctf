@@ -177,7 +177,9 @@ func (in *NetworkSpec) DeepCopyInto(out *NetworkSpec) {
 	if in.Ports != nil {
 		in, out := &in.Ports, &out.Ports
 		*out = make([]PortSpec, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	return
 }
@@ -196,6 +198,11 @@ func (in *NetworkSpec) DeepCopy() *NetworkSpec {
 func (in *PortSpec) DeepCopyInto(out *PortSpec) {
 	*out = *in
 	out.TargetPort = in.TargetPort
+	if in.Domains != nil {
+		in, out := &in.Domains, &out.Domains
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

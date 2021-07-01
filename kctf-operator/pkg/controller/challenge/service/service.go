@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	gkenetv1 "github.com/GoogleCloudPlatform/gke-managed-certs/pkg/apis/networking.gke.io/v1"
 	backendv1 "github.com/google/kctf/pkg/apis/cloud/v1"
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -79,13 +80,42 @@ func generateBackendConfig(challenge *kctfv1.Challenge) *backendv1.BackendConfig
 	return config
 }
 
-func generateIngress(domainName string, challenge *kctfv1.Challenge) *netv1beta1.Ingress {
-	// Ingress object
-	ingress := &netv1beta1.Ingress{
+func findHTTPSPort(challenge *kctfv1.Challenge) *kctfv1.PortSpec {
+	for _, port := range challenge.Spec.Network.Ports {
+		// non-HTTPS is handled by generateLoadBalancerService
+		if port.Protocol != "HTTPS" {
+			continue
+		}
+		return &port
+	}
+	return nil
+}
+
+func generateManagedCertificate(challenge *kctfv1.Challenge, domains []string) *gkenetv1.ManagedCertificate {
+	cert := &gkenetv1.ManagedCertificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      challenge.Name,
 			Namespace: challenge.Namespace,
 			Labels:    map[string]string{"app": challenge.Name},
+		},
+		Spec: gkenetv1.ManagedCertificateSpec{
+			Domains: domains,
+		},
+		Status: gkenetv1.ManagedCertificateStatus{
+			DomainStatus: []gkenetv1.DomainStatus{},
+		},
+	}
+	return cert
+}
+
+func generateIngress(domainName string, challenge *kctfv1.Challenge, port *kctfv1.PortSpec) *netv1beta1.Ingress {
+	// Ingress object
+	ingress := &netv1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        challenge.Name,
+			Namespace:   challenge.Namespace,
+			Labels:      map[string]string{"app": challenge.Name},
+			Annotations: map[string]string{},
 		},
 		Spec: netv1beta1.IngressSpec{
 			TLS: []netv1beta1.IngressTLS{{
@@ -97,24 +127,18 @@ func generateIngress(domainName string, challenge *kctfv1.Challenge) *netv1beta1
 		},
 	}
 
-	for _, port := range challenge.Spec.Network.Ports {
-		// non-HTTPS is handled by generateLoadBalancerService
-		if port.Protocol != "HTTPS" {
-			continue
-		}
+	servicePort := port.Port
+	if servicePort == 0 {
+		servicePort = port.TargetPort.IntVal
+	}
 
-		servicePort := port.Port
-		if servicePort == 0 {
-			servicePort = port.TargetPort.IntVal
-		}
+	ingress.Spec.Backend = &netv1beta1.IngressBackend{
+		ServiceName: challenge.Name,
+		ServicePort: intstr.FromInt(int(servicePort)),
+	}
 
-		ingress.Spec.Backend = &netv1beta1.IngressBackend{
-			ServiceName: challenge.Name,
-			ServicePort: intstr.FromInt(int(servicePort)),
-		}
-		// Only one https port is supported at the moment.
-		// To support more, we will need a field to specify the domain name per ingress.
-		break
+	if port.Domains != nil {
+		ingress.Annotations["networking.gke.io/managed-certificates"] = challenge.Name
 	}
 
 	return ingress
