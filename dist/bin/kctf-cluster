@@ -555,7 +555,7 @@ function kctf_cluster_start_gce {
   # Cloud DNS
 
   if [ ! -z "${DOMAIN_NAME}" ]; then
-    ZONE_NAME="$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')-dns-zone"
+    ZONE_NAME="kctf-$(echo ${DOMAIN_NAME} | sed 's/[.]/--/g')"
 
     DNS_ZONE=$(gcloud dns managed-zones list --filter "name:${ZONE_NAME}" --format 'get(name)')
     if [ -z "${DNS_ZONE}" ]; then
