@@ -120,6 +120,12 @@ spec:
                           - type: string
                           description: TargetPort is not optional
                           x-kubernetes-int-or-string: true
+                        domains:
+                          description: Extra domains to get certificates for. Only used for protocol HTTPS.
+                            You need set up DNS manually by adding a CNAME entry from domain to chal-web.ctf.tld.
+                          items:
+                            type: string
+                          type: array
                       required:
                       - protocol
                       - targetPort

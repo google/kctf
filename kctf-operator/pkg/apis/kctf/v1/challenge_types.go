@@ -23,6 +23,9 @@ type PortSpec struct {
 	// Protocol is not optional
 	// +kubebuilder:validation:Required
 	Protocol corev1.Protocol `json:"protocol"`
+
+	// Extra domains for managed certificates. Only used for type HTTPS.
+	Domains []string `json:"domains,omitempty"`
 }
 
 // Network specifications for the service

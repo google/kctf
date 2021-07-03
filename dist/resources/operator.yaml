@@ -16,7 +16,7 @@ spec:
       serviceAccountName: kctf-operator
       containers:
         - name: kctf-operator
-          image: gcr.io/kctf-docker/kctf-operator@sha256:09367cbd2efcfb0888ea1140f1b1ba6185e78404b5eaa59d6dab4e7ae8d17335
+          image: gcr.io/kctf-docker/kctf-operator@sha256:5d8dea60ae41bb6b1834d092ffbfeddb94758dd73c566c511d8c8d9c9b9f884a
           command:
           - kctf-operator
           imagePullPolicy: Always
@@ -31,6 +31,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "kctf-operator"
+            - name: ALLOWED_IPS
+              value: "0.0.0.0/0"
+            - name: SECURITY_POLICY
+              value: "kctf-policy"
           readinessProbe:
             exec:
               command:

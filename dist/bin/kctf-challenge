@@ -21,7 +21,7 @@ function has_cluster_config {
 
 function require_cluster_config {
   if ! has_cluster_config; then
-    _kctf_log_err "No config loaded. You need to run \"kctf config\" first."
+    _kctf_log_err "No config loaded. You need to run \"kctf cluster\" first."
     exit 1
   fi
 }

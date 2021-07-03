@@ -5,7 +5,6 @@ import (
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,23 +60,18 @@ func deployment(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Ports = containerPorts(challenge)
 	// Set other container's configurations
 	deployment.Spec.Template.Spec.Containers[idx_challenge].Image = challenge.Spec.Image
-	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{
-		Capabilities: &corev1.Capabilities{
-			Add: []corev1.Capability{
-				"SYS_ADMIN",
-			},
-		},
-		ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext = &corev1.SecurityContext{}
+	}
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.ReadOnlyRootFilesystem = &readOnlyRootFilesystem
+	}
+	if deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities == nil {
+		deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities = &corev1.Capabilities{};
 	}
 
-	deployment.Spec.Template.Spec.Containers[idx_challenge].Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			"cpu": *resource.NewMilliQuantity(900, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			"cpu": *resource.NewMilliQuantity(450, resource.DecimalSI),
-		},
-	}
+	deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add =
+		append(deployment.Spec.Template.Spec.Containers[idx_challenge].SecurityContext.Capabilities.Add, "SYS_ADMIN")
 
 	volumeMounts := []corev1.VolumeMount{
 		{

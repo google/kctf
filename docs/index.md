@@ -38,7 +38,8 @@ If you are able to break out of it, you can [earn up to $10,000 USD](vrp.md).
 
 * [Local Testing Walkthrough](local-testing.md) – A quick start guide showing you how to build and test challenges locally.
 * [kCTF in 8 Minutes](introduction.md) – A quick 8-minute summary of what kCTF is and how it interacts with Kubernetes.
-* [Google Cloud Walkthrough](google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud. 
+* [Google Cloud Walkthrough](google-cloud.md) – Once you have everything up and running, try deploying to Google Cloud.
+* [Custom Domains](custom-domains.md) – How to add custom domains for your challenges.
 * [Troubleshooting](troubleshooting.md) – Help with fixing broken challenges.
 * [CTF playbook](ctf-playbook.md) – How to set up your cluster and challenges to scale during a CTF.
 * [Security Threat Model](security-threat-model.md) – Security considerations regarding kCTF including information on assets, risks, and potential attackers.
