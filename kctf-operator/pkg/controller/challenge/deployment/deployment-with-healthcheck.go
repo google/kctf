@@ -16,30 +16,38 @@ func withHealthcheck(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	idx_challenge := utils.IndexOfContainer("challenge", dep.Spec.Template.Spec.Containers)
 	idx_healthcheck := utils.IndexOfContainer("healthcheck", dep.Spec.Template.Spec.Containers)
 
+	challengeContainer := &dep.Spec.Template.Spec.Containers[idx_challenge]
+
 	// Get the container with the challenge and add healthcheck configurations
-	dep.Spec.Template.Spec.Containers[idx_challenge].LivenessProbe = &corev1.Probe{
-		FailureThreshold: 2,
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/healthz",
-				Port: intstr.FromInt(45281),
+	livenessProbe := &challengeContainer.LivenessProbe
+	if *livenessProbe == nil {
+		*livenessProbe = &corev1.Probe{
+			FailureThreshold: 2,
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/healthz",
+					Port: intstr.FromInt(45281),
+				},
 			},
-		},
-		InitialDelaySeconds: 45,
-		TimeoutSeconds:      3,
-		PeriodSeconds:       30,
+			InitialDelaySeconds: 45,
+			TimeoutSeconds:      3,
+			PeriodSeconds:       30,
+		}
 	}
 
-	dep.Spec.Template.Spec.Containers[idx_challenge].ReadinessProbe = &corev1.Probe{
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/healthz",
-				Port: intstr.FromInt(45281),
+	readinessProbe := &challengeContainer.ReadinessProbe
+	if *readinessProbe == nil {
+		*readinessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/healthz",
+					Port: intstr.FromInt(45281),
+				},
 			},
-		},
-		InitialDelaySeconds: 5,
-		TimeoutSeconds:      3,
-		PeriodSeconds:       5,
+			InitialDelaySeconds: 5,
+			TimeoutSeconds:      3,
+			PeriodSeconds:       5,
+		}
 	}
 
 	if idx_healthcheck == -1 {
@@ -50,8 +58,10 @@ func withHealthcheck(challenge *kctfv1.Challenge) *appsv1.Deployment {
 		idx_healthcheck = len(dep.Spec.Template.Spec.Containers) - 1
 	}
 
-	dep.Spec.Template.Spec.Containers[idx_healthcheck].Image = challenge.Spec.Healthcheck.Image
-	dep.Spec.Template.Spec.Containers[idx_healthcheck].Resources = corev1.ResourceRequirements{
+	healthcheckContainer := &dep.Spec.Template.Spec.Containers[idx_healthcheck]
+
+	healthcheckContainer.Image = challenge.Spec.Healthcheck.Image
+	healthcheckContainer.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			"cpu": *resource.NewMilliQuantity(1000, resource.DecimalSI),
 		},
@@ -60,7 +70,7 @@ func withHealthcheck(challenge *kctfv1.Challenge) *appsv1.Deployment {
 		},
 	}
 
-	dep.Spec.Template.Spec.Containers[idx_healthcheck].VolumeMounts = []corev1.VolumeMount{{
+	healthcheckContainer.VolumeMounts = []corev1.VolumeMount{{
 		Name:      "pow-bypass",
 		ReadOnly:  true,
 		MountPath: "/pow-bypass",
