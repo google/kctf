@@ -40,22 +40,23 @@ If you would like to have a shared directory (for sessions, or uploads), you can
 ```yaml
 spec:
   persistentVolumeClaims:
-  - name: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
-    size: 21Gi
+  - $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
   podTemplate:
-    containers:
-    - name: challenge
-      volumeMounts:
-      - name: gcsfuse
-        subPath: sessions # this this a folder inside volume
-        mountPath: /mnt/disks/sessions
-      - name: gcsfuse
-        subPath: uploads
-        mountPath: /mnt/disks/uploads
-    volumes:
-    - name: gcsfuse
-      persistentVolumeClaim:
-        claimName: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
+    template:
+      spec:
+        containers:
+        - name: challenge
+          volumeMounts:
+          - name: gcsfuse
+            subPath: sessions # this this a folder inside volume
+            mountPath: /mnt/disks/sessions
+          - name: gcsfuse
+            subPath: uploads
+            mountPath: /mnt/disks/uploads
+        volumes:
+        - name: gcsfuse
+          persistentVolumeClaim:
+            claimName: $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
 ```
 
 This will mount a file across all challenges in that directory. You can test this setup on a remote cluster using the PHP/CGI sandbox.
