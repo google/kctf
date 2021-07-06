@@ -41,7 +41,7 @@ func Update(requeue bool, err error, challenge *kctfv1.Challenge, cl client.Clie
 				}
 				// We take the right pod (it's possible that, if the challenge is not healthy,
 				// that we have multiple pods)
-				if pod.Spec.Containers[idx_challenge].Image != "challenge" && right_healthcheck {
+				if idx_challenge > -1 && pod.Spec.Containers[idx_challenge].Image != "challenge" && right_healthcheck {
 					// We update the status
 					challenge.Status.Status = pod.Status.Phase
 
