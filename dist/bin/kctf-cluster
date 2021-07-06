@@ -27,10 +27,10 @@ function update_gcloud_config {
   if ! gcloud config configurations describe "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null; then
         gcloud config configurations create --no-activate "${CLOUDSDK_ACTIVE_CONFIG_NAME}" >/dev/null 2>/dev/null || return
   fi
-  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null 2>/dev/null || return
-  gcloud config set core/project "${PROJECT}" >/dev/null 2>/dev/null || return
-  gcloud config set compute/zone "${ZONE}" >/dev/null 2>/dev/null || return
-  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null 2>/dev/null || return
+  gcloud config set core/account "${ACTIVE_ACCOUNT}" >/dev/null || return
+  gcloud config set core/project "${PROJECT}" >/dev/null || return
+  gcloud config set compute/zone "${ZONE}" >/dev/null || return
+  gcloud config set container/cluster "${CLUSTER_NAME}" >/dev/null || return
 }
 
 function set_lastconfig_link {
