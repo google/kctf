@@ -113,7 +113,11 @@ function kctf {
       _kctf_set_active_challenge
       shift
       "${KCTF_CTF_DIR}/kctf/bin/kctf-challenge" $@
-      return
+      ret=$?
+      if [[ $ret -ne 0 ]]; then
+        _kctf_log_err "command returned $ret"
+      fi
+      return $ret
       ;;
     cluster)
       shift
@@ -140,7 +144,11 @@ function kctf {
       else
         "${KCTF_CTF_DIR}/kctf/bin/kctf-cluster" $@
       fi
-      return
+      ret=$?
+      if [[ $ret -ne 0 ]]; then
+        _kctf_log_err "command returned $ret"
+      fi
+      return $ret
       ;;
     *)
       _kctf_usage
