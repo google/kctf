@@ -40,7 +40,7 @@ If you would like to have a shared directory (for sessions, or uploads), you can
 ```yaml
 spec:
   persistentVolumeClaims:
-    - $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
+  - $PUT_THE_NAME_OF_THE_CHALLENGE_HERE
   podTemplate:
     template:
       spec:
