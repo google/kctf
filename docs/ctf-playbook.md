@@ -21,7 +21,7 @@ kctf cluster resize --min-nodes 4 --max-nodes 16 --num-nodes 5 --machine-type n2
 | :warning: the maximum number of nodes may be limited by the [cloud project quotas](https://cloud.google.com/compute/quotas) |
 | --- |
 
-After enabling scaling for the number of nodes, we also want to enable scaling for the challenges. You can do this by adding a horizontalAutoScaler spec to the `challenge.yaml`.
+After enabling scaling for the number of nodes, we also want to enable scaling for the challenges. You can do this by adding a horizontalAutoScaler spec and a resource request to the `challenge.yaml`.
 For available fields, see:
 
 ```sh
@@ -41,6 +41,15 @@ spec:
     maxReplicas: 8
     minReplicas: 2
     targetCPUUtilizationPercentage: 60
+  podTemplate:
+    template:
+      spec:
+        containers:
+          - name: 'challenge'
+            resources:
+              requests:
+                memory: "1000Mi"
+                cpu: "500m"
 ```
 
 Start the challenge:
