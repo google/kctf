@@ -133,7 +133,7 @@ function build_image {
 }
 
 function healthcheck_enabled {
-  [[ $("${KCTF_BIN}/yq" eval '.spec.healthcheck.enabled' "${CHALLENGE_DIR}/challenge.yaml") == "true" ]]
+  [[ $("${KCTF_BIN}/yq" eval 'select(.kind == "Challenge") | .spec.healthcheck.enabled' "${CHALLENGE_DIR}/challenge.yaml") == "true" ]]
 }
 
 function build_images {
@@ -184,9 +184,9 @@ function kctf_chal_start {
   push_images || return
 
   # update challenge.yaml with the image urls
-  "${KCTF_BIN}/yq" eval ".spec.image = \"${CHALLENGE_IMAGE_REMOTE}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
+  "${KCTF_BIN}/yq" eval "select(.kind == \"Challenge\") | .spec.image = \"${CHALLENGE_IMAGE_REMOTE}\", select(.kind == \"Challenge\" | not)" --inplace "${CHALLENGE_DIR}/challenge.yaml"
   if healthcheck_enabled; then
-    "${KCTF_BIN}/yq" eval ".spec.healthcheck.image = \"${HEALTHCHECK_IMAGE_REMOTE}\"" --inplace "${CHALLENGE_DIR}/challenge.yaml"
+    "${KCTF_BIN}/yq" eval "select(.kind == \"Challenge\") | .spec.healthcheck.image = \"${HEALTHCHECK_IMAGE_REMOTE}\", select(.kind == \"Challenge\" | not)" --inplace "${CHALLENGE_DIR}/challenge.yaml"
   fi
 
   "${KCTF_BIN}/kubectl" apply -f "${CHALLENGE_DIR}/challenge.yaml" || return
@@ -549,7 +549,7 @@ function kctf_chal_list {
   echo '== challenges in repository =='
 
   for challenge_yaml in $(find "${KCTF_CTF_DIR}" -path "${KCTF_CTF_DIR}/kctf" -prune -false -o -name "challenge.yaml"); do
-    challenge_name=$(${KCTF_BIN}/yq eval ".metadata.name" "${challenge_yaml}")
+    challenge_name=$(${KCTF_BIN}/yq eval "select(.kind == \"Challenge\") | .metadata.name" "${challenge_yaml}")
     challenge_dir=$(realpath --relative-to "${KCTF_CTF_DIR}" $(dirname "${challenge_yaml}"))
     if [[ "${challenge_name}" == ${challenge_dir} ]]; then
       echo "${challenge_name}"
