@@ -208,13 +208,13 @@ function _kctf_set_active_challenge {
   current_dir="${PWD}"
   while [[ "${current_dir}" == "${KCTF_CTF_DIR}"/* ]]; do
     if [[ -e "${current_dir}/challenge.yaml" ]]; then
-      CHALLENGE_NAME=$("${KCTF_BIN}/yq" eval --exit-status '.metadata.name' "${current_dir}/challenge.yaml" 2>/dev/null)
+      CHALLENGE_NAME=$("${KCTF_BIN}/yq" eval --exit-status 'select(.kind == "Challenge") | .metadata.name' "${current_dir}/challenge.yaml" 2>/dev/null)
       if [[ $? -ne 0 ]]; then
         unset CHALLENGE_NAME
       fi
       CHALLENGE_NAMESPACE="default"
-      if "${KCTF_BIN}/yq" eval --exit-status '.metadata.namespace' "${current_dir}/challenge.yaml" >/dev/null 2>/dev/null; then
-        CHALLENGE_NAMESPACE=$("${KCTF_BIN}/yq" eval '.metadata.namespace' "${current_dir}/challenge.yaml" 2>/dev/null)
+      if "${KCTF_BIN}/yq" eval --exit-status 'select(.kind == "Challenge") | .metadata.namespace' "${current_dir}/challenge.yaml" >/dev/null 2>/dev/null; then
+        CHALLENGE_NAMESPACE=$("${KCTF_BIN}/yq" eval 'select(.kind == "Challenge") | .metadata.namespace' "${current_dir}/challenge.yaml" 2>/dev/null)
       fi
       export CHALLENGE_DIR="${current_dir}"
       export CHALLENGE_NAME
