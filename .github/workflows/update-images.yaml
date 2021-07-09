@@ -34,7 +34,7 @@ jobs:
       certbot-digest: ${{ steps.push.outputs.certbot-digest }}
     strategy:
       matrix:
-        image: ["kctf-operator", "challenge", "healthcheck", "gcsfuse", "certbot"]
+        image: ["challenge", "healthcheck", "gcsfuse", "certbot", "kctf-operator"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -44,7 +44,7 @@ jobs:
       name: Check for modified paths
       run: |
         if [ "${{ matrix.image }}" == "kctf-operator" ]; then
-          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**" "docker-images/gcsfuse/**" "docker-images/certbot/**")
+          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
         else
           PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
         fi
