@@ -29,7 +29,7 @@ RUN apt-get update \
 FROM ubuntu:20.04
 
 RUN apt-get update \
-    && apt-get install -yq --no-install-recommends python3.8 python3-pip libgmp3-dev libmpc-dev uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates socat \
+    && apt-get install -yq --no-install-recommends build-essential python3.8 python3-pip libgmp3-dev libmpc-dev uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates socat \
     && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
