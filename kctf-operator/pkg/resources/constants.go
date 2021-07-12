@@ -1,6 +1,6 @@
 package resources
 
-//        <AUTOMATICALLY GENERATED>
+// <AUTOMATICALLY GENERATED>
 // =======================================
 // == || These are set by automation || ==
 // .. vv ........................... vv ..
@@ -11,4 +11,4 @@ const DOCKER_GCSFUSE_IMAGE = "gcr.io/kctf-docker/gcsfuse@sha256:851fc79914736881
 // .. ^^ ........................... ^^ ..
 // == || These are set by automation || ==
 // =======================================
-//       </AUTOMATICALLY GENERATED>
+// </AUTOMATICALLY GENERATED>
