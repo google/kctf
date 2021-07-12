@@ -21,21 +21,53 @@ import socket
 import sys
 import hashlib
 
+try:
+    import gmpy2
+    HAVE_GMP = True
+except ImportError:
+    HAVE_GMP = False
+    sys.stderr.write("[NOTICE] Running 10x slower, gotta go fast? pip3 install gmpy2\n")
+
 VERSION = 's'
 MODULUS = 2**1279-1
 CHALSIZE = 2**128
 
 SOLVER_URL = 'https://goo.gle/kctf-pow'
 
-def sloth_root(x, diff, p):
+def python_sloth_root(x, diff, p):
+    exponent = (p + 1) // 4
     for i in range(diff):
-        x = pow(x, (p + 1) // 4, p) ^ 1
+        x = pow(x, exponent, p) ^ 1
     return x
 
-def sloth_square(y, diff, p):
+def python_sloth_square(y, diff, p):
     for i in range(diff):
         y = pow(y ^ 1, 2, p)
     return y
+
+def gmpy_sloth_root(x, diff, p):
+    exponent = (p + 1) // 4
+    for i in range(diff):
+        x = gmpy2.powmod(x, exponent, p).bit_flip(0)
+    return int(x)
+
+def gmpy_sloth_square(y, diff, p):
+    y = gmpy2.mpz(y)
+    for i in range(diff):
+        y = gmpy2.powmod(y.bit_flip(0), 2, p)
+    return int(y)
+
+def sloth_root(x, diff, p):
+    if HAVE_GMP:
+        return gmpy_sloth_root(x, diff, p)
+    else:
+        return python_sloth_root(x, diff, p)
+
+def sloth_square(x, diff, p):
+    if HAVE_GMP:
+        return gmpy_sloth_square(x, diff, p)
+    else:
+        return python_sloth_square(x, diff, p)
 
 def encode_number(num):
     size = (num.bit_length() // 24) * 3 + 3
@@ -84,9 +116,10 @@ def usage():
     sys.stdout.write('Usage:\n')
     sys.stdout.write('Solve pow: {} solve $challenge\n')
     sys.stdout.write('Check pow: {} ask $difficulty\n')
-    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU):\n')
-    sys.stdout.write('             1337: 10 secs\n')
-    sys.stdout.write('             31337: 5 mins\n')
+    sys.stdout.write('  $difficulty examples (for 1.6GHz CPU) in fast mode:\n')
+    sys.stdout.write('             1337:   1 sec\n')
+    sys.stdout.write('             31337:  30 secs\n')
+    sys.stdout.write('             313373: 5 mins\n')
     sys.stdout.flush()
     sys.exit(1)
 
