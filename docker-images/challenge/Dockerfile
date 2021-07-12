@@ -29,15 +29,15 @@ RUN apt-get update \
 FROM ubuntu:20.04
 
 RUN apt-get update \
-    && apt-get install -yq --no-install-recommends python3.8 python3-pip uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates socat \
+    && apt-get install -yq --no-install-recommends python3.8 python3-pip libgmp3-dev libmpc-dev uidmap libprotobuf17 libnl-route-3-200 wget netcat ca-certificates socat \
     && rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/useradd --no-create-home -u 1000 user
 
 COPY --from=nsjail /usr/bin/nsjail /usr/bin/nsjail
 
-# ecdsa used by the proof of work
-RUN python3 -m pip install ecdsa
+# gmpy2 and ecdsa used by the proof of work
+RUN python3 -m pip install ecdsa gmpy2
 
 # we need a clean proc to allow nsjail to remount it in the user namespace
 RUN mkdir /kctf
