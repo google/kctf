@@ -22,19 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     outputs:
-      kctf-operator-modified: ${{ steps.set-modified.outputs.kctf-operator-modified }}
       challenge-modified: ${{ steps.set-modified.outputs.challenge-modified }}
       healthcheck-modified: ${{ steps.set-modified.outputs.healthcheck-modified }}
       gcsfuse-modified: ${{ steps.set-modified.outputs.gcsfuse-modified }}
       certbot-modified: ${{ steps.set-modified.outputs.certbot-modified }}
-      kctf-operator-digest: ${{ steps.push.outputs.kctf-operator-digest }}
       challenge-digest: ${{ steps.push.outputs.challenge-digest }}
       healthcheck-digest: ${{ steps.push.outputs.healthcheck-digest }}
       gcsfuse-digest: ${{ steps.push.outputs.gcsfuse-digest }}
       certbot-digest: ${{ steps.push.outputs.certbot-digest }}
     strategy:
       matrix:
-        image: ["challenge", "healthcheck", "gcsfuse", "certbot", "kctf-operator"]
+        image: ["challenge", "healthcheck", "gcsfuse", "certbot"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -43,11 +41,7 @@ jobs:
     - id: modified
       name: Check for modified paths
       run: |
-        if [ "${{ matrix.image }}" == "kctf-operator" ]; then
-          PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
-        else
-          PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
-        fi
+        PATHS=(".github/workflows/update-images.yaml" "docker-images/${{ matrix.image }}/**")
 
         BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
         echo "BASE_SHA=${BASE_SHA}"
@@ -78,16 +72,8 @@ jobs:
     - name: Build image
       if: steps.modified.outputs.modified
       run: |
-        if [ "${{ matrix.image }}" == "kctf-operator" ]; then
-          cd kctf-operator
-          curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
-          chmod u+x operator-sdk
-          sudo mv operator-sdk /usr/local/bin/
-          /usr/local/bin/operator-sdk build "${{ matrix.image }}"
-        else
-          cd "docker-images/${{ matrix.image }}"
-          docker build . --tag "${{ matrix.image }}"
-        fi
+        cd "docker-images/${{ matrix.image }}"
+        docker build . --tag "${{ matrix.image }}"
 
     - name: Setup gcloud CLI
       if: steps.modified.outputs.modified
@@ -111,10 +97,86 @@ jobs:
         DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
         echo "::set-output name=${{ matrix.image }}-digest::${DIGEST}"
 
+  build-operator:
+    runs-on: ubuntu-latest
+    needs:
+    - build-docker
+    if: github.event_name == 'push'
+    outputs:
+      kctf-operator-modified: ${{ steps.set-modified.outputs.kctf-operator-modified }}
+      kctf-operator-digest: ${{ steps.push.outputs.kctf-operator-digest }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: 0
+          
+    - id: modified
+      name: Check for modified paths
+      run: |
+        PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
+
+        BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
+        echo "BASE_SHA=${BASE_SHA}"
+        if [ -z "${BASE_SHA}" ]; then
+          # we couldn't find any existing robot commit, just rebuild everything
+          echo "::set-output name=modified::true"
+          exit 0
+        fi
+        CHANGED_FILES="$(git diff --name-only ${BASE_SHA} ${{ github.sha }})"
+        echo "CHANGED_FILES=${CHANGED_FILES}"
+
+        while IFS= read -r changed_file; do
+          for watched_path in "${PATHS[@]}"; do
+            if [[ $changed_file == $watched_path ]]; then
+              echo "modified=true: ${changed_file} matches ${watched_path}"
+              echo "::set-output name=modified::true"
+              exit 0
+            fi
+          done
+        done <<< "${CHANGED_FILES}"
+
+    - id: set-modified
+      name: Set modified
+      run: |
+        echo "::set-output name=kctf-operator-modified::${{ steps.modified.outputs.modified }}"
+
+    - name: Build image
+      if: steps.modified.outputs.modified
+      run: |
+        ls -l
+        cd kctf-operator
+        curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
+        chmod u+x operator-sdk
+        sudo mv operator-sdk /usr/local/bin/
+        /usr/local/bin/operator-sdk build kctf-operator
+
+    - name: Setup gcloud CLI
+      if: steps.modified.outputs.modified
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        version: '319.0.0'
+        service_account_email: ${{ secrets.GCR_EMAIL }}
+        service_account_key: ${{ secrets.GCR_KEY }}
+
+    - name: Configure docker to use the gcloud command-line tool as a credential helper
+      if: steps.modified.outputs.modified
+      run: |
+        gcloud auth configure-docker
+
+    - id: push
+      name: Push images
+      if: steps.modified.outputs.modified
+      run: |
+        IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/kctf-operator"
+        docker tag "kctf-operator" "$IMAGE_GCR"
+        DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
+        echo "::set-output name=kctf-operator-digest::${DIGEST}"
+
   update-image-and-commit:
     runs-on: ubuntu-latest
     needs:
     - build-docker
+    - build-operator
     steps:
     - uses: actions/checkout@v2
 
@@ -151,9 +213,9 @@ jobs:
         sed -i 's%const DOCKER_CERTBOT_IMAGE = .*%const DOCKER_CERTBOT_IMAGE = "'${IMAGE}'"%' kctf-operator/pkg/resources/constants.go
 
     - name: Update operator
-      if: needs.build-docker.outputs.kctf-operator-modified
+      if: needs.build-operator.outputs.kctf-operator-modified
       run: |
-        IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-docker.outputs.kctf-operator-digest }}"
+        IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-operator.outputs.kctf-operator-digest }}"
         sed -i "s#image: .*#image: ${IMAGE}#" dist/resources/operator.yaml
 
     - name: Download kubectl
