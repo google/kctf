@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Generates the configmap that contains the how difficult should be the proof of work
+// Generates the configmap that contains how difficult should be the proof of work
 func generate(challenge *kctfv1.Challenge) *corev1.ConfigMap {
 	data := map[string]string{
 		"pow.conf": strconv.Itoa(challenge.Spec.PowDifficultySeconds * 1337) + "\n",
