@@ -563,7 +563,7 @@ function kctf_cluster_start_gce {
       gcloud dns managed-zones create "${ZONE_NAME}" --description "DNS Zone for ${DOMAIN_NAME}" --dns-name="${DOMAIN_NAME}." || return
       soa_ttl="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(ttl)')"
       if [[ $? -ne 0 ]]; then return 1; fi
-      soa_data="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(DATA)')"
+      soa_data="$(gcloud dns record-sets list --zone=${ZONE_NAME} --type=SOA --name="${DOMAIN_NAME}." --format='get(rrdatas)')"
       if [[ $? -ne 0 ]]; then return 1; fi
       new_soa=($soa_data)
       # update the serial no
