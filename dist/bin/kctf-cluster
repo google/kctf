@@ -20,6 +20,12 @@ KCTF_CLOUD_BASE_URL="https://kctf-cloud.appspot.com/v1"
 # owned by kctf-cloud
 KCTF_CLOUD_API_KEY="AIzaSyC7Jgu4e0IygmImZNPmJHrcfZ3lJA9ZrZs"
 
+if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+  GETOPT="$(brew --prefix gnu-getopt)/bin/getopt"
+else
+  GETOPT="getopt"
+fi
+
 function update_gcloud_config {
   _kctf_log "Updating gcloud config."
   ACTIVE_ACCOUNT="$(CLOUDSDK_ACTIVE_CONFIG_NAME= gcloud config get-value core/account 2>/dev/null)"
@@ -146,7 +152,7 @@ function kctf_cluster_create {
 
   OPTS="h"
   LONGOPTS="help,type:,project:,zone:,registry:,cluster-name:,domain-name:,email-address:,start"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster create" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_create_usage
     return 1
@@ -344,7 +350,7 @@ function kctf_cluster_ip_ranges {
 
   OPTS="h"
   LONGOPTS="help"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster set-src-ip-ranges" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster set-src-ip-ranges" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_ip_ranges_usage
     return 1
@@ -742,7 +748,7 @@ function kctf_cluster_resize {
 
   OPTS="h"
   LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_resize_usage
     exit 1
