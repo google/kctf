@@ -15,6 +15,12 @@
 
 source "${KCTF_BIN}/kctf-log"
 
+if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+  GETOPT="$(brew --prefix gnu-getopt)/bin/getopt"
+else
+  GETOPT="getopt"
+fi
+
 function has_cluster_config {
   [[ ! -z "${CLUSTER_NAME-}" ]]
 }
@@ -45,7 +51,7 @@ function parse_help_arg_only_usage {
 function parse_help_arg_only {
   OPTS="h"
   LONGOPTS="help"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
   if [[ $? -ne 0 ]]; then
     parse_help_arg_only_usage
     exit 1
@@ -82,7 +88,7 @@ function parse_container_name_usage {
 function parse_container_name {
   OPTS="h"
   LONGOPTS="help,container:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
   if [[ $? -ne 0 ]]; then
     parse_container_name_usage
     exit 1
@@ -245,7 +251,7 @@ function kctf_chal_debug_logs {
 
   OPTS="h"
   LONGOPTS="help,container:,tail:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal ${COMMAND}" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_debug_logs_usage
     exit 1
@@ -346,7 +352,7 @@ function kctf_chal_debug_port_forward {
 
   OPTS="h"
   LONGOPTS="help,challenge-name:,port:,local-port:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal debug port-forward" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal debug port-forward" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_debug_port_forward_usage
     exit 1
@@ -462,7 +468,7 @@ function kctf_chal_create_usage {
 function kctf_chal_create {
   OPTS="h"
   LONGOPTS="help,template:,challenge-dir:"
-  PARSED=$(getopt --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_chal_create_usage
     exit 1
