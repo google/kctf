@@ -25,19 +25,27 @@ export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..
 export KCTF_BIN="${KCTF_CTF_DIR}/kctf/bin"
 source "${KCTF_BIN}/kctf-log"
 
+if [[ "$OSTYPE" =~ ^darwin.* ]]; then
+  STAT="gstat"
+  MKTEMP="gmktemp"
+else
+  STAT="stat"
+  MKTEMP="mktemp"
+fi
+
 function _kctf_check_umask {
   if [[ $((8#$(umask) & 8#755)) -ne 0 ]]; then
     _kctf_log_err "umask is too prohibitive. Please set it to 022 when using kctf"
     return 1
   fi
-  if [[ "$(stat "${KCTF_BIN}/kctf-cluster" --format '%a')" -ne "755" ]]; then
+  if [[ "$(${STAT} "${KCTF_BIN}/kctf-cluster" --format '%a')" -ne "755" ]]; then
     _kctf_log_err "${KCTF_BIN}/kctf-cluster has unexpected permissions. Maybe a umask problem during checkout?"
     return 1
   fi
 }
 
 function _kctf_setup_environment {
-  KCTF_CONFIG_DIR="$(mktemp -d --tmpdir kctf.XXXXXXXXXX)"
+  KCTF_CONFIG_DIR="$(${MKTEMP} -d --tmpdir kctf.XXXXXXXXXX)"
   if [[ $? -ne 0 ]]; then
     return 1
   fi
