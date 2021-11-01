@@ -1,6 +1,6 @@
 # kCTF VRP Setup
 
-We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page. Successful demonstrations are eligible for rewards between 5,000 to 10,000 USD as defined in https://g.co/vrp.
+We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page. Successful demonstrations are eligible for rewards between ~5,000 to 10,000 USD~[31,337 - 50,337 USD](https://security.googleblog.com/2021/11/trick-treat-paying-leets-and-sweets-for.html) as defined in https://g.co/vrp.
 
 [kCTF](https://github.com/google/kctf) is an open source infrastructure for CTF competitions. You can find details on how it works in the [kCTF documentation](https://google.github.io/kctf/introduction.html), but in short, it’s running on a hardened Kubernetes cluster with the following security features:
 
@@ -72,4 +72,6 @@ We want to encourage the community to help research vulnerabilities such as thos
 *   It's ok to use 1-day exploits against the lab environment using publicly known vulnerabilities that exploit the patch gap between the time when a patch is announced and the lab environment is updated, however we will only issue a single reward per vulnerability.
 
 
-In case of questions or suggestions, you can reach us at kctf@google.com
+When we receive an exploit for a fixed vulnerability we'll add details here.
+
+In case of questions or suggestions, you can reach us in [#kctf](https://discord.gg/V8UqnZ6JBG).
