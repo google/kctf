@@ -513,12 +513,12 @@ function kctf_cluster_start_gce {
 
   EXISTING_ROUTER=$(gcloud compute routers list --filter "name=kctf-${CLUSTER_NAME}-nat-router" --format 'get(name)')
   if [ -z "${EXISTING_ROUTER}" ]; then
-    gcloud compute routers create "kctf-${CLUSTER_NAME}-nat-router" --network="${NETWORK}" --region "${ZONE::-2}" || return
+    gcloud compute routers create "kctf-${CLUSTER_NAME}-nat-router" --network="${NETWORK}" --region "${ZONE::${#ZONE}-2}" || return
   fi
 
-  EXISTING_NAT=$(gcloud compute routers nats list --router "kctf-${CLUSTER_NAME}-nat-router" --router-region "${ZONE::-2}" --format 'get(name)')
+  EXISTING_NAT=$(gcloud compute routers nats list --router "kctf-${CLUSTER_NAME}-nat-router" --router-region "${ZONE::${#ZONE}-2}" --format 'get(name)')
   if [ -z "${EXISTING_NAT}" ]; then
-    gcloud compute routers nats create "kctf-${CLUSTER_NAME}-nat-config" --router-region "${ZONE::-2}" --router kctf-${CLUSTER_NAME}-nat-router --nat-all-subnet-ip-ranges --auto-allocate-nat-external-ips || return
+    gcloud compute routers nats create "kctf-${CLUSTER_NAME}-nat-config" --router-region "${ZONE::${#ZONE}-2}" --router kctf-${CLUSTER_NAME}-nat-router --nat-all-subnet-ip-ranges --auto-allocate-nat-external-ips || return
   fi
 
   "${KCTF_BIN}/kubectl" create namespace "kctf-system" --dry-run=client -oyaml | "${KCTF_BIN}/kubectl" apply -f - >&2 || return
@@ -680,7 +680,7 @@ function kctf_cluster_stop_gce {
   sleep 20
 
   CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud container clusters delete ${CLUSTER_NAME}
-  gcloud compute routers delete "kctf-${CLUSTER_NAME}-nat-router" --region "${ZONE::-2}" --quiet
+  gcloud compute routers delete "kctf-${CLUSTER_NAME}-nat-router" --region "${ZONE::${#ZONE}-2}" --quiet
 
   SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
 
