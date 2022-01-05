@@ -79,5 +79,6 @@ Date|Patch
 --|--|
 |2021-12-14T04:33:00.000Z|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|
 |2021-12-24T11:34:00.000Z|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|
+|todo|[Patch](New one https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ec6af094ea28f0f2dda1a6a33b14cd57e36a9755)|
 
 In case of questions or suggestions, you can reach us in [#kctf](https://discord.gg/V8UqnZ6JBG).
