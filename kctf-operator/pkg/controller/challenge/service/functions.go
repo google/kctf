@@ -13,7 +13,7 @@ import (
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	utils "github.com/google/kctf/pkg/controller/challenge/utils"
 	corev1 "k8s.io/api/core/v1"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,7 +32,7 @@ func isCertEqual(existingCert *gkenetv1.ManagedCertificate, newCert *gkenetv1.Ma
 	return reflect.DeepEqual(existingCert.Spec.Domains, newCert.Spec.Domains)
 }
 
-func isIngressEqual(ingressFound *netv1beta1.Ingress, ingress *netv1beta1.Ingress) bool {
+func isIngressEqual(ingressFound *netv1.Ingress, ingress *netv1.Ingress) bool {
 	return reflect.DeepEqual(ingressFound.Spec, ingress.Spec)
 }
 
@@ -173,7 +173,7 @@ func updateManagedCertificate(challenge *kctfv1.Challenge, client client.Client,
 
 func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
-	existingIngress := &netv1beta1.Ingress{}
+	existingIngress := &netv1.Ingress{}
 	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingIngress)
 
 	if err != nil && !errors.IsNotFound(err) {

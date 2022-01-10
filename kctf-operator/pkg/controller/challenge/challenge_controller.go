@@ -18,7 +18,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -64,7 +64,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to secondary resource Pods and requeue the owner Challenge
 	objs := []runtime.Object{&appsv1.Deployment{}, &autoscalingv1.HorizontalPodAutoscaler{},
-		&corev1.Service{}, &netv1beta1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
+		&corev1.Service{}, &netv1.Ingress{}, &corev1.PersistentVolumeClaim{}, &corev1.PersistentVolume{},
 		&corev1.ConfigMap{}, &corev1.Secret{}}
 
 	for _, obj := range objs {

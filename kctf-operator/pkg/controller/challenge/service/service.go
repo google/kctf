@@ -10,7 +10,7 @@ import (
 	backendv1 "github.com/google/kctf/pkg/apis/cloud/v1"
 	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
 	corev1 "k8s.io/api/core/v1"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -108,20 +108,20 @@ func generateManagedCertificate(challenge *kctfv1.Challenge, domains []string) *
 	return cert
 }
 
-func generateIngress(domainName string, challenge *kctfv1.Challenge, port *kctfv1.PortSpec) *netv1beta1.Ingress {
+func generateIngress(domainName string, challenge *kctfv1.Challenge, port *kctfv1.PortSpec) *netv1.Ingress {
 	// Ingress object
-	ingress := &netv1beta1.Ingress{
+	ingress := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        challenge.Name,
 			Namespace:   challenge.Namespace,
 			Labels:      map[string]string{"app": challenge.Name},
 			Annotations: map[string]string{},
 		},
-		Spec: netv1beta1.IngressSpec{
-			TLS: []netv1beta1.IngressTLS{{
+		Spec: netv1.IngressSpec{
+			TLS: []netv1.IngressTLS{{
 				SecretName: "tls-cert",
 			}},
-			Rules: []netv1beta1.IngressRule{{
+			Rules: []netv1.IngressRule{{
 				Host: challenge.Name + "-web." + domainName,
 			}},
 		},
@@ -132,7 +132,7 @@ func generateIngress(domainName string, challenge *kctfv1.Challenge, port *kctfv
 		servicePort = port.TargetPort.IntVal
 	}
 
-	ingress.Spec.Backend = &netv1beta1.IngressBackend{
+	ingress.Spec.Backend = &netv1.IngressBackend{
 		ServiceName: challenge.Name,
 		ServicePort: intstr.FromInt(int(servicePort)),
 	}
