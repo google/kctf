@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
-	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
+	kctfv1 "github.com/google/kctf/api/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"

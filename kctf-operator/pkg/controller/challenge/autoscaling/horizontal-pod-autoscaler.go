@@ -1,7 +1,7 @@
 package autoscaling
 
 import (
-	kctfv1 "github.com/google/kctf/pkg/apis/kctf/v1"
+	kctfv1 "github.com/google/kctf/api/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
