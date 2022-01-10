@@ -16,6 +16,6 @@ require (
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.3.1
-	k8s.io/api => k8s.io/api v0.18.9
+	k8s.io/api => k8s.io/api v0.19.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
 )
