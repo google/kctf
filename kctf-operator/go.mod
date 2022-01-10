@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/common v0.9.1
 	github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a
 	github.com/spf13/pflag v1.0.5
-	k8s.io/api v0.18.2
+	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.6.0
