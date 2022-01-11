@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mychal3
+
+---
+
+apiVersion: kctf.dev/v1
+kind: Challenge
+metadata:
+  name: mychal3
+  namespace: mychal3
+spec:
+  # Add fields here
+  image: "memcached:1.4.36-alpine"
+  deployed: true
+  powDifficultySeconds: 10
+  healthcheck:
+    enabled: false
+  network:
+    public: false
+    dns: false
+  podTemplate:
+    template:
+      spec:
+        containers:
+        - name: challenge
+          volumeMounts:
+          - name: sessions
+            mountPath: /mnt/disks/sessions
+        volumes:
+        - name: sessions
+          persistentVolumeClaim:
+            claimName: mychal3-sessions
+  persistentVolumeClaims:
+    - mychal3-sessions
