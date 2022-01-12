@@ -34,6 +34,8 @@ import (
 	kctfv1 "github.com/google/kctf/api/v1"
 	"github.com/google/kctf/controllers"
 	//+kubebuilder:scaffold:imports
+
+	"github.com/google/kctf/resources"
 )
 
 var (
@@ -86,6 +88,16 @@ func main() {
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
+
+	// Initializer that creates objects and connect them to the lifetime of the operator
+	// Should be only used when testing the operator in a cluster
+	// since the instances that are created are associated to the deployment of the operator
+	// which only happens when it is ran inside the cluster
+	if err := resources.InitializeOperator(&(mgr.GetClient())); err != nil {
+		log.Error(err, "Error initializing initial instances")
+		os.Exit(1)
+	}
+
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
