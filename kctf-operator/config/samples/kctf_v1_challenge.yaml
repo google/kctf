@@ -1,0 +1,6 @@
+apiVersion: kctf.dev/v1
+kind: Challenge
+metadata:
+  name: challenge-sample
+spec:
+  # Add fields here
