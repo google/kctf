@@ -115,7 +115,7 @@ type ChallengeSpec struct {
 
 	// PodTemplate is used to set the template for the deployment's pod,
 	// so that an author can add volumeMounts and other extra features
-	PodTemplate *corev1.PodTemplate `json:"podTemplate"`
+	PodTemplate *corev1.PodTemplate `json:"podTemplate,omitempty"`
 
 	// Names of the desired PersistentVolumeClaims
 	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`

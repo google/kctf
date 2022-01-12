@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: gcr.io/kctf-docker/test-evn-new-operator
-  newTag: v0.0.1
+  newTag: v0.0.7

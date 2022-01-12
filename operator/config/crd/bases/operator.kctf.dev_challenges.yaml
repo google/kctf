@@ -7316,7 +7316,6 @@ spec:
                 type: integer
             required:
             - image
-            - podTemplate
             type: object
           status:
             description: ChallengeStatus defines the observed state of Challenge
