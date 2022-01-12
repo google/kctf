@@ -8,13 +8,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	clientPkg "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var log logr.Logger = logf.Log.WithName("cmd")
 
-func InitializeOperator(client *client.Client) error {
+func InitializeOperator(client *clientPkg.Client) error {
 	// Creates the objects that enable the DNS, external DNS and etc
 
 	// Create the tls secret separately since we don't want to overwrite it if it exists
@@ -25,7 +24,7 @@ func InitializeOperator(client *client.Client) error {
 		return err
 	}
 
-	objectFunctions := []func() runtime.Object{NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
+	objectFunctions := []func() clientPkg.Object{NewExternalDnsClusterRole, NewExternalDnsClusterRoleBinding,
 		NewExternalDnsDeployment, NewDaemonSetGcsFuse, NewSecretPowBypass,
 		NewSecretPowBypassPub, NewNetworkPolicyBlockInternal, NewAllowDns}
 

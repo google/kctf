@@ -9,7 +9,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var privateKey *ecdsa.PrivateKey = generateKey()
@@ -63,15 +63,15 @@ func secret(name string, nameMap string, private bool) *corev1.Secret {
 	return secret
 }
 
-func NewSecretPowBypass() runtime.Object {
+func NewSecretPowBypass() client.Object {
 	return secret("pow-bypass", "pow-bypass-key.pem", true)
 }
 
-func NewSecretPowBypassPub() runtime.Object {
+func NewSecretPowBypassPub() client.Object {
 	return secret("pow-bypass-pub", "pow-bypass-key-pub.pem", false)
 }
 
-func NewSecretTls() runtime.Object {
+func NewSecretTls() client.Object {
 	// Generate empty secret so ingress works
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,7 +80,7 @@ func NewSecretTls() runtime.Object {
 		},
 		Type: corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			corev1.TLSCertKey: []byte{},
+			corev1.TLSCertKey:       []byte{},
 			corev1.TLSPrivateKeyKey: []byte{},
 		},
 	}

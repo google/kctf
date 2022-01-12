@@ -3,10 +3,10 @@ package resources
 import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewNetworkPolicyBlockInternal() runtime.Object {
+func NewNetworkPolicyBlockInternal() client.Object {
 	networkPolicy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "block-internal",

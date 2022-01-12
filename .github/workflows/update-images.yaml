@@ -3,12 +3,12 @@ name: Update docker images
 
 on:
   push:
-    paths-ignore: 
-      - 'docs/**' 
+    paths-ignore:
+      - 'docs/**'
       - '*.md'
   pull_request:
-    paths-ignore: 
-      - 'docs/**' 
+    paths-ignore:
+      - 'docs/**'
       - '*.md'
 
 env:
@@ -109,7 +109,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
           fetch-depth: 0
-          
+
     - id: modified
       name: Check for modified paths
       run: |
@@ -140,16 +140,6 @@ jobs:
       run: |
         echo "::set-output name=kctf-operator-modified::${{ steps.modified.outputs.modified }}"
 
-    - name: Build image
-      if: steps.modified.outputs.modified
-      run: |
-        ls -l
-        cd kctf-operator
-        curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -o operator-sdk
-        chmod u+x operator-sdk
-        sudo mv operator-sdk /usr/local/bin/
-        /usr/local/bin/operator-sdk build kctf-operator
-
     - name: Setup gcloud CLI
       if: steps.modified.outputs.modified
       uses: google-github-actions/setup-gcloud@master
@@ -162,6 +152,16 @@ jobs:
       if: steps.modified.outputs.modified
       run: |
         gcloud auth configure-docker
+
+    - name: Build and push image
+      if: steps.modified.outputs.modified
+      run: |
+        ls -l
+        cd kctf-operator
+        curl -L https://github.com/operator-framework/operator-sdk/releases/download/v1.15.0/operator-sdk_linux_amd64 -o operator-sdk
+        chmod u+x operator-sdk
+        sudo mv operator-sdk /usr/local/bin/
+        make manifests docker-build IMG=kctf-operator
 
     - id: push
       name: Push images

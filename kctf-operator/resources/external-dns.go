@@ -5,10 +5,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewExternalDnsClusterRole() runtime.Object {
+func NewExternalDnsClusterRole() client.Object {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "external-dns-viewer",
@@ -34,7 +34,7 @@ func NewExternalDnsClusterRole() runtime.Object {
 	return clusterRole
 }
 
-func NewExternalDnsClusterRoleBinding() runtime.Object {
+func NewExternalDnsClusterRoleBinding() client.Object {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "external-dns-sa:external-dns-viewer",
@@ -53,7 +53,7 @@ func NewExternalDnsClusterRoleBinding() runtime.Object {
 	return clusterRoleBinding
 }
 
-func NewExternalDnsDeployment() runtime.Object {
+func NewExternalDnsDeployment() client.Object {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "external-dns",
@@ -93,7 +93,7 @@ func NewExternalDnsDeployment() runtime.Object {
 						},
 						{
 							Image: DOCKER_CERTBOT_IMAGE,
-							Name: "certbot",
+							Name:  "certbot",
 							Env: []corev1.EnvVar{
 								{
 									Name: "DOMAIN",
@@ -107,7 +107,7 @@ func NewExternalDnsDeployment() runtime.Object {
 									},
 								},
 								{
-									Name: "SECRET",
+									Name:  "SECRET",
 									Value: "tls-cert",
 								},
 								{
@@ -122,7 +122,7 @@ func NewExternalDnsDeployment() runtime.Object {
 									},
 								},
 								{
-									Name: "PROD",
+									Name:  "PROD",
 									Value: "true",
 								},
 							},

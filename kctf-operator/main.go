@@ -93,11 +93,11 @@ func main() {
 	// Should be only used when testing the operator in a cluster
 	// since the instances that are created are associated to the deployment of the operator
 	// which only happens when it is ran inside the cluster
-	if err := resources.InitializeOperator(&(mgr.GetClient())); err != nil {
-		log.Error(err, "Error initializing initial instances")
+	client := mgr.GetClient()
+	if err := resources.InitializeOperator(&client); err != nil {
+		setupLog.Error(err, "Error initializing initial instances")
 		os.Exit(1)
 	}
-
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
