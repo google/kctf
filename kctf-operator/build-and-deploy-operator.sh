@@ -45,7 +45,8 @@ sed -i 's%const DOCKER_CERTBOT_IMAGE = .*%const DOCKER_CERTBOT_IMAGE = "'${CERTB
 set +x
 
 IMAGE_URL="${IMAGE_BASE}/kctf-operator:development"
-make manifests docker-build IMG="${IMAGE_URL}"
+make manifests docker-build bundle IMG="${IMAGE_URL}"
+
 OPERATOR_SHA=$(docker push "${IMAGE_URL}" | egrep -o 'sha256:[0-9a-f]+' | head -n1)
 IMAGE_ID="${IMAGE_URL}@${OPERATOR_SHA}"
 
