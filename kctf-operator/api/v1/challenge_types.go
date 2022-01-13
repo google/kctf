@@ -140,6 +140,12 @@ type ChallengeStatus struct {
 //+kubebuilder:subresource:status
 
 // Challenge is the Schema for the challenges API
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:path=challenges,scope=Namespaced
+// +kubebuilder:printcolumn:name="Health",type=string,JSONPath=`.status.health`
+// +kubebuilder:printcolumn:name="Status", type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Deployed",type=boolean,JSONPath=`.spec.deployed`
+// +kubebuilder:printcolumn:name="Public",type=boolean,JSONPath=`.spec.network.public`
 type Challenge struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
