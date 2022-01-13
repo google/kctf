@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mychal2
+
+---
+
+apiVersion: kctf.dev/v1
+kind: Challenge
+metadata:
+  name: mychal2
+  namespace: mychal2
+spec:
+  # Add fields here
+  image: "memcached:1.4.36-alpine"
+  deployed: true
+  healthcheck:
+    enabled: false
+  powDifficultySeconds: 10
+  network:
+    public: true
+    dns: false

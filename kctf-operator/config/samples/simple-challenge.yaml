@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-challenge
+
+---
+
+apiVersion: operator.kctf.dev/v1
+kind: Challenge
+metadata:
+  name: simple-challenge
+  namespace: simple-challenge
+spec:
+  image: "memcached:1.4.36-alpine"
+  deployed: false
+  healthcheck:
+    enabled: false
