@@ -173,7 +173,7 @@ jobs:
         curl -L https://github.com/operator-framework/operator-sdk/releases/download/v1.15.0/operator-sdk_linux_amd64 -o operator-sdk
         chmod u+x operator-sdk
         sudo mv operator-sdk /usr/local/bin/
-        make manifests docker-build IMG=kctf-operator
+        make manifests docker-build IMG=kctf-operator CGO_ENABLED=0
 
     - id: push
       name: Push images
