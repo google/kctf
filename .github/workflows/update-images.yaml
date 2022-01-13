@@ -233,7 +233,7 @@ jobs:
       if: needs.build-operator.outputs.kctf-operator-modified
       run: |
         IMAGE="gcr.io/kctf-docker/kctf-operator@${{ needs.build-operator.outputs.kctf-operator-digest }}"
-        sed -i "s#image: kctf-operator#image: ${IMAGE}#" dist/resources/operator.yaml
+        sed -i "s#image: .*kctf-operator.*#image: ${IMAGE}#" dist/resources/operator.yaml
 
     - name: Download kubectl
       run: |
