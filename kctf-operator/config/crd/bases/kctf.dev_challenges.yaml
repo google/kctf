@@ -16,7 +16,20 @@ spec:
     singular: challenge
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.health
+      name: Health
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.deployed
+      name: Deployed
+      type: boolean
+    - jsonPath: .spec.network.public
+      name: Public
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         description: Challenge is the Schema for the challenges API

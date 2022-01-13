@@ -21,7 +21,20 @@ spec:
     singular: challenge
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.health
+      name: Health
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.deployed
+      name: Deployed
+      type: boolean
+    - jsonPath: .spec.network.public
+      name: Public
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         description: Challenge is the Schema for the challenges API
@@ -4504,7 +4517,12 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: eu.gcr.io/kctf-testing/kctf-operator@sha256:c6d26538bedb29b93cd314eb9555fbaa74f00a64f1296094190aed8d84e5ffcf
+        env:
+        - name: ALLOWED_IPS
+          value: 0.0.0.0/0
+        - name: SECURITY_POLICY
+          value: kctf-policy
+        image: eu.gcr.io/kctf-testing/kctf-operator@sha256:139b6cb0bba4f0fba1675509ed680f8aa22701a07778418bc6a95d8fe664075a
         livenessProbe:
           httpGet:
             path: /healthz
