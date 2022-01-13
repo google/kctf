@@ -398,8 +398,8 @@ function start_operator_gce {
   SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
   POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
   # restart the operator with the new range
-  "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
-    | "${KCTF_BIN}/yq" eval "(.spec.template.spec.containers[0].env[] | select(.name == \"SECURITY_POLICY\")).value = \"${POLICY_NAME}\"" - \
+  "${KCTF_BIN}/yq" eval "(((.|select(has(\"spec\"))).spec|select(has(\"template\"))).template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
+    | "${KCTF_BIN}/yq" eval "(((.|select(has(\"spec\"))).spec|select(has(\"template\"))).template.spec.containers[0].env[] | select(.name == \"SECURITY_POLICY\")).value = \"${POLICY_NAME}\"" - \
     | "${KCTF_BIN}/kubectl" apply -f - || return
 }
 
@@ -431,15 +431,16 @@ function create_cloud_armor_policy {
 
 function create_operator {
   # Creating CRD, rbac and operator
-  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges_crd.yaml" || return
-  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/rbac.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf.dev_challenges.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf-operator-manager-config_v1_configmap.yaml" || return
+  "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf-operator-controller-manager-metrics-service_v1_service.yaml" || return
   if [[ "$CLUSTER_TYPE" == "gce" ]]; then
     start_operator_gce
   else
     "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
   fi
-
-  OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[0].image' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
+  OPERATOR_IMAGE=$("${KCTF_BIN}/yq" eval '.spec.template.spec.containers[].image | select(.=="*kctf-operator*")' "${KCTF_CTF_DIR}/kctf/resources/operator.yaml")
   if [[ $? -ne 0 ]]; then
     echo "Failed to find the operator image." >&2
     return 1
@@ -447,12 +448,13 @@ function create_operator {
 
   # The operator needs to create some subresources, e.g. the gcsfuse service account
   for i in {1..100}; do
-    "${KCTF_BIN}/kubectl" get pods --namespace kctf-system -o=jsonpath="{.items[?(@.spec.containers[0].image==\"${OPERATOR_IMAGE}\")].status.containerStatuses[0].ready}" | grep "true" && break
+    "${KCTF_BIN}/kubectl" get pods --namespace kctf-operator-system -o=jsonpath='{.items[].status.containerStatuses[?(@.imageID=="'${OPERATOR_IMAGE}'")].ready}' | grep "true" && break
     if [ "$i" == "100" ]; then
       _kctf_log_err "Couldn't find a kctf-operator pod with status ready=true and image=\"${OPERATOR_IMAGE}\" after 5 minutes"
-      "${KCTF_BIN}/kubectl" get pods --namespace kctf-system -o=yaml >&2
+      "${KCTF_BIN}/kubectl" get pods --namespace kctf-operator-system -o=yaml >&2
       exit 1
     fi
+    echo -n '.'
     sleep 3
   done
 }

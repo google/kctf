@@ -44,16 +44,18 @@ sed -i 's%const DOCKER_CERTBOT_IMAGE = .*%const DOCKER_CERTBOT_IMAGE = "'${CERTB
 
 set +x
 
-IMAGE_URL="${IMAGE_BASE}/kctf-operator:development"
-make manifests docker-build bundle IMG="${IMAGE_URL}"
-
+IMAGE_URL="${IMAGE_BASE}/kctf-operator:dev"
+make manifests docker-build operator.yaml bundle IMG="${IMAGE_URL}"
 OPERATOR_SHA=$(docker push "${IMAGE_URL}" | egrep -o 'sha256:[0-9a-f]+' | head -n1)
-IMAGE_ID="${IMAGE_URL}@${OPERATOR_SHA}"
+IMAGE_ID="${IMAGE_BASE}/kctf-operator@${OPERATOR_SHA}"
 
 echo "pushed to ${IMAGE_ID}"
 
 OPERATOR_YAML="${KCTF_CTF_DIR}/kctf/resources/operator.yaml"
-sed -i "s#image: .*#image: ${IMAGE_ID}#" "${OPERATOR_YAML}"
+sed -i "s#image: ${IMAGE_URL}#image: ${IMAGE_ID}#" "operator.yaml"
+cat "operator.yaml" > "${OPERATOR_YAML}"
+
+cp -f bundle/manifests/*.yaml "${KCTF_CTF_DIR}/kctf/resources/"
 
 popd
 
