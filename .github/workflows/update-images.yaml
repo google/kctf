@@ -92,6 +92,7 @@ jobs:
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
       run: |
+        gcloud auth list
         gcloud auth configure-docker
 
     - id: push
@@ -163,6 +164,7 @@ jobs:
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
       run: |
+        gcloud auth list
         gcloud auth configure-docker
 
     - name: 'Setup go version necessary for operator'
@@ -257,6 +259,7 @@ jobs:
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       run: |
+        gcloud auth list
         gcloud auth configure-docker
 
     - name: Configure kCTF cluster
