@@ -75,13 +75,19 @@ jobs:
         cd "docker-images/${{ matrix.image }}"
         docker build . --tag "${{ matrix.image }}"
 
-    - name: Setup gcloud CLI
-      if: steps.modified.outputs.modified
-      uses: google-github-actions/setup-gcloud@master
+    - name: 'Set up Cloud SDK auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        # not using workload identity because we use gsutil
+        # TODO(evn) switch when supported
+        # https://github.com/google-github-actions/setup-gcloud#authorization
+        credentials_json: '${{ secrets.GKE_KEY }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v0'
       with:
         version: '319.0.0'
-        service_account_email: ${{ secrets.GCR_EMAIL }}
-        service_account_key: ${{ secrets.GCR_KEY }}
+        service_account_email: ${{ secrets.GKE_EMAIL }}
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
@@ -140,13 +146,19 @@ jobs:
       run: |
         echo "::set-output name=kctf-operator-modified::${{ steps.modified.outputs.modified }}"
 
-    - name: Setup gcloud CLI
-      if: steps.modified.outputs.modified
-      uses: google-github-actions/setup-gcloud@master
+    - name: 'Set up Cloud SDK auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        # not using workload identity because we use gsutil
+        # TODO(evn) switch when supported
+        # https://github.com/google-github-actions/setup-gcloud#authorization
+        credentials_json: '${{ secrets.GKE_KEY }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v0'
       with:
         version: '319.0.0'
-        service_account_email: ${{ secrets.GCR_EMAIL }}
-        service_account_key: ${{ secrets.GCR_KEY }}
+        service_account_email: ${{ secrets.GKE_EMAIL }}
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
