@@ -1,0 +1,24 @@
+# permissions for end users to edit challenges.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: challenge-editor-role
+rules:
+- apiGroups:
+  - kctf.dev
+  resources:
+  - challenges
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kctf.dev
+  resources:
+  - challenges/status
+  verbs:
+  - get

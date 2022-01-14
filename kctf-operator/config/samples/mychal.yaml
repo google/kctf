@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mychal
+
+---
+
+apiVersion: operator.kctf.dev/v1
+kind: Challenge
+metadata:
+  name: mychal
+  namespace: mychal
+spec:
+  # Add fields here
+  image: "quay.io/aliciafmachado/bash:latest"
+  deployed: true
+  healthcheck:
+    enabled: false
+  network:
+    public: true
+    dns: true
+    ports:
+    - protocol: "TCP"
+      port: 3
+      targetPort: 1337
+    - protocol: "HTTPS"
+      targetPort: 1338
+  horizontalPodAutoscalerSpec:
+    minReplicas: 1
+    maxReplicas: 2

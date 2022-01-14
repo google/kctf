@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM gcr.io/kctf-docker/challenge@sha256:456de9cb229a2f20bf67b78c641937b8aa85596f76917f79f97f88db2d94242b
+FROM gcr.io/kctf-docker/challenge@sha256:d0614bfd82847a06604680287338deb19395196b21332a3d0a76a2fe9e1a260b
 
 RUN apt-get update && apt-get install -y gnupg2
 
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y gnupg2
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
-    && apt-get install -yq --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         ca-certificates \
         fonts-liberation \
         libappindicator3-1 \
@@ -61,7 +61,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
         lsb-release \
         wget \
         xdg-utils \
-       nodejs npm \
+        nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 COPY bot.js /home/user/
@@ -88,6 +88,7 @@ RUN sed -i -e "s/DOMAIN_SET_IN_DOCKERFILE/${DOMAIN}/" /home/user/cookie
 
 CMD kctf_setup && \
     mount -t tmpfs none /tmp && \
+    mkdir /tmp/chrome-userdata && chmod o+rwx /tmp/chrome-userdata && \
     while true; do \
       if [ "${BLOCK_SUBORIGINS}" = "1" ]; then \
         kctf_drop_privs env BLOCK_SUBORIGINS="${BLOCK_SUBORIGINS}" DOMAIN="${DOMAIN}" REGISTERED_DOMAIN="${REGISTERED_DOMAIN}" xvfb-run /usr/bin/node /home/user/bot.js; \

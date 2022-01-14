@@ -126,10 +126,14 @@ function build_image {
   CONTAINER_NAME="$1"
   CONTAINER_DIR="${CHALLENGE_DIR}/${CONTAINER_NAME}"
   _kctf_log "building image in \"${CONTAINER_DIR}\""
-  IMAGE_ID=$(docker build -q "${CONTAINER_DIR}")
+  IIDFILE="$(mktemp)"
+  docker build "${CONTAINER_DIR}" --iidfile "${IIDFILE}"
   if [[ $? -ne 0 ]]; then
+    rm "${IIDFILE}"
     return 1
   fi
+  IMAGE_ID=$(cat "${IIDFILE}")
+  rm "${IIDFILE}"
 
   # strip optional sha256 prefix
   if [[ "${IMAGE_ID}" = sha256:* ]]; then

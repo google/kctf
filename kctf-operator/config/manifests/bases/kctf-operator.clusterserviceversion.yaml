@@ -1,0 +1,48 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: kctf-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Challenge is the Schema for the challenges API
+      displayName: Challenge
+      kind: Challenge
+      name: challenges.kctf.dev
+      version: v1
+  description: Operator for KCTF
+  displayName: kctf-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - kctf
+  links:
+  - name: Kctf Operator
+    url: https://kctf-operator.domain
+  maintainers:
+  - email: kctf@google.com
+    name: kctf
+  maturity: alpha
+  provider:
+    name: Google
+    url: http://kctf.dev
+  version: 0.0.0

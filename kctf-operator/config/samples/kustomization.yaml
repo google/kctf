@@ -1,0 +1,4 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- kctf_v1_challenge.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
