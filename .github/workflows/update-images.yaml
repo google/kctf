@@ -120,7 +120,7 @@ jobs:
     - id: modified
       name: Check for modified paths
       run: |
-        PATHS=(".github/workflows/update-images.yaml" "kctf-operator/*" "kctf-operator/build/**" "kctf-operator/cmd/**" "kctf-operator/pkg/**" "kctf-operator/version/**")
+        PATHS=(".github/workflows/update-images.yaml" "kctf-operator/**")
 
         BASE_SHA="$(git log -n1 --grep='Automated commit: update images.' --format=%H || echo '')"
         echo "BASE_SHA=${BASE_SHA}"
@@ -313,8 +313,12 @@ jobs:
     - name: Commit
       run: |
         # git add returns success for files that exist and haven't been modified
-        git add kctf-operator/pkg/resources/constants.go
+        git add kctf-operator/resources/constants.go
+        git add kctf-operator/operator.yaml
         git add dist/resources/operator.yaml
+        git add kctf-operator/bundle/manifests/kctf.dev_challenges.yaml
+        git add kctf-operator/config/crd/bases/kctf.dev_challenges.yaml
+        git add dist/resources/kctf.dev_challenges.yaml
         for dir in dist/challenge-templates/* samples/*; do
           if [[ ! -e "${dir}/challenge.yaml" ]]; then
             continue
