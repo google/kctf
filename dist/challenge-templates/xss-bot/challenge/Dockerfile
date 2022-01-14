@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 FROM gcr.io/kctf-docker/challenge@sha256:456de9cb229a2f20bf67b78c641937b8aa85596f76917f79f97f88db2d94242b
-
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y gnupg2
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
