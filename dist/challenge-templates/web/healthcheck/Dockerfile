@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM gcr.io/kctf-docker/healthcheck@sha256:28d92de9e06999dae27a74ae73f9b1c1a4268af427b878aaf99aabe21e8293fe
+FROM gcr.io/kctf-docker/healthcheck@sha256:abe5bc78f1eed01a050bc9efccde279aef560888598c0a04547b383a1429c6d4
 
 COPY healthcheck_loop.sh healthcheck.py healthz_webserver.py /home/user/
 

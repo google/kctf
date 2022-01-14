@@ -4520,7 +4520,7 @@ spec:
           value: 0.0.0.0/0
         - name: SECURITY_POLICY
           value: kctf-policy
-        image: gcr.io/kctf-docker/kctf-operator@sha256:689d0975b52f4370a597c7440e1ee499f93a2068b34b01433f683412c2a28959
+        image: gcr.io/kctf-docker/kctf-operator@sha256:a583672d2269cf188b6b6411286e9a33fb3e751b4f37e7b8c8d51fdda5838fb9
         livenessProbe:
           httpGet:
             path: /healthz
