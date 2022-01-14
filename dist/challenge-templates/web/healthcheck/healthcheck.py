@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pwnlib.util
+import pwnlib.util.web
 
 if b"imanode" in pwnlib.util.web.wget("http://localhost:1337/nodejs?edonami"):
       exit(0)
