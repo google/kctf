@@ -88,6 +88,7 @@ RUN sed -i -e "s/DOMAIN_SET_IN_DOCKERFILE/${DOMAIN}/" /home/user/cookie
 
 CMD kctf_setup && \
     mount -t tmpfs none /tmp && \
+    mkdir /tmp/chrome-userdata && chmod o+rwx /tmp/chrome-userdata && \
     while true; do \
       if [ "${BLOCK_SUBORIGINS}" = "1" ]; then \
         kctf_drop_privs env BLOCK_SUBORIGINS="${BLOCK_SUBORIGINS}" DOMAIN="${DOMAIN}" REGISTERED_DOMAIN="${REGISTERED_DOMAIN}" xvfb-run /usr/bin/node /home/user/bot.js; \
