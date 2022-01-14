@@ -24,14 +24,14 @@ import (
 
 type PortSpec struct {
 	// Name of the port
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// TargetPort is not optional
 	// +kubebuilder:validation:Required
 	TargetPort intstr.IntOrString `json:"targetPort"`
 
 	// Port
-	Port int32 `json:"port"`
+	Port int32 `json:"port,omitempty"`
 
 	// Protocol is not optional
 	// +kubebuilder:validation:Required
