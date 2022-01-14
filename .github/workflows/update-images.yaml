@@ -92,7 +92,6 @@ jobs:
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
       run: |
-        gcloud auth list
         gcloud auth configure-docker
 
     - id: push
@@ -164,7 +163,6 @@ jobs:
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       if: steps.modified.outputs.modified
       run: |
-        gcloud auth list
         gcloud auth configure-docker
 
     - name: 'Setup go version necessary for operator'
@@ -259,7 +257,6 @@ jobs:
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       run: |
-        gcloud auth list
         gcloud auth configure-docker
 
     - name: Configure kCTF cluster
@@ -314,9 +311,7 @@ jobs:
       run: |
         # git add returns success for files that exist and haven't been modified
         git add kctf-operator/resources/constants.go
-        git add kctf-operator/operator.yaml
         git add dist/resources/operator.yaml
-        git add kctf-operator/bundle/manifests/kctf.dev_challenges.yaml
         git add kctf-operator/config/crd/bases/kctf.dev_challenges.yaml
         git add dist/resources/kctf.dev_challenges.yaml
         for dir in dist/challenge-templates/* samples/*; do
