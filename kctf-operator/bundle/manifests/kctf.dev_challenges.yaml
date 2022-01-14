@@ -131,8 +131,6 @@ spec:
                           description: TargetPort is not optional
                           x-kubernetes-int-or-string: true
                       required:
-                      - name
-                      - port
                       - protocol
                       - targetPort
                       type: object
