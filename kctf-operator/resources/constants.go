@@ -5,8 +5,8 @@ package resources
 // == || These are set by automation || ==
 // .. vv ........................... vv ..
 
-const DOCKER_CERTBOT_IMAGE = "gcr.io/kctf-docker/certbot@sha256:622226809c655a9268acccce6f16f21581bc650c03ea049acc72f21689d1a34f"
-const DOCKER_GCSFUSE_IMAGE = "gcr.io/kctf-docker/gcsfuse@sha256:9226dc5469c58a1bcc4763ae1d295e2dcf0c5b3dc856bb15a924ddeead6c5cc3"
+const DOCKER_CERTBOT_IMAGE = "gcr.io/kctf-docker/certbot@sha256:fcad367fd6cc8b5d714386616bfe3974fd0552e7f8cabc08848b1b6dddfd764b"
+const DOCKER_GCSFUSE_IMAGE = "gcr.io/kctf-docker/gcsfuse@sha256:e265a33fc014d9ddf5e4cae6a2e970800b488fefda1478c5006b513db9ef8e56"
 
 // .. ^^ ........................... ^^ ..
 // == || These are set by automation || ==
