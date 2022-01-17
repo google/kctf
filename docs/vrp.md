@@ -80,8 +80,9 @@ We want to encourage the community to help research vulnerabilities such as thos
 
 
 When we receive an exploit for a fixed vulnerability we'll add details here.
+
 |Date Received (exploit)|Patch|References|
-|--|--|--|
+|:--:|:--:|:--:|
 |2021-12-14|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)|
 |2021-12-24|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)|
 |2022-01-05|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ec6af094ea28f0f2dda1a6a33b14cd57e36a9755)|[Syzkaller](https://syzkaller.appspot.com/bug?id=8b2fd4b920d0bb1e6d9c839a1da0a6b5f5c1b118)|
