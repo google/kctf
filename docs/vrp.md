@@ -86,6 +86,8 @@ When we receive an exploit for a fixed vulnerability we'll add details here.
 |2021-12-14|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)|
 |2021-12-24|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)|
 |2022-01-05|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ec6af094ea28f0f2dda1a6a33b14cd57e36a9755)|[Syzkaller](https://syzkaller.appspot.com/bug?id=8b2fd4b920d0bb1e6d9c839a1da0a6b5f5c1b118)|
-|2021-01-06||[Syzkaller](https://syzkaller.appspot.com/bug?id=53c05996968fc87df17de205b461f4f96d5b5907)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=852ddf3aee4937a946abb6b1331c4336122981b9)|
+|2021-01-06|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=722d94847de29310e8aa03fcbdb41fc92c521756)|[Syzkaller](https://syzkaller.appspot.com/bug?id=53c05996968fc87df17de205b461f4f96d5b5907)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=852ddf3aee4937a946abb6b1331c4336122981b9)|
+|2021-01-18|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=722d94847de29310e8aa03fcbdb41fc92c521756)|[Syzkaller](https://syzkaller.appspot.com/bug?id=53c05996968fc87df17de205b461f4f96d5b5907)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=852ddf3aee4937a946abb6b1331c4336122981b9)|
+
 
 In case of questions or suggestions, you can reach us in [#kctf](https://discord.gg/V8UqnZ6JBG).
