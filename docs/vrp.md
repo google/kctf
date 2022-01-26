@@ -63,11 +63,9 @@ As you can see, the flags include a timestamp and are rotated frequently.
 
 We want to avoid learning about unfixed vulnerabilities, so the process to submit reports is:
   1. Test your exploit - we recommend you to test it locally first, and run a GKE cluster to debug.
-  2. Once you have a working exploit, test it on the [lab environment](#kctf-challenge). If you have troubles let us know in [#kctf](https://discord.gg/V8UqnZ6JBG) and we'll help you figure out any problems.
-  3. Once you get the flag, send it [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform). You won't share any technical details about the vulnerability, you will just record the fact you found something (as we only reward the first person that writes an exploit for a given bug, we use it to resolve the timing in case of an exploit collision).
-  4. Once the vulnerability is fixed, please contact us at [g.co/vulnz](https://g.co/vulnz) and include:
-     1. The patch that fixed the vulnerability.
-     2. The exploit you used to trigger it.
+  2. If it is a 0day (there's no patch for it on [linus master branch](https://github.com/torvalds/linux/tree/master) yet), then send us a checksum of your working exploit to our form [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform). You won't share any technical details about the vulnerability, you will just record the fact you found something (as we only reward the first person that writes an exploit for a given bug, we use it to resolve the timing in case of an exploit collision)
+  3. For 1days or once there is a public patch, test your exploit it on the [lab environment](#kctf-challenge). If you have troubles let us know in [#kctf](https://discord.gg/V8UqnZ6JBG) and we'll help you figure out any problems.
+  4. Once you get the flag, send it together with the patch and the exploit [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform).
 
 ### Notes
 
