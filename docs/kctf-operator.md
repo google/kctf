@@ -1,3 +1,11 @@
+this document is outdated
+
+Please check
+
+https://github.com/google/kctf/issues/356
+
+---
+
 # Developing the operator
 
 ## Introduction
