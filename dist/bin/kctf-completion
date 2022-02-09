@@ -105,8 +105,7 @@ function _kctf_complete_cluster() {
 
   case "${COMP_WORDS[2]}" in
     start|stop)
-      COMPREPLY=($(compgen -W "--help --disable-src-ranges" -- "${COMP_WORDS[${COMP_CWORD}]}"))
-      return
+      return 0
       ;;
     resize)
       if [ "${PREV_IS_FLAG}" = 1 ]; then
@@ -124,7 +123,7 @@ function _kctf_complete_cluster() {
       return
       ;;
     create)
-      if [ "${PREV_IS_FLAG}" = 1 ] && [ "${PREV_WORD}" != "--start" ] && [ "${PREV_WORD}" != "--disable-src-ranges" ]; then
+      if [ "${PREV_IS_FLAG}" = 1 ] && [ "${PREV_WORD}" != "--start" ]; then
         if [ "${PREV_WORD}" == "--type" ]; then
           COMPREPLY=($(compgen -W "gce kind" -- "${COMP_WORDS[${COMP_CWORD}]}"))
           return
@@ -147,7 +146,7 @@ function _kctf_complete_cluster() {
         fi
         return 0
       fi
-      COMPREPLY=($(compgen -W "--help --type --project --zone --registry --cluster-name --domain-name --email-address --start --disable-src-ranges" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--help --type --project --zone --registry --cluster-name --domain-name --start" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     load)

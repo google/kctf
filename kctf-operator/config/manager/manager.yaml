@@ -31,6 +31,11 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+          - name: ALLOWED_IPS
+            value: "0.0.0.0/0"
+          - name: SECURITY_POLICY
+            value: "kctf-policy"
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
