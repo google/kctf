@@ -77,18 +77,6 @@ We want to encourage the community to help research vulnerabilities such as thos
 *   It's ok to use 1-day exploits against the lab environment using publicly known vulnerabilities that exploit the patch gap between the time when a patch is announced and the lab environment is updated, however we will only issue a single reward per vulnerability.
 
 
-When we receive an exploit for a fixed vulnerability we'll add details here.
-
-|Form Received|Exploit Received|Patch|References|
-|:--:|:--:|:--:|:--:|
-|2021-12-14|2021-12-14|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[checksum](#93d608415be627643697d554c00ce93c9ea434619a8ea220e1c1cc21902930cf)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)<br/>[CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2021-4154)|
-|2021-12-24|2021-12-24|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3b0462726e7ef281c35a7a4ae33e93ee2bc9975b)|[checksum](#021590cc2ea40a4134d06a87d9e66b4885f41915efce8a02b2498ff1c2f3170d)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac)<br/>[CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2021-4154)|
-|2021-12-27|?|?|[checksum](#dfad77dfb3fdd5c640834f548cba6c90bacf8f14a5e7eb9a980b61ea084fb03b)|
-|2022-01-05|2022-01-05|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ec6af094ea28f0f2dda1a6a33b14cd57e36a9755)|[checksum](#b3b0e71c36081fdf58bc63fafec32007e45ea1f4a7ca4b7d7432b7a2be512bf3)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=8b2fd4b920d0bb1e6d9c839a1da0a6b5f5c1b118)<br/>[CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2021-22600)|
-|2021-01-06|2021-01-06|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=722d94847de29310e8aa03fcbdb41fc92c521756)|[checksum](#60f8c7ce4b322a0c92aaf96f9f2363508ba70db2cc96483dbf989d822323998e)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=53c05996968fc87df17de205b461f4f96d5b5907)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=852ddf3aee4937a946abb6b1331c4336122981b9)<br/>[CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-0185)|
-|2021-01-14|2021-01-18|[Patch](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=722d94847de29310e8aa03fcbdb41fc92c521756)|[checksum](#76a3b66a6272dccbb7c6b6d89683845b4e3c47cb13bda4e0e8095e9b9adebc38)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=53c05996968fc87df17de205b461f4f96d5b5907)<br/>[Syzkaller](https://syzkaller.appspot.com/bug?id=852ddf3aee4937a946abb6b1331c4336122981b9)<br/>[CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-0185)|
-|2022-01-22|?|?|[checksum](#5859a79450bdebdaa4a9f41c187ab5cafd2666f102d3cdb77382b0bd5234ae86)|
-|2022-01-24|?|?|[checksum](#f3c5659e93474c9434a7afb8120f139d78930fc2)|
-
+When we receive an exploit for a fixed vulnerability we'll add details [here](https://docs.google.com/spreadsheets/d/e/2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MbebdRdFnj6qZ0Yd7LwQfvYC2oF/pubhtml).
 
 In case of questions or suggestions, you can reach us in [#kctf](https://discord.gg/V8UqnZ6JBG).
