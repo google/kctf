@@ -71,12 +71,10 @@ func generateBackendConfig(challenge *kctfv1.Challenge) *backendv1.BackendConfig
 			Namespace: challenge.Namespace,
 		},
 		Spec: backendv1.BackendConfigSpec{
+			SecurityPolicy: &backendv1.SecurityPolicyConfig{
+				Name: os.Getenv("SECURITY_POLICY"),
+			},
 		},
-	}
-	if os.Getenv("SECURITY_POLICY") != "DISABLED" {
-		config.Spec.SecurityPolicy = &backendv1.SecurityPolicyConfig{
-			Name: os.Getenv("SECURITY_POLICY"),
-		}
 	}
 	return config
 }
