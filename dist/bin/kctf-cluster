@@ -436,7 +436,7 @@ function create_operator {
   "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf-operator-manager-config_v1_configmap.yaml" || return
   "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/kctf-operator-controller-manager-metrics-service_v1_service.yaml" || return
   if [[ "$CLUSTER_TYPE" == "gce" ]]; then
-    start_operator_gce
+    start_operator_gce || return
   else
     "${KCTF_BIN}/kubectl" apply -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
   fi
