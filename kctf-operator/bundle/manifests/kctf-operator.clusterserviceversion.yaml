@@ -299,11 +299,6 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                env:
-                - name: ALLOWED_IPS
-                  value: 0.0.0.0/0
-                - name: SECURITY_POLICY
-                  value: kctf-policy
                 image: eu.gcr.io/kctf-testing/kctf-operator:dev
                 livenessProbe:
                   httpGet:

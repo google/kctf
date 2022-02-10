@@ -4519,8 +4519,8 @@ spec:
         - name: ALLOWED_IPS
           value: 0.0.0.0/0
         - name: SECURITY_POLICY
-          value: kctf-policy
-        image: gcr.io/kctf-docker/kctf-operator@sha256:035e0b98b133ba362e328b2f330faa90ca12fb83ed52c799a7191da81a844cc3
+          value: DISABLED
+        image: gcr.io/kctf-docker/kctf-operator@sha256:9763b2f53ff64e23193255148d00a32fa9a6b4b72906bec54308865e7d10f449
         livenessProbe:
           httpGet:
             path: /healthz
