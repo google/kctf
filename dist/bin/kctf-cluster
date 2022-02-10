@@ -448,7 +448,7 @@ function create_operator {
 
   # The operator needs to create some subresources, e.g. the gcsfuse service account
   for i in {1..100}; do
-    "${KCTF_BIN}/kubectl" get pods --namespace kctf-operator-system -o=jsonpath='{.items[].status.containerStatuses[?(@.ready==true)].imageID}' | grep "${OPERATOR_IMAGE}" && break
+    "${KCTF_BIN}/kubectl" get pods --namespace kctf-operator-system -o=jsonpath='{.items[*].status.containerStatuses[?(@.ready==true)].imageID}' | grep "${OPERATOR_IMAGE}" && break
     if [ "$i" == "100" ]; then
       _kctf_log_err "Couldn't find a kctf-operator pod with status ready=true and image \"${OPERATOR_IMAGE}\" after 5 minutes"
       "${KCTF_BIN}/kubectl" get pods --namespace kctf-operator-system -o=yaml >&2
