@@ -4520,7 +4520,7 @@ spec:
           value: 0.0.0.0/0
         - name: SECURITY_POLICY
           value: DISABLED
-        image: gcr.io/kctf-docker/kctf-operator@sha256:9763b2f53ff64e23193255148d00a32fa9a6b4b72906bec54308865e7d10f449
+        image: gcr.io/kctf-docker/kctf-operator@sha256:44399c2da5c9ff858a858b7a0163bafc95517345ca94f24b3e782078e5bc4faf
         livenessProbe:
           httpGet:
             path: /healthz
