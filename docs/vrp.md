@@ -77,6 +77,6 @@ We want to encourage the community to help research vulnerabilities such as thos
 *   It's ok to use 1-day exploits against the lab environment using publicly known vulnerabilities that exploit the patch gap between the time when a patch is announced and the lab environment is updated, however we will only issue a single reward per vulnerability.
 
 
-When we receive an exploit for a fixed vulnerability we'll add details [here](https://docs.google.com/spreadsheets/d/e/2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MbebdRdFnj6qZ0Yd7LwQfvYC2oF/pubhtml).
+**When we receive an exploit for a fixed vulnerability we'll add details [here](https://docs.google.com/spreadsheets/d/e/2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MbebdRdFnj6qZ0Yd7LwQfvYC2oF/pubhtml).**
 
 In case of questions or suggestions, you can reach us in [#kctf](https://discord.gg/V8UqnZ6JBG).
