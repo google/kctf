@@ -4539,7 +4539,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: eu.gcr.io/kctf-test/kctf-operator@sha256:939bca420a7f600a820d6a49dda849dae96d22d2db30fde0fbb6b383dbf2829f
+        image: gcr.io/kctf-docker/kctf-operator@sha256:05922e953a843363e54c1ddf18c8c3baa8779e38c5988ede9dfd2eea69cdfa47
         livenessProbe:
           httpGet:
             path: /healthz
