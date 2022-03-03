@@ -323,7 +323,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: eu.gcr.io/kctf-test/kctf-operator:dev
+                image: eu.gcr.io/kctf-testing/kctf-operator:dev
                 livenessProbe:
                   httpGet:
                     path: /healthz

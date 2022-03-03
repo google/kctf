@@ -4539,6 +4539,11 @@ spec:
         - --leader-elect
         command:
         - /manager
+        env:
+        - name: ALLOWED_IPS
+          value: 0.0.0.0/0
+        - name: SECURITY_POLICY
+          value: DISABLED
         image: gcr.io/kctf-docker/kctf-operator@sha256:05922e953a843363e54c1ddf18c8c3baa8779e38c5988ede9dfd2eea69cdfa47
         livenessProbe:
           httpGet:
