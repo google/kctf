@@ -803,7 +803,7 @@ function kctf_cluster_resize {
   fi
 
   OPTS="h"
-  LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool"
+  LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool:"
   PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_resize_usage
