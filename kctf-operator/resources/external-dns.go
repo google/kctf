@@ -74,7 +74,7 @@ func NewExternalDnsDeployment() client.Object {
 					ServiceAccountName: "external-dns-sa",
 					Containers: []corev1.Container{
 						{
-							Image: "us.gcr.io/k8s-artifacts-prod/external-dns/external-dns:v0.7.2",
+							Image: "us.gcr.io/k8s-artifacts-prod/external-dns/external-dns:v0.10.0",
 							Name:  "external-dns",
 							Env: []corev1.EnvVar{{
 								Name: "DOMAIN_NAME",
