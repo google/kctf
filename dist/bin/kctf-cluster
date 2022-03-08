@@ -804,7 +804,7 @@ function kctf_cluster_resize {
 
   OPTS="h"
   LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool:"
-  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf chal create" -- "$@")
+  PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster resize" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_resize_usage
     exit 1
