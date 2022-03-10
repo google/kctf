@@ -25,7 +25,7 @@ func NewExternalDnsClusterRole() client.Object {
 				Verbs:     []string{"get", "watch", "list"},
 			},
 			{
-				APIGroups: []string{"extensions"},
+				APIGroups: []string{"extensions", "networking.k8s.io"},
 				Resources: []string{"ingresses"},
 				Verbs:     []string{"get", "watch", "list"},
 			},
