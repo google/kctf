@@ -109,7 +109,7 @@ kctf chal debug port-forward &
 
 After connecting, you will see `Forwarding from 127.0.0.1:[LOCAL_PORT] -> 1337` in the terminal. Connect to the LOCAL_PORT:
 ```bash
-nc 127.0.0.1 [external_port]
+nc 127.0.0.1 [LOCAL_PORT]
 ```
 
 If all went well, you should be able to connect and see:
