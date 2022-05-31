@@ -22,10 +22,7 @@ To build the Docker image, run:
 kctf chal debug docker
 ```
 
-This will output any errors when *building* the image, but the image won't actually be run. If you would like to run the image, run:
-
-
-This will output something like this towards the end:
+This will output any errors when *building* the image and something like this towards the end:
 ```
 CONTAINER ID        IMAGE                       COMMAND                  CREATED             STATUS                  PORTS                     NAMES
 81d06c71f6b5        kctf-chal-troubleshooting   "/bin/sh -c '/usr/bi…"   1 second ago        Up Less than a second   0.0.0.0:32780->1337/tcp   unruffled_payne
