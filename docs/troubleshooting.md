@@ -201,13 +201,13 @@ To obtain remote logs, run:
 kctf chal debug logs
 ```
 
-In addition, you can run any kubectl command as before.
+In addition, you can run any kubectl command as described in the section [Inspecting a Kubernetes Deployment](#inspecting-a-kubernetes-deployment).
 
 ### Restarting or redeploying
 
 A good first step is to restart the challenge. To do so run:
 ```
-kctf-kubectl rollout restart deployment/chal
+kubectl rollout restart deployment/chal
 ```
 Note: To make Kubernetes automatically restart flaky challenges, you should have a healthcheck. 
 
