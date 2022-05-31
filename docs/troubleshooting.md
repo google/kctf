@@ -201,13 +201,7 @@ To obtain remote logs, run:
 kctf chal debug logs
 ```
 
-In addition, you can run any kubectl command under the kCTF cluster using kctf-kubectl.
-
-Again, make sure to use the right namespace by running:
-```
-kctf-kubectl config set-context --current --namespace=kctf-chal-troubleshooting
-```
-This will be done automatically if you interact with a challenge using the Makefile, e.g. via `kctf chal status`.
+In addition, you can run any kubectl command as before.
 
 ### Restarting or redeploying
 
