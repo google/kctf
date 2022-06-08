@@ -408,8 +408,8 @@ function start_operator_gce {
     SUFFIX=$(echo "${PROJECT}-${CLUSTER_NAME}-${ZONE}" | sha1sum)
     POLICY_NAME="kctf-policy-${SUFFIX:0:16}"
     # restart the operator with the new range
-    "${KCTF_BIN}/yq" eval "(((.|select(has(\"spec\"))).spec|select(has(\"template\"))).template.spec.containers[0].env[] | select(.name == \"ALLOWED_IPS\")).value = \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
-      | "${KCTF_BIN}/yq" eval "(((.|select(has(\"spec\"))).spec|select(has(\"template\"))).template.spec.containers[0].env[] | select(.name == \"SECURITY_POLICY\")).value = \"${POLICY_NAME}\"" - \
+    "${KCTF_BIN}/yq" eval "(select(.kind == \"Deployment\").spec.template.spec.containers[] | select(.name == \"manager\").env[] | select(.name == \"ALLOWED_IPS\").value) |= \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
+      | "${KCTF_BIN}/yq" eval "(select(.kind == \"Deployment\").spec.template.spec.containers[] | select(.name == \"manager\").env[] | select(.name == \"SECURITY_POLICY\").value) |= \"${POLICY_NAME}\"" - \
       | "${KCTF_BIN}/kubectl" apply -f - || return
   fi
 }
