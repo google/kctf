@@ -393,7 +393,8 @@ function kctf_cluster_ip_ranges {
   set_cloud_armor_policy "${RANGES}" || return
 
   # stop the operator
-  "${KCTF_BIN}/kubectl" delete -f "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" || return
+  "${KCTF_BIN}/yq" eval "select(.kind == \"Deployment\")" "${KCTF_CTF_DIR}/kctf/resources/operator.yaml" \
+    | "${KCTF_BIN}/kubectl" delete -f - || return
 
   start_operator_gce || return
 }
