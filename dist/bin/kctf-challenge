@@ -127,7 +127,12 @@ function build_image {
   CONTAINER_DIR="${CHALLENGE_DIR}/${CONTAINER_NAME}"
   _kctf_log "building image in \"${CONTAINER_DIR}\""
   IIDFILE="$(mktemp)"
-  docker build "${CONTAINER_DIR}" --iidfile "${IIDFILE}"
+  if find "${CONTAINER_DIR}" -type l -exec false {} + >/dev/null 2>/dev/null; then
+    docker build "${CONTAINER_DIR}" --iidfile "${IIDFILE}"
+  else
+    _kctf_log "found symlink, building with tar -czh | docker"
+    tar -C "${CONTAINER_DIR}" -czh . | docker build --iidfile "${IIDFILE}" -
+  fi
   if [[ $? -ne 0 ]]; then
     rm "${IIDFILE}"
     return 1
