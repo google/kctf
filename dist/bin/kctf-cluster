@@ -721,6 +721,11 @@ function kctf_cluster_start {
 }
 
 function kctf_cluster_stop_gce {
+  read -p "Do you really want to delete the GKE cluster? If you are sure type the cluster name (${CLUSTER_NAME}): "
+  if [[ ! "${REPLY}" = "${CLUSTER_NAME}" ]]
+  then
+    return 1
+  fi
   _kctf_log "deleting all challenges so that load balancers etc can be cleaned up"
   CHALLENGES=$("${KCTF_BIN}/kubectl" get challenge --all-namespaces -o=jsonpath='{range .items[*]}{@.metadata.namespace}{"/"}{@.metadata.name}{" "}{end}')
   if [[ ! -z "${CHALLENGES}" ]]; then
