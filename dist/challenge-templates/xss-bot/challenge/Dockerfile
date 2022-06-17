@@ -13,7 +13,7 @@
 # limitations under the License.
 FROM gcr.io/kctf-docker/challenge@sha256:d884e54146b71baf91603d5b73e563eaffc5a42d494b1e32341a5f76363060fb
 
-RUN apt-get update && apt-get install -y gnupg2
+RUN apt-get update && apt-get install -y gnupg2 wget
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer installs, work.
@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y gnupg2
 #  plus libxshmfence1 which seems to be missing
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && wget -q -O - https://deb.nodesource.com/setup_16.x | bash - \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         ca-certificates \
@@ -61,7 +62,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
         lsb-release \
         wget \
         xdg-utils \
-        nodejs npm \
+        nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 COPY bot.js /home/user/
