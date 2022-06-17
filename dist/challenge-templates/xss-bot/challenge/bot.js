@@ -53,7 +53,9 @@ if (BLOCK_SUBORIGINS) {
     const page = await context.newPage();
     await page.setCookie(cookie);
     socket.write(`Loading page ${url}.\n`);
-    page.goto(url);
+    await page.goto(url, {
+      timeout: 1500  /* add 1.5s margin for network delays */
+    });
     setTimeout(()=>{
       try {
         context.close();
