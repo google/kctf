@@ -53,10 +53,10 @@ if (BLOCK_SUBORIGINS) {
     const page = await context.newPage();
     await page.setCookie(cookie);
     socket.write(`Loading page ${url}.\n`);
-    await page.goto(url);
+    page.goto(url);
     setTimeout(()=>{
       try {
-        page.close();
+        context.close();
         socket.write('timeout\n');
         socket.destroy();
       } catch (err) {
