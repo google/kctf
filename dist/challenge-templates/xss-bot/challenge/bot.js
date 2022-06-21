@@ -6,6 +6,7 @@ const DOMAIN = process.env.DOMAIN;
 if (DOMAIN == undefined) throw 'domain undefined'
 const REGISTERED_DOMAIN = process.env.REGISTERED_DOMAIN;
 const BLOCK_SUBORIGINS = process.env.BLOCK_SUBORIGINS == "1";
+const BOT_TIMEOUT = process.env.BOT_TIMEOUT || 60*1000;
 
 // will only be used if BLOCK_SUBORIGINS is enabled
 const PAC_B64 = Buffer.from(`
@@ -53,9 +54,6 @@ if (BLOCK_SUBORIGINS) {
     const page = await context.newPage();
     await page.setCookie(cookie);
     socket.write(`Loading page ${url}.\n`);
-    await page.goto(url, {
-      timeout: 1500  /* add 1.5s margin for network delays */
-    });
     setTimeout(()=>{
       try {
         context.close();
@@ -64,7 +62,8 @@ if (BLOCK_SUBORIGINS) {
       } catch (err) {
         console.log(`err: ${err}`);
       }
-      }, 60000);
+    }, BOT_TIMEOUT);
+    await page.goto(url);
   }
 
   var server = net.createServer();
