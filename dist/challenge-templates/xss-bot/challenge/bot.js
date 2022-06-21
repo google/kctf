@@ -6,7 +6,7 @@ const DOMAIN = process.env.DOMAIN;
 if (DOMAIN == undefined) throw 'domain undefined'
 const REGISTERED_DOMAIN = process.env.REGISTERED_DOMAIN;
 const BLOCK_SUBORIGINS = process.env.BLOCK_SUBORIGINS == "1";
-const BOT_TIMEOUT = process.env.BOT_TIMEOUT || 60;
+const BOT_TIMEOUT = process.env.BOT_TIMEOUT || 60*1000;
 
 // will only be used if BLOCK_SUBORIGINS is enabled
 const PAC_B64 = Buffer.from(`
