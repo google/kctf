@@ -120,7 +120,7 @@ function _kctf_complete_cluster() {
         fi
         return 0
       fi
-      COMPREPLY=($(compgen -W "--machine-type --min-nodes --max-nodes --num-nodes --pool-name --old-pool" -- "${COMP_WORDS[${COMP_CWORD}]}"))
+      COMPREPLY=($(compgen -W "--machine-type --spot --min-nodes --max-nodes --num-nodes --pool-name --old-pool" -- "${COMP_WORDS[${COMP_CWORD}]}"))
       return
       ;;
     create)
