@@ -795,6 +795,7 @@ function kctf_cluster_resize_usage {
   echo -e "  -h|--help      print this help" >&2
   echo -e "  --machine-type machine type to use" >&2
   echo -e "                 to list available types, run: gcloud compute machine-types list --zones=\"${ZONE}\"" >&2
+  echo -e "  --spot         use spot VMs (reduced cost but no availability guarantees)" >&2
   echo -e "  --min-nodes    (required) minimum number of nodes in the cluster" >&2
   echo -e "  --max-nodes    (required) maximum number of nodes in the cluster" >&2
   echo -e "  --num-nodes    (required) initial number of nodes in the cluster" >&2
@@ -809,7 +810,7 @@ function kctf_cluster_resize {
   fi
 
   OPTS="h"
-  LONGOPTS="help,machine-type:,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool:"
+  LONGOPTS="help,machine-type:,spot,min-nodes:,max-nodes:,num-nodes:,pool-name:,old-pool:"
   PARSED=$(${GETOPT} --options=$OPTS --longoptions=$LONGOPTS --name "kctf cluster resize" -- "$@")
   if [[ $? -ne 0 ]]; then
     kctf_cluster_resize_usage
@@ -818,6 +819,7 @@ function kctf_cluster_resize {
   eval set -- "$PARSED"
 
   MACHINE_TYPE="n2-standard-4"
+  SPOT=
   MIN_NODES=
   MAX_NODES=
   NUM_NODES=
@@ -832,6 +834,10 @@ function kctf_cluster_resize {
       --machine-type)
         MACHINE_TYPE="$2"
         shift 2
+        ;;
+      --spot)
+        SPOT=1
+        shift 1
         ;;
       --min-nodes)
         MIN_NODES="$2"
@@ -900,6 +906,7 @@ function kctf_cluster_resize {
   gcloud container node-pools create "${NEW_POOL_NAME}" \
     --cluster="${CLUSTER_NAME}" \
     --machine-type="${MACHINE_TYPE}" \
+    ${SPOT:+--spot} \
     --enable-autorepair \
     --enable-autoupgrade \
     --num-nodes="${NUM_NODES}" \
