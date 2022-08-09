@@ -59,6 +59,32 @@ KCTF{$CHAL_NAME-$TIMESTAMP:$MAC}
 
 As you can see, the flags include a timestamp and are rotated frequently.
 
+## Experimental mitigations challenge
+
+We’re launching new instances to evaluate the latest Linux kernel stable image as well as new experimental mitigations in a custom kernel we've built. Rather than simply learning about the current state of the stable kernels, the new instances are used to ask the community to help us evaluate the value of both our latest and more experimental security mitigations.
+
+The [mitigations](https://github.com/thejh/linux/blob/slub-virtual/MITIGATION_README) we've built attempt to tackle the following exploit primitives:
+* Out-of-bounds write on slab
+* Cross-cache attacks
+* Elastic objects
+* Freelist corruption
+
+You can connect to the instance with the latest kernel without the patch via
+
+```
+nc kctf-mitigation.vrp.ctfcompetition.com 1337
+```
+
+And to the version patched with our experimental mitigations:
+
+```
+nc kctf-mitigation.vrp.ctfcompetition.com 31337
+```
+
+These instances are not based on the kCTF infrastructure (as they require running custom kernel version), instead they spin up a new QEMU VM on every new connection. As this is not a production-ready infrastructure, breaking the infrastructure itself (or e.g. using leaks from console) is not considered a valid submission.
+
+Please also note that although we are trying to keep up-to-date with the latest kernel version, these instances may sometimes be outdated.
+
 ### Submission
 
 We want to avoid learning about unfixed vulnerabilities, so the process to submit reports is:
@@ -66,6 +92,7 @@ We want to avoid learning about unfixed vulnerabilities, so the process to submi
   2. If it is a 0day (there's no patch for it on [linus master branch](https://github.com/torvalds/linux/tree/master) yet), then send us a checksum of your working exploit to our form [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform). You won't share any technical details about the vulnerability, you will just record the fact you found something (as we only reward the first person that writes an exploit for a given bug, we use it to resolve the timing in case of an exploit collision). Make sure to submit the exploit checksum **before** there's a public patch and to submit the full exploit **within a week** after the patch is public. If you take longer than a week, we might issue the reward to someone else.
   3. For 1days or once there is a public patch, test your exploit it on the [lab environment](#kctf-challenge). If you have troubles let us know in [#kctf](https://discord.gg/V8UqnZ6JBG) and we'll help you figure out any problems.
   4. Once you get the flag, send it together with the patch and the exploit [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform).
+  5. To increase the timely sharing of new techniques with the community, we are also now requiring that the exploits that receive innovation bonus get publicly documented within a month.  If the researcher prefers not to do so, we will.
 
 ### Notes
 
