@@ -83,6 +83,15 @@ nc kctf-mitigation.vrp.ctfcompetition.com 31337
 
 These instances are not based on the kCTF infrastructure (as they require running custom kernel version), instead they spin up a new QEMU VM on every new connection. As this is not a production-ready infrastructure, breaking the infrastructure itself (or e.g. using leaks from console) is not considered a valid submission.
 
+|                | Upstream | Custom mitigation |
+| -------------- | -------- | ----------------- |
+| Kernel version | 5.19     | 5.19 - custom     |
+| Kernel image   | [bzImage_upstream_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19) | [bzImage_mitigation_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19) |
+| Kernel config  | [bzImage_upstream_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19_config) | [bzImage_mitigation_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19_config) |
+| Commit         | [3d7cb6b](https://github.com/thejh/linux/commit/3d7cb6b04c3f3115719235cc6866b10326de34cd) | [c02401c](https://github.com/thejh/linux/commit/c02401c87a2d84efb47c4354400a9ad17d7b6436) |
+| Port           | 1337     | 31337             |
+| Reward (base)  | $21000   | $42000            |
+
 Please also note that although we are trying to keep up-to-date with the latest kernel version, these instances may sometimes be outdated.
 
 ### Submission
@@ -92,7 +101,7 @@ We want to avoid learning about unfixed vulnerabilities, so the process to submi
   2. If it is a 0day (there's no patch for it on [linus master branch](https://github.com/torvalds/linux/tree/master) yet), then send us a checksum of your working exploit to our form [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform). You won't share any technical details about the vulnerability, you will just record the fact you found something (as we only reward the first person that writes an exploit for a given bug, we use it to resolve the timing in case of an exploit collision). Make sure to submit the exploit checksum **before** there's a public patch and to submit the full exploit **within a week** after the patch is public. If you take longer than a week, we might issue the reward to someone else.
   3. For 1days or once there is a public patch, test your exploit it on the [lab environment](#kctf-challenge). If you have troubles let us know in [#kctf](https://discord.gg/V8UqnZ6JBG) and we'll help you figure out any problems.
   4. Once you get the flag, send it together with the patch and the exploit [here](https://docs.google.com/forms/d/e/1FAIpQLSeQf6aWmIIjtG4sbEKfgOBK0KL3zzeHCrsgA1EcPr-xsFAk7w/viewform).
-  5. To increase the timely sharing of new techniques with the community, we are also now requiring that the exploits that receive innovation bonus get publicly documented within a month.  If the researcher prefers not to do so, we will.
+  5. To increase the timely sharing of new techniques with the community, we are also now requiring that the exploits that receive innovation bonus get publicly documented within a month, otherwise we may publish it.
 
 ### Notes
 
