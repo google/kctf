@@ -88,7 +88,7 @@ These instances are not based on the kCTF infrastructure (as they require runnin
 | Kernel version | 5.19     | 5.19 - custom     |
 | Kernel image   | [bzImage_upstream_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19) | [bzImage_mitigation_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19) |
 | Kernel config  | [bzImage_upstream_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19_config) | [bzImage_mitigation_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19_config) |
-| Commit         | [3d7cb6b](https://github.com/thejh/linux/commit/3d7cb6b04c3f3115719235cc6866b10326de34cd) | [c02401c](https://github.com/thejh/linux/commit/c02401c87a2d84efb47c4354400a9ad17d7b6436) |
+| Source code    | [3d7cb6b](https://github.com/thejh/linux/tree/3d7cb6b04c3f3115719235cc6866b10326de34cd) | [c02401c](https://github.com/thejh/linux/tree/c02401c87a2d84efb47c4354400a9ad17d7b6436) |
 | Port           | 1337     | 31337             |
 | Reward (base)  | $21000   | $42000            |
 
