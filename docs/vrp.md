@@ -1,6 +1,6 @@
 # kCTF VRP Setup
 
-We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page. Successful demonstrations are eligible for rewards between [20,000 - 91,337 USD](https://security.googleblog.com/2022/02/roses-are-red-violets-are-blue-giving.html) as defined in https://g.co/vrp.
+We invite you to demonstrate an exploit against our kCTF demo cluster based on the challenges presented on this page. Successful demonstrations are eligible for rewards between [20,000 - 91,337 USD](https://security.googleblog.com/2022/02/roses-are-red-violets-are-blue-giving.html) as defined in [https://g.co/vrp](https://g.co/vrp). On top of this, exploiting our [new instances](#experimental-mitigations-challenge) are eligible up to 42,000 USD, increasing the total possible payout to [133,337 USD](https://security.googleblog.com/2022/08/making-linux-kernel-exploit-cooking.html).
 
 [kCTF](https://github.com/google/kctf) is an open source infrastructure for CTF competitions. You can find details on how it works in the [kCTF documentation](https://google.github.io/kctf/introduction.html), but in short, it’s running on a hardened Kubernetes cluster with the following security features:
 
@@ -61,7 +61,7 @@ As you can see, the flags include a timestamp and are rotated frequently.
 
 ## Experimental mitigations challenge
 
-We’re launching new instances to evaluate the latest Linux kernel stable image as well as new experimental mitigations in a custom kernel we've built. Rather than simply learning about the current state of the stable kernels, the new instances are used to ask the community to help us evaluate the value of both our latest and more experimental security mitigations.
+We’re [launching new instances](https://security.googleblog.com/2022/08/making-linux-kernel-exploit-cooking.html) to evaluate the latest Linux kernel stable image as well as new experimental mitigations in a custom kernel we've built. Rather than simply learning about the current state of the stable kernels, the new instances are used to ask the community to help us evaluate the value of both our latest and more experimental security mitigations.
 
 The [mitigations](https://github.com/thejh/linux/blob/slub-virtual/MITIGATION_README) we've built attempt to tackle the following exploit primitives:
 * Out-of-bounds write on slab

@@ -30,7 +30,7 @@ We have a fake challenge running, you can see what an isolated challenge would l
 nc kctf.vrp.ctfcompetition.com 1337
 ```
 
-If you are able to break out of it, you can [earn up to $10,000 USD](vrp.md).
+If you are able to break out of it, you can [earn up to $133,337 USD](vrp.md).
 
 **Tip**: Execute `bash -i 2>&1` to get an interactive bash session.
 
