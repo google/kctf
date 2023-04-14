@@ -26,11 +26,15 @@ You can find the code for the challenges
 
 The “kctf” challenge is the only entry point to the cluster. You can connect to it via:
 
+**Older cluster (running Linux 5.10 currently):**
+```
+socat FILE:`tty`,raw,echo=0 TCP:kctf.vrp.ctfcompetition.com:1337
+```
+
+**Newer cluster (running Linux 5.15 currently):**
 ```
 socat FILE:`tty`,raw,echo=0 TCP:kctf.vrp2.ctfcompetition.com:1337
 ```
-
-Our older cluster running on Linux 5.4 (`kctf.vrp.ctfcompetition.com:1337`) is already end-of-life and we will be turned off soon (not later than 2023-04-29), please do not start new research on that cluster.
 
 It will ask you to solve a proof-of-work and then gives you access to a bash running in a setup similar to the [kCTF pwn template challenge](https://github.com/google/kctf/tree/beta/dist/challenge-templates/pwn). The only difference is that the flag is not accessible inside of the nsjail sandbox and you will need to break out of the chroot in order to read it. You can observe the full source code [here](https://github.com/google/google-ctf/tree/master/vrp).
 
