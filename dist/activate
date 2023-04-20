@@ -24,7 +24,12 @@ if [[ "$OSTYPE" =~ ^darwin.* ]]; then
 
   STAT="gstat"
   MKTEMP="gmktemp"
-  export KCTF_CTF_DIR="$(grealpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+  if ! grealpath &> /dev/null
+  then
+    export KCTF_CTF_DIR="$(grealpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+  else
+    export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
+  fi
   
 else
   KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
