@@ -84,10 +84,10 @@ These instances are not based on the kCTF infrastructure (as they require runnin
 
 |                | Upstream | Custom mitigation |
 | -------------- | -------- | ----------------- |
-| Kernel version | 5.19     | 5.19 - custom     |
-| Kernel image   | [bzImage_upstream_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19) | [bzImage_mitigation_5.19](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19) |
-| Kernel config  | [bzImage_upstream_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_5.19_config) | [bzImage_mitigation_5.19_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_5.19_config) |
-| Source code    | [3d7cb6b](https://github.com/thejh/linux/tree/3d7cb6b04c3f3115719235cc6866b10326de34cd) | [c02401c](https://github.com/thejh/linux/tree/c02401c87a2d84efb47c4354400a9ad17d7b6436) |
+| Kernel version | 6.1.25   | 6.1.25 - custom   |
+| Kernel image   | [bzImage_upstream_6.1.25](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_6.1.25) | [bzImage_mitigation_6.1.25](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_6.1.25) |
+| Kernel config  | [bzImage_upstream_6.1.25_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_upstream_6.1.25_config) | [bzImage_mitigation_6.1.25_config](https://storage.googleapis.com/kctf-vrp-public-files/bzImage_mitigation_6.1.25_config) |
+| Source code    | [f17b0ab](https://github.com/thejh/linux/commit/f17b0ab65d17988d5e6d6fe22f708ef3721080bf) | [a87ad16](https://github.com/thejh/linux/commit/a87ad16046f6f7fd61080ebfb93753366466b761) |
 | Port           | 1337     | 31337             |
 | Reward (base)  | $21000   | $42000            |
 
