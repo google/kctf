@@ -80,6 +80,8 @@ And to the version patched with our experimental mitigations:
 nc kctf-mitigation.vrp.ctfcompetition.com 31337
 ```
 
+(Previous kernel version 5.19 with the mitigation is available at `nc kctf-mitigation.vrp.ctfcompetition.com 31338`, but please do not use that for new research.)
+
 These instances are not based on the kCTF infrastructure (as they require running custom kernel version), instead they spin up a new QEMU VM on every new connection. As this is not a production-ready infrastructure, breaking the infrastructure itself (or e.g. using leaks from console) is not considered a valid submission.
 
 |                | Upstream | Custom mitigation |
