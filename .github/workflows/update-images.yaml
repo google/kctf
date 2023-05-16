@@ -157,7 +157,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.7'
 
     - name: Export gcloud related env variable
       run: export CLOUDSDK_PYTHON="/usr/bin/python3"
@@ -249,6 +249,14 @@ jobs:
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+
+    - name: Export gcloud related env variable
+      run: export CLOUDSDK_PYTHON="/usr/bin/python3"
+    
     - name: 'Set up Cloud SDK auth'
       uses: 'google-github-actions/auth@v0'
       with:
