@@ -273,7 +273,6 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0'
       with:
-        version: '319.0.0'
         service_account_email: ${{ secrets.GKE_EMAIL }}
         install_components: 'gke-gcloud-auth-plugin'
 
