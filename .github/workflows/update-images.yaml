@@ -75,6 +75,11 @@ jobs:
         cd "docker-images/${{ matrix.image }}"
         docker build . --tag "${{ matrix.image }}"
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.5'
+
     - name: 'Set up Cloud SDK auth'
       uses: 'google-github-actions/auth@v0'
       with:
