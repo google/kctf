@@ -16,7 +16,7 @@
 FROM ubuntu:20.04 as nsjail
 
 ENV BUILD_PACKAGES build-essential git protobuf-compiler libprotobuf-dev bison flex pkg-config libnl-route-3-dev ca-certificates
-ENV NSJAIL_COMMIT 4be95952340bd1339889174d3a9158d636985813
+ENV NSJAIL_COMMIT f920c9194ec1e9654f051eb2390604059c951ea2
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends $BUILD_PACKAGES \
