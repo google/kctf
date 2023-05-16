@@ -279,6 +279,10 @@ jobs:
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       run: |
         gcloud auth configure-docker
+        
+    - name: Configure gke auth plugin to use the gcloud command-line tool as a credential helper
+      run: |
+        gcloud components install gke-gcloud-auth-plugin
 
     - name: Configure kCTF cluster
       run: |
