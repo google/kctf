@@ -154,8 +154,16 @@ jobs:
         # https://github.com/google-github-actions/setup-gcloud#authorization
         credentials_json: '${{ secrets.GKE_KEY }}'
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Export gcloud related env variable
+      run: export CLOUDSDK_PYTHON="/usr/bin/python3"
+    
     - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
+      uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '319.0.0'
         service_account_email: ${{ secrets.GKE_EMAIL }}
