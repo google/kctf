@@ -275,14 +275,11 @@ jobs:
       with:
         version: '319.0.0'
         service_account_email: ${{ secrets.GKE_EMAIL }}
+        install_components: 'gke-gcloud-auth-plugin'
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
       run: |
         gcloud auth configure-docker
-        
-    - name: Configure gke auth plugin to use the gcloud command-line tool as a credential helper
-      run: |
-        gcloud components install gke-gcloud-auth-plugin
 
     - name: Configure kCTF cluster
       run: |
