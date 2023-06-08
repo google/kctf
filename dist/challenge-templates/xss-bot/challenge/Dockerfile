@@ -68,7 +68,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 COPY bot.js /home/user/
 COPY cookie /home/user/
 COPY .puppeteerrc.cjs /home/user/
-RUN cd /home/user && npm install puppeteer && node node_modules/puppeteer/install.js
+RUN cd /home/user && npm install puppeteer
 RUN cp -r /root/.cache /home/user/
 
 ENV DOMAIN="www.example.com"
