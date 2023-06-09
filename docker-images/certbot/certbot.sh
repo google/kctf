@@ -26,7 +26,7 @@ else
 fi
 
 function request_certificate() {
-  certbot certonly ${TEST} --non-interactive --agree-tos ${EMAIL_FLAG} --dns-google -d '*.'"${DOMAIN}" --dns-google-propagation-seconds 120
+  certbot certonly ${TEST} --non-interactive --agree-tos ${EMAIL_FLAG} --dns-google -d "${DOMAIN}" -d '*.'"${DOMAIN}" --dns-google-propagation-seconds 120
 }
 
 function update_tls_secret() {
