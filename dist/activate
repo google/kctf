@@ -16,8 +16,8 @@ if [[ "$OSTYPE" =~ ^darwin.* ]]; then
   KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_darwin_amd64"
   KCTF_YQ_HASH="83b9dc96e75799e162035b2ee2dffc0c51de869c27a2e294eb0aee8653a19804"
 
-  KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.11.1/kind-darwin-amd64"
-  KCTF_KIND_HASH="432bef555a70e9360b44661c759658265b9eaaf7f75f1beec4c4d1e6bbf97ce3"
+  KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.18.0/kind-darwin-amd64"
+  KCTF_KIND_HASH="9c91e3a6f380ee4cab79094d3fade94eb10a4416d8d3a6d3e1bb9c616f392de4"
 
   KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.20.4/bin/darwin/amd64/kubectl"
   KCTF_KUBECTL_HASH="37f593731b8c9913bf2a3bfa36dacb3058dc176c7aeae2930c783822ea03a573"
@@ -35,8 +35,8 @@ else
   KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
   KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
 
-  KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64"
-  KCTF_KIND_HASH="949f81b3c30ca03a3d4effdecda04f100fa3edc07a28b19400f72ede7c5f0491"
+  KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.18.0/kind-linux-amd64"
+  KCTF_KIND_HASH="705c722b0a87c9068e183f6d8baecd155a97a9683949ca837c2a500c9aa95c63"
 
   KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl"
   KCTF_KUBECTL_HASH="98e8aea149b00f653beeb53d4bd27edda9e73b48fed156c4a0aa1dabe4b1794c"
