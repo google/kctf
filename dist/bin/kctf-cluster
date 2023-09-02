@@ -651,7 +651,7 @@ function kctf_cluster_start_gce {
 
     gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:${DNS_GSA_EMAIL} --role=roles/dns.admin || return
 
-    "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
+    "${KCTF_BIN}/kubectl" create configmap --namespace kctf-system external-dns --from-literal=DOMAIN_NAME=${DOMAIN_NAME} --from-literal=EMAIL_ADDRESS=${EMAIL_ADDRESS:-} --from-literal=CLUSTER_NAME=${CLUSTER_NAME:-} --dry-run=client -o yaml | "${KCTF_BIN}/kubectl" apply -f - || return
   fi
 
   if [[ "${DISABLE_SRC_RANGES}" == "0" ]]; then
