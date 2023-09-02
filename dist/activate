@@ -292,7 +292,12 @@ function _kctf_activate {
   else
     _kctf_log "To create a cluster config, run \"kctf cluster create\""
   fi
-  PS1="${PS1}${_KCTF_PROMPT_COLOR1}kCTF[ctf=${_KCTF_PROMPT_COLOR2}${KCTF_CTF_NAME}\$(_kctf_config_string)\$(_kctf_chal_string)${_KCTF_PROMPT_COLOR1}] >${_KCTF_PROMPT_COLOR_END} "
+  if set -o | grep -E '^promptsubst\s+off' -q; then
+    _kctf_log_warn "Prompt substitution is disabled. Please run 'setopt PROMPT_SUBST' before 'kctf/activate' for extra prompt information."
+    PS1="${PS1}${_KCTF_PROMPT_COLOR1}kCTF[ctf=${_KCTF_PROMPT_COLOR2}${KCTF_CTF_NAME}${_KCTF_PROMPT_COLOR1}] >${_KCTF_PROMPT_COLOR_END} "
+  else
+    PS1="${PS1}${_KCTF_PROMPT_COLOR1}kCTF[ctf=${_KCTF_PROMPT_COLOR2}${KCTF_CTF_NAME}\$(_kctf_config_string)\$(_kctf_chal_string)${_KCTF_PROMPT_COLOR1}] >${_KCTF_PROMPT_COLOR_END} "
+  fi
 }
 
 function deactivate {
