@@ -47,7 +47,7 @@ jobs:
         echo "BASE_SHA=${BASE_SHA}"
         if [ -z "${BASE_SHA}" ]; then
           # we couldn't find any existing robot commit, just rebuild everything
-          echo "::set-output name=modified::true"
+          echo "modified=true" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         CHANGED_FILES="$(git diff --name-only ${BASE_SHA} ${{ github.sha }})"
@@ -57,7 +57,7 @@ jobs:
           for watched_path in "${PATHS[@]}"; do
             if [[ $changed_file == $watched_path ]]; then
               echo "modified=true: ${changed_file} matches ${watched_path}"
-              echo "::set-output name=modified::true"
+              echo "modified=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           done
@@ -66,7 +66,7 @@ jobs:
     - id: set-modified
       name: Set modified
       run: |
-        echo "::set-output name=${{ matrix.image }}-modified::${{ steps.modified.outputs.modified }}"
+        echo "${{ matrix.image }}-modified=${{ steps.modified.outputs.modified }}" >> "$GITHUB_OUTPUT"
 
 
     - name: Build image
@@ -106,7 +106,7 @@ jobs:
         IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/${{ matrix.image }}"
         docker tag "${{ matrix.image }}" "$IMAGE_GCR"
         DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
-        echo "::set-output name=${{ matrix.image }}-digest::${DIGEST}"
+        echo "${{ matrix.image }}-digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
   build-operator:
     runs-on: ubuntu-latest
@@ -130,7 +130,7 @@ jobs:
         echo "BASE_SHA=${BASE_SHA}"
         if [ -z "${BASE_SHA}" ]; then
           # we couldn't find any existing robot commit, just rebuild everything
-          echo "::set-output name=modified::true"
+          echo "modified=true" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         CHANGED_FILES="$(git diff --name-only ${BASE_SHA} ${{ github.sha }})"
@@ -140,7 +140,7 @@ jobs:
           for watched_path in "${PATHS[@]}"; do
             if [[ $changed_file == $watched_path ]]; then
               echo "modified=true: ${changed_file} matches ${watched_path}"
-              echo "::set-output name=modified::true"
+              echo "modified=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           done
@@ -149,7 +149,7 @@ jobs:
     - id: set-modified
       name: Set modified
       run: |
-        echo "::set-output name=kctf-operator-modified::${{ steps.modified.outputs.modified }}"
+        echo "kctf-operator-modified=${{ steps.modified.outputs.modified }}" >> "$GITHUB_OUTPUT"
 
     - name: 'Set up Cloud SDK auth'
       uses: 'google-github-actions/auth@v0'
@@ -200,7 +200,7 @@ jobs:
         IMAGE_GCR="gcr.io/${{ secrets.GCR_PROJECT }}/kctf-operator"
         docker tag "kctf-operator" "$IMAGE_GCR"
         DIGEST="$(docker push "$IMAGE_GCR" | grep 'digest: ' | sed 's/.*\(sha256:[^ ]*\).*/\1/')"
-        echo "::set-output name=kctf-operator-digest::${DIGEST}"
+        echo "kctf-operator-digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
   update-image-and-commit:
     runs-on: ubuntu-latest
