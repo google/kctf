@@ -17,7 +17,6 @@
 import base64
 import os
 import secrets
-import socket
 import sys
 import hashlib
 
