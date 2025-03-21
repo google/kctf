@@ -181,7 +181,7 @@ jobs:
     - name: 'Setup go version necessary for operator'
       uses: actions/setup-go@v5
       with:
-        go-version: 'latest'
+        go-version: '1.24.1'
 
     - name: Build image
       if: steps.modified.outputs.modified
