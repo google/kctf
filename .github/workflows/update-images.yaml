@@ -89,9 +89,9 @@ jobs:
         credentials_json: '${{ secrets.GKE_KEY }}'
 
     - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
+      uses: 'google-github-actions/setup-gcloud@v2'
       with:
-        version: '319.0.0'
+        version: 'latest'
         service_account_email: ${{ secrets.GKE_EMAIL }}
 
     - name: Configure docker to use the gcloud command-line tool as a credential helper
