@@ -78,7 +78,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.7.17'
+        python-version: '3.13.2'
 
     - name: 'Set up Cloud SDK auth'
       uses: 'google-github-actions/auth@v0'
