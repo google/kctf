@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y wget fuse
-RUN wget -q https://github.com/GoogleCloudPlatform/gcsfuse/releases/download/v0.35.1/gcsfuse_0.35.1_amd64.deb && dpkg -i gcsfuse_0.35.1_amd64.deb
+RUN wget -q https://github.com/GoogleCloudPlatform/gcsfuse/releases/download/v1.4.2/gcsfuse_1.4.2_amd64.deb && dpkg -i gcsfuse_1.4.2_amd64.deb
 RUN mkdir -p /mnt/disks/gcs
 
 CMD test -f /config/gcs_bucket &&\
