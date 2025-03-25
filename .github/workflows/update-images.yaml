@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.event_name == 'push'
     outputs:
       challenge-modified: ${{ steps.set-modified.outputs.challenge-modified }}
@@ -109,7 +109,7 @@ jobs:
         echo "::set-output name=${{ matrix.image }}-digest::${DIGEST}"
 
   build-operator:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs:
     - build-docker
     if: github.event_name == 'push'
@@ -203,7 +203,7 @@ jobs:
         echo "::set-output name=kctf-operator-digest::${DIGEST}"
 
   update-image-and-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs:
     - build-docker
     - build-operator
