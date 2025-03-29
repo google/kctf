@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1 contains API Schema definitions for the kctf v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=kctf.dev
+// +kubebuilder:object:generate=true
+// +groupName=kctf.dev
 package v1
 
 import (

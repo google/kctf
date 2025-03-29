@@ -23,7 +23,7 @@ func withHealthcheck(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	if *livenessProbe == nil {
 		*livenessProbe = &corev1.Probe{
 			FailureThreshold: 2,
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/healthz",
 					Port: intstr.FromInt(45281),
@@ -38,7 +38,7 @@ func withHealthcheck(challenge *kctfv1.Challenge) *appsv1.Deployment {
 	readinessProbe := &challengeContainer.ReadinessProbe
 	if *readinessProbe == nil {
 		*readinessProbe = &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/healthz",
 					Port: intstr.FromInt(45281),
