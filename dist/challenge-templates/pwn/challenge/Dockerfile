@@ -13,7 +13,8 @@
 # limitations under the License.
 FROM ubuntu:24.04 as chroot
 
-RUN /usr/sbin/useradd --no-create-home -u 1000 user
+# ubuntu24 includes the ubuntu user by default
+RUN /usr/sbin/userdel -r ubuntu && /usr/sbin/useradd --no-create-home -u 1000 user
 
 COPY flag /
 COPY chal /home/user/
