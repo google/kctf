@@ -125,25 +125,25 @@ func (r *ChallengeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Secret{}).
 		Watches(&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, a client.Object) []ctrl.Request {
-			if a.GetNamespace() == "kctf-system" {
-				challengeList := &kctfv1.ChallengeList{}
-				err := mgr.GetClient().List(context.Background(), challengeList)
-				if err != nil {
-					// log.Error(err, "Failed to obtain a list of all challenges for updating a secret")
-					return nil
+				if a.GetNamespace() == "kctf-system" {
+					challengeList := &kctfv1.ChallengeList{}
+					err := mgr.GetClient().List(context.Background(), challengeList)
+					if err != nil {
+						// log.Error(err, "Failed to obtain a list of all challenges for updating a secret")
+						return nil
+					}
+					requestList := []ctrl.Request{}
+					for i := range challengeList.Items {
+						requestList = append(requestList, ctrl.Request{
+							NamespacedName: types.NamespacedName{
+								Name:      challengeList.Items[i].Name,
+								Namespace: challengeList.Items[i].Namespace,
+							}})
+					}
+					return requestList
 				}
-				requestList := []ctrl.Request{}
-				for i := range challengeList.Items {
-					requestList = append(requestList, ctrl.Request{
-						NamespacedName: types.NamespacedName{
-							Name:      challengeList.Items[i].Name,
-							Namespace: challengeList.Items[i].Namespace,
-						}})
-				}
-				return requestList
-			}
-			return nil
-		})).
+				return nil
+			})).
 		Complete(r)
 }
 
