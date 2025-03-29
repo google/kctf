@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM gcr.io/kctf-docker/challenge@sha256:eb0f8c3b97460335f9820732a42702c2fa368f7d121a671c618b45bbeeadab28
+FROM gcr.io/kctf-docker/challenge@sha256:654ef5cfed844f6d548075b55d40efbff13750d959437a8e28eefd1e8f37baa9
 
 RUN apt-get update && apt-get install -y gnupg2 wget
 
@@ -21,13 +21,13 @@ RUN apt-get update && apt-get install -y gnupg2 wget
 #  plus libxshmfence1 which seems to be missing
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && wget -q -O - https://deb.nodesource.com/setup_16.x | bash - \
+    && wget -q -O - https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         ca-certificates \
         fonts-liberation \
         libappindicator3-1 \
-        libasound2 \
+        libasound2t64 \
         libatk-bridge2.0-0 \
         libatk1.0-0 \
         libc6 \

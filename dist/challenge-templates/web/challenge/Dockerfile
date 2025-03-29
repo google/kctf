@@ -21,10 +21,8 @@ RUN apt-get update \
        curl ca-certificates socat gnupg lsb-release software-properties-common php-cgi \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-    && (echo "deb https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main";\
-        echo "deb-src https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main") \
-       > /etc/apt/sources.list.d/nodesource.list \
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh \
+    && bash nodesource_setup.sh \
     && add-apt-repository universe \
     && apt-get update \
     && apt-get install -yq --no-install-recommends nodejs socat \

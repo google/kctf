@@ -24,6 +24,7 @@ const puppeter_args = {};
 if (BLOCK_SUBORIGINS) {
   puppeter_args.headless = false;
   puppeter_args.args = [
+    '--incognito',
     '--user-data-dir=/tmp/chrome-userdata',
     '--breakpad-dump-location=/tmp/chrome-crashes',
     '--proxy-pac-url=data:application/x-ns-proxy-autoconfig;base64,'+PAC_B64,
@@ -50,7 +51,7 @@ if (BLOCK_SUBORIGINS) {
     socket.state = 'LOADED';
     let cookie = JSON.parse(fs.readFileSync('/home/user/cookie'));
 
-    const context = await browser.createIncognitoBrowserContext();
+    const context = await browser.createBrowserContext();
     const page = await context.newPage();
     await page.setCookie(cookie);
     socket.write(`Loading page ${url}.\n`);
