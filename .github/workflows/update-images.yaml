@@ -206,6 +206,8 @@ jobs:
 
   update-image-and-commit:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     needs:
     - build-docker
     - build-operator
