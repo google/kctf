@@ -194,6 +194,8 @@ jobs:
         sudo mv operator-sdk /usr/local/bin/
         make test
         make docker-build IMG=kctf-operator
+        make build-installer IMG=kctf-operator
+        mv dist/install.yaml ../dist/resources/install.yaml
 
     - id: push
       name: Push images
@@ -250,7 +252,7 @@ jobs:
       if: needs.build-operator.outputs.kctf-operator-modified
       run: |
         IMAGE="gcr.io/${{ secrets.GCR_PROJECT }}/kctf-operator@${{ needs.build-operator.outputs.kctf-operator-digest }}"
-        sed -i "s#image: .*kctf-operator.*#image: ${IMAGE}#" dist/resources/operator.yaml
+        sed -i "s#image: .*kctf-operator.*#image: ${IMAGE}#" dist/resources/install.yaml
 
     - name: Download kubectl
       run: |
@@ -338,9 +340,8 @@ jobs:
       run: |
         # git add returns success for files that exist and haven't been modified
         git add kctf-operator/resources/constants.go
-        git add dist/resources/operator.yaml
+        git add dist/resources/install.yaml
         git add kctf-operator/config/crd/bases/kctf.dev_challenges.yaml
-        git add dist/resources/kctf.dev_challenges.yaml
         for dir in dist/challenge-templates/* samples/*; do
           if [[ ! -e "${dir}/challenge.yaml" ]]; then
             continue

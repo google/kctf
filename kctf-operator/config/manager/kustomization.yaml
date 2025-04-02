@@ -13,4 +13,3 @@ kind: Kustomization
 images:
 - name: controller
   newName: gcr.io/kctf-docker/kctf-operator
-  newTag: latest
