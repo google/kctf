@@ -38,8 +38,8 @@ else
   KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64"
   KCTF_KIND_HASH="949f81b3c30ca03a3d4effdecda04f100fa3edc07a28b19400f72ede7c5f0491"
 
-  KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl"
-  KCTF_KUBECTL_HASH="98e8aea149b00f653beeb53d4bd27edda9e73b48fed156c4a0aa1dabe4b1794c"
+  KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.29.3/bin/linux/amd64/kubectl"
+  KCTF_KUBECTL_HASH="89c0435cec75278f84b62b848b8c0d3e15897d6947b6c59a49ddccd93d7312bf"
   
   STAT="stat"
   MKTEMP="mktemp"
