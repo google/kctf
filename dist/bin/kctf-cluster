@@ -410,7 +410,7 @@ function start_operator_gce {
     # restart the operator with the new range
     "${KCTF_BIN}/yq" eval "(select(.kind == \"Deployment\").spec.template.spec.containers[] | select(.name == \"manager\").env[] | select(.name == \"ALLOWED_IPS\").value) |= \"${RANGES}\"" "${KCTF_CTF_DIR}/kctf/resources/install.yaml" \
       | "${KCTF_BIN}/yq" eval "(select(.kind == \"Deployment\").spec.template.spec.containers[] | select(.name == \"manager\").env[] | select(.name == \"SECURITY_POLICY\").value) |= \"${POLICY_NAME}\"" - \
-      | "${KCTF_BIN}/kubectl" apply -f - || return
+      | "${KCTF_BIN}/kubectl" apply --server-side -f - || return
   fi
 }
 
