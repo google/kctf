@@ -24,12 +24,12 @@ const puppeter_args = {};
 if (BLOCK_SUBORIGINS) {
   puppeter_args.headless = false;
   puppeter_args.args = [
-    '--incognito',
     '--user-data-dir=/tmp/chrome-userdata',
     '--breakpad-dump-location=/tmp/chrome-crashes',
     '--proxy-pac-url=data:application/x-ns-proxy-autoconfig;base64,'+PAC_B64,
   ];
 }
+puppeter_args.args.push('--incognito');
 
 (async function(){
   const browser = await puppeteer.launch(puppeter_args);
