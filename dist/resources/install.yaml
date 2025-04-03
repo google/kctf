@@ -8222,7 +8222,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: gcr.io/kctf-docker/kctf-operator@sha256:f17a14585a7a8461896708a334f2fc730b232598d86310e772b8116deefb5e0b
+        image: gcr.io/kctf-docker/kctf-operator@sha256:eca42a9795c0150a803c35e83080495c664327f4067b9c676d8566daec39008e
         livenessProbe:
           httpGet:
             path: /healthz
