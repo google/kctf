@@ -13,17 +13,16 @@
 # limitations under the License.
 FROM ubuntu:24.04 as chroot
 
-RUN /usr/sbin/useradd -u 1000 user
+# ubuntu24 includes the ubuntu user by default
+RUN /usr/sbin/userdel -r ubuntu && /usr/sbin/useradd --no-create-home -u 1000 user
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends \
        curl ca-certificates socat gnupg lsb-release software-properties-common php-cgi \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-    && (echo "deb https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main";\
-        echo "deb-src https://deb.nodesource.com/node_10.x $(lsb_release -s -c) main") \
-       > /etc/apt/sources.list.d/nodesource.list \
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh \
+    && bash nodesource_setup.sh \
     && add-apt-repository universe \
     && apt-get update \
     && apt-get install -yq --no-install-recommends nodejs socat \
@@ -40,7 +39,7 @@ COPY web-servers /web-servers
 
 COPY flag /
 
-FROM gcr.io/kctf-docker/challenge@sha256:eb0f8c3b97460335f9820732a42702c2fa368f7d121a671c618b45bbeeadab28
+FROM gcr.io/kctf-docker/challenge@sha256:2008bc49ea75d2e4be6dd71b09e51b2405517fdde7318245436ca36f8402d3e6
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends tzdata apache2 \

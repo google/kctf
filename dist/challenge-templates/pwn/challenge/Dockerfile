@@ -13,12 +13,13 @@
 # limitations under the License.
 FROM ubuntu:24.04 as chroot
 
-RUN /usr/sbin/useradd --no-create-home -u 1000 user
+# ubuntu24 includes the ubuntu user by default
+RUN /usr/sbin/userdel -r ubuntu && /usr/sbin/useradd --no-create-home -u 1000 user
 
 COPY flag /
 COPY chal /home/user/
 
-FROM gcr.io/kctf-docker/challenge@sha256:eb0f8c3b97460335f9820732a42702c2fa368f7d121a671c618b45bbeeadab28
+FROM gcr.io/kctf-docker/challenge@sha256:2008bc49ea75d2e4be6dd71b09e51b2405517fdde7318245436ca36f8402d3e6
 
 COPY --from=chroot / /chroot
 

@@ -29,7 +29,7 @@ func persistentVolumeClaim(claim string,
 				"ReadWriteMany",
 			},
 			VolumeName: claim,
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: resources,
 			},
 		},
