@@ -19,8 +19,8 @@ if [[ "$OSTYPE" =~ ^darwin.* ]]; then
   KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.11.1/kind-darwin-amd64"
   KCTF_KIND_HASH="432bef555a70e9360b44661c759658265b9eaaf7f75f1beec4c4d1e6bbf97ce3"
 
-  KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.20.4/bin/darwin/amd64/kubectl"
-  KCTF_KUBECTL_HASH="37f593731b8c9913bf2a3bfa36dacb3058dc176c7aeae2930c783822ea03a573"
+  KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.29.3/bin/darwin/amd64/kubectl"
+  KCTF_KUBECTL_HASH="1a1f9040bce74fb28c475dc157a86565fcabf883a697ca576993ab8372935836"
 
   STAT="gstat"
   MKTEMP="gmktemp"
