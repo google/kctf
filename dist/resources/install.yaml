@@ -8222,7 +8222,12 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: gcr.io/kctf-docker/kctf-operator@sha256:eca42a9795c0150a803c35e83080495c664327f4067b9c676d8566daec39008e
+        env:
+        - name: ALLOWED_IPS
+          value: 0.0.0.0/0
+        - name: SECURITY_POLICY
+          value: DISABLED
+        image: gcr.io/kctf-docker/kctf-operator:latest
         livenessProbe:
           httpGet:
             path: /healthz

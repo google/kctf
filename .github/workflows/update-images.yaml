@@ -194,8 +194,6 @@ jobs:
         sudo mv operator-sdk /usr/local/bin/
         make test
         make docker-build IMG=kctf-operator
-        make build-installer IMG=kctf-operator
-        mv dist/install.yaml ../dist/resources/install.yaml
 
     - id: push
       name: Push images
