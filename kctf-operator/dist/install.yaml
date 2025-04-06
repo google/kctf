@@ -8222,6 +8222,11 @@ spec:
         - --leader-elect
         command:
         - /manager
+        env:
+        - name: ALLOWED_IPS
+          value: 0.0.0.0/0
+        - name: SECURITY_POLICY
+          value: DISABLED
         image: gcr.io/kctf-docker/kctf-operator:latest
         livenessProbe:
           httpGet:
