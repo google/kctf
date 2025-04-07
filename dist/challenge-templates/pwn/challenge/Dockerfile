@@ -19,7 +19,7 @@ RUN /usr/sbin/userdel -r ubuntu && /usr/sbin/useradd --no-create-home -u 1000 us
 COPY flag /
 COPY chal /home/user/
 
-FROM gcr.io/kctf-docker/challenge@sha256:5117cc6e9f35c62fd8ce47603b020c1875d243392d1b6275b4cb89e0d6b488ca
+FROM gcr.io/kctf-docker/challenge@sha256:9f15314c26bd681a043557c9f136e7823414e9e662c08dde54d14a6bfd0b619f
 
 COPY --from=chroot / /chroot
 
