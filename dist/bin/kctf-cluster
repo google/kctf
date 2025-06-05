@@ -517,7 +517,7 @@ function kctf_cluster_start_gce {
   EXISTING_CLUSTER=$(gcloud container clusters list --filter "name=${CLUSTER_NAME}" --format 'get(name)')
   if [ -z "${EXISTING_CLUSTER}" ]; then
     CIDR="172.16.0.32/28"
-    gcloud container clusters create --release-channel=regular --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --network ${NETWORK} --create-subnetwork name=kctf-subnet-${NETWORK} --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr ${CIDR} --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME} || return
+    gcloud container clusters create --release-channel=regular --enable-nested-virtualization --node-labels=nested-virtualization=enabled --enable-network-policy --enable-autoscaling --min-nodes ${MIN_NODES} --max-nodes ${MAX_NODES} --num-nodes ${NUM_NODES} --network ${NETWORK} --create-subnetwork name=kctf-subnet-${NETWORK} --no-enable-master-authorized-networks --enable-ip-alias --enable-private-nodes --master-ipv4-cidr ${CIDR} --enable-autorepair --preemptible --machine-type ${MACHINE_TYPE} --workload-pool=${PROJECT}.svc.id.goog ${CLUSTER_NAME} || return
   fi
 
   EXISTING_ROUTER=$(gcloud compute routers list --filter "name=kctf-${CLUSTER_NAME}-nat-router" --format 'get(name)')
@@ -901,6 +901,8 @@ function kctf_cluster_resize {
   _kctf_log 'Creating the new node pool'
   gcloud container node-pools create "${NEW_POOL_NAME}" \
     --cluster="${CLUSTER_NAME}" \
+    --enable-nested-virtualization \
+    --node-labels=nested-virtualization=enabled \
     --machine-type="${MACHINE_TYPE}" \
     ${SPOT:+--spot} \
     --enable-autorepair \
