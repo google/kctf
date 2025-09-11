@@ -31,6 +31,19 @@ if [[ "$OSTYPE" =~ ^darwin.* ]]; then
   fi
   export KCTF_CTF_DIR="$(realpath "$(dirname "${script_dir}")")"
   unset script_dir
+elif [[ "$HOSTTYPE" =~ ^aarch64.* ]]; then
+  KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_arm64"
+  KCTF_YQ_HASH="d3465af718d65339ccb5091495277aa982f4b8e0ae11edd74cc30a624d4d0d05"
+
+  KCTF_KIND_URL="https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-arm64"
+  KCTF_KIND_HASH="320c992ada56292ec5e12b0b85f5dfc60045a6ffcdfaf6ad3f5a554e40ef0235"
+
+  KCTF_KUBECTL_URL="https://dl.k8s.io/release/v1.29.3/bin/linux/arm64/kubectl"
+  KCTF_KUBECTL_HASH="191a96b27e3c6ae28b330da4c9bfefc9592762670727df4fcf124c9f1d5a466a"
+
+  STAT="stat"
+  MKTEMP="mktemp"
+  export KCTF_CTF_DIR="$(realpath --no-symlinks "$(dirname "${BASH_SOURCE-$0}")/..")"
 else
   KCTF_YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64"
   KCTF_YQ_HASH="5d44bd64e264e9029c5f06bcd960ba162d7ed7ddd1781f02a28d62f50577b632"
