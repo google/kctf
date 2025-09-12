@@ -86,20 +86,10 @@ func NewExternalDnsDeployment() client.Object {
 										Key: "DOMAIN_NAME",
 									},
 								},
-							}, {
-								Name: "CLUSTER_NAME",
-								ValueFrom: &corev1.EnvVarSource{
-									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "external-dns",
-										},
-										Key: "CLUSTER_NAME",
-									},
-								},
-							}, },
+							}},
 							Args: []string{"--log-level=debug", "--source=service", "--source=ingress",
 								"--provider=google", "--domain-filter=$(DOMAIN_NAME)", "--registry=txt",
-								"--txt-owner-id=kctf-cloud-dns-$(CLUSTER_NAME)"},
+								"--txt-owner-id=kctf-cloud-dns"},
 						},
 						{
 							Image: DOCKER_CERTBOT_IMAGE,
