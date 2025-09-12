@@ -337,6 +337,7 @@ jobs:
         SUBMITTER: ${{ github.event.head_commit.author.email }}
       run: |
         # git add returns success for files that exist and haven't been modified
+        git pull --rebase
         git add kctf-operator/resources/constants.go
         git add dist/resources/install.yaml
         git add kctf-operator/config/crd/bases/kctf.dev_challenges.yaml
