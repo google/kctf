@@ -17,7 +17,6 @@
 import base64
 import os
 import secrets
-import socket
 import sys
 import hashlib
 
@@ -185,3 +184,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
