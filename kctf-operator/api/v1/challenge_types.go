@@ -37,6 +37,13 @@ type PortSpec struct {
 	// +kubebuilder:validation:Required
 	Protocol corev1.Protocol `json:"protocol"`
 
+	// Domain overrides the subdomain prefix used for DNS.
+	// For HTTPS it replaces "{name}-web", for TCP it replaces "{name}".
+	// When empty the default kCTF naming is used.
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	Domain string `json:"domain,omitempty"`
+
 	// Extra domains for managed certificates. Only used for type HTTPS.
 	Domains []string `json:"domains,omitempty"`
 }

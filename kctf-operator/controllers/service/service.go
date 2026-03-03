@@ -14,6 +14,18 @@ import (
 	backendv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 )
 
+const (
+	annExternalDNSHostname = "external-dns.alpha.kubernetes.io/hostname"
+	annManagedCertificates = "networking.gke.io/managed-certificates"
+)
+
+func portHost(challengeName string, port *kctfv1.PortSpec, domainName string, defaultSuffix string) string {
+	if port.Domain != "" {
+		return port.Domain + "." + domainName
+	}
+	return challengeName + defaultSuffix + "." + domainName
+}
+
 func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -32,11 +44,6 @@ func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 	portsSeen := make(map[int32]bool)
 
 	for i, port := range challenge.Spec.Network.Ports {
-		if portsSeen[port.Port] {
-			continue
-		}
-		portsSeen[port.Port] = true
-
 		protocol := corev1.ProtocolTCP
 		switch port.Protocol {
 		case corev1.ProtocolSCTP, corev1.ProtocolTCP, corev1.ProtocolUDP:
@@ -47,6 +54,10 @@ func generateNodePortService(challenge *kctfv1.Challenge) *corev1.Service {
 		if servicePort == 0 {
 			servicePort = port.TargetPort.IntVal
 		}
+		if portsSeen[servicePort] {
+			continue
+		}
+		portsSeen[servicePort] = true
 
 		portName := port.Name
 		if portName == "" {
@@ -80,93 +91,123 @@ func generateBackendConfig(challenge *kctfv1.Challenge) *backendv1.BackendConfig
 	return config
 }
 
-func findHTTPSPort(challenge *kctfv1.Challenge) *kctfv1.PortSpec {
+func ingressName(challengeName string, domain string) string {
+	if domain == "" {
+		return challengeName
+	}
+	return challengeName + "-ingress-" + domain
+}
+
+func certName(challengeName string, domain string) string {
+	if domain == "" {
+		return challengeName
+	}
+	return challengeName + "-cert-" + domain
+}
+
+func generateIngresses(domainName string, challenge *kctfv1.Challenge) []*netv1.Ingress {
+	var ingresses []*netv1.Ingress
+
 	for _, port := range challenge.Spec.Network.Ports {
-		// non-HTTPS is handled by generateLoadBalancerService
 		if port.Protocol != "HTTPS" {
 			continue
 		}
-		return &port
-	}
-	return nil
-}
 
-func generateManagedCertificate(challenge *kctfv1.Challenge, domains []string) *gkenetv1.ManagedCertificate {
-	cert := &gkenetv1.ManagedCertificate{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      challenge.Name,
-			Namespace: challenge.Namespace,
-			Labels:    map[string]string{"app": challenge.Name},
-		},
-		Spec: gkenetv1.ManagedCertificateSpec{
-			Domains: domains,
-		},
-		Status: gkenetv1.ManagedCertificateStatus{
-			DomainStatus: []gkenetv1.DomainStatus{},
-		},
-	}
-	return cert
-}
+		servicePort := port.Port
+		if servicePort == 0 {
+			servicePort = port.TargetPort.IntVal
+		}
 
-func generateIngress(domainName string, challenge *kctfv1.Challenge, port *kctfv1.PortSpec) *netv1.Ingress {
-	// Ingress object
-	ingress := &netv1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        challenge.Name,
-			Namespace:   challenge.Namespace,
-			Labels:      map[string]string{"app": challenge.Name},
-			Annotations: map[string]string{},
-		},
-		Spec: netv1.IngressSpec{
-			TLS: []netv1.IngressTLS{{
-				SecretName: "tls-cert",
-			}},
-			Rules: []netv1.IngressRule{{
-				Host: challenge.Name + "-web." + domainName,
-			}},
-		},
-	}
-
-	servicePort := port.Port
-	if servicePort == 0 {
-		servicePort = port.TargetPort.IntVal
-	}
-
-	ingress.Spec.DefaultBackend = &netv1.IngressBackend{
-		Service: &netv1.IngressServiceBackend{
-			Name: challenge.Name,
-			Port: netv1.ServiceBackendPort{
-				Number: int32(servicePort),
+		ingress := &netv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        ingressName(challenge.Name, port.Domain),
+				Namespace:   challenge.Namespace,
+				Labels:      map[string]string{"app": challenge.Name},
+				Annotations: map[string]string{},
 			},
-		},
+			Spec: netv1.IngressSpec{
+				TLS: []netv1.IngressTLS{{
+					SecretName: "tls-cert",
+				}},
+				Rules: []netv1.IngressRule{{
+					Host: portHost(challenge.Name, &port, domainName, "-web"),
+				}},
+				DefaultBackend: &netv1.IngressBackend{
+					Service: &netv1.IngressServiceBackend{
+						Name: challenge.Name,
+						Port: netv1.ServiceBackendPort{
+							Number: int32(servicePort),
+						},
+					},
+				},
+			},
+		}
+
+		if port.Domains != nil {
+			ingress.Annotations[annManagedCertificates] = certName(challenge.Name, port.Domain)
+		}
+
+		ingresses = append(ingresses, ingress)
 	}
 
-	if port.Domains != nil {
-		ingress.Annotations["networking.gke.io/managed-certificates"] = challenge.Name
-	}
-
-	return ingress
+	return ingresses
 }
 
-func generateLoadBalancerService(domainName string, challenge *kctfv1.Challenge) *corev1.Service {
-	// Service object
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      challenge.Name + "-lb-service",
-			Namespace: challenge.Namespace,
-			Labels:    map[string]string{"app": challenge.Name},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector:                 map[string]string{"app": challenge.Name},
-			Type:                     "LoadBalancer",
-			LoadBalancerSourceRanges: strings.Split(os.Getenv("ALLOWED_IPS"), ","),
-		},
+func generateManagedCertificates(challenge *kctfv1.Challenge) []*gkenetv1.ManagedCertificate {
+	var certs []*gkenetv1.ManagedCertificate
+
+	for _, port := range challenge.Spec.Network.Ports {
+		if port.Protocol != "HTTPS" || port.Domains == nil {
+			continue
+		}
+
+		certs = append(certs, &gkenetv1.ManagedCertificate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      certName(challenge.Name, port.Domain),
+				Namespace: challenge.Namespace,
+				Labels:    map[string]string{"app": challenge.Name},
+			},
+			Spec: gkenetv1.ManagedCertificateSpec{
+				Domains: port.Domains,
+			},
+			Status: gkenetv1.ManagedCertificateStatus{
+				DomainStatus: []gkenetv1.DomainStatus{},
+			},
+		})
 	}
+
+	return certs
+}
+
+func lbServiceName(challengeName string, domain string) string {
+	if domain == "" {
+		return challengeName + "-lb-service"
+	}
+	return challengeName + "-lb-" + domain
+}
+
+func generateLoadBalancerServices(domainName string, challenge *kctfv1.Challenge) []*corev1.Service {
+	type lbGroup struct {
+		hostname string
+		ports    []corev1.ServicePort
+	}
+
+	groups := make(map[string]*lbGroup)
+	var groupOrder []string
 
 	for i, port := range challenge.Spec.Network.Ports {
-		// HTTPS is handled by generateIngress
 		if port.Protocol == "HTTPS" {
 			continue
+		}
+
+		key := port.Domain
+		group, ok := groups[key]
+		if !ok {
+			group = &lbGroup{
+				hostname: portHost(challenge.Name, &port, domainName, ""),
+			}
+			groups[key] = group
+			groupOrder = append(groupOrder, key)
 		}
 
 		servicePortNumber := port.Port
@@ -174,23 +215,39 @@ func generateLoadBalancerService(domainName string, challenge *kctfv1.Challenge)
 			servicePortNumber = port.TargetPort.IntVal
 		}
 
-		servicePort := corev1.ServicePort{
+		portName := port.Name
+		if portName == "" {
+			portName = "port-" + strconv.Itoa(i)
+		}
+
+		group.ports = append(group.ports, corev1.ServicePort{
 			Port:       servicePortNumber,
 			TargetPort: port.TargetPort,
 			Protocol:   port.Protocol,
-		}
-
-		if port.Name != "" {
-			servicePort.Name = port.Name
-		} else {
-			servicePort.Name = "port-" + strconv.Itoa(i)
-		}
-
-		service.Spec.Ports = append(service.Spec.Ports, servicePort)
+			Name:       portName,
+		})
 	}
 
-	service.ObjectMeta.Annotations =
-		map[string]string{"external-dns.alpha.kubernetes.io/hostname": challenge.Name + "." + domainName}
+	var services []*corev1.Service
+	for _, key := range groupOrder {
+		group := groups[key]
+		services = append(services, &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      lbServiceName(challenge.Name, key),
+				Namespace: challenge.Namespace,
+				Labels:    map[string]string{"app": challenge.Name},
+				Annotations: map[string]string{
+					annExternalDNSHostname: group.hostname,
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector:                 map[string]string{"app": challenge.Name},
+				Type:                     "LoadBalancer",
+				LoadBalancerSourceRanges: strings.Split(os.Getenv("ALLOWED_IPS"), ","),
+				Ports:                    group.ports,
+			},
+		})
+	}
 
-	return service
+	return services
 }
