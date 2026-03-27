@@ -121,6 +121,14 @@ spec:
                     description: By default, one port is set with default values
                     items:
                       properties:
+                        domain:
+                          description: |-
+                            Domain overrides the subdomain prefix used for DNS.
+                            For HTTPS it replaces "{name}-web", for TCP it replaces "{name}".
+                            When empty the default kCTF naming is used.
+                          maxLength: 63
+                          pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                          type: string
                         domains:
                           description: Extra domains for managed certificates. Only
                             used for type HTTPS.

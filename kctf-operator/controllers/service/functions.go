@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	backendv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
@@ -21,11 +22,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func annotationEqual(a, b map[string]string, key string) bool {
+	return a[key] == b[key]
+}
+
+// isServiceEqual compares two services for equality.
+// Used for both NodePort (internal) and LoadBalancer services — the annotation
+// check is a no-op for NodePort since neither side sets annExternalDNSHostname.
 func isServiceEqual(serviceFound *corev1.Service, serv *corev1.Service) bool {
 	if !equalPorts(serviceFound.Spec.Ports, serv.Spec.Ports) {
 		return false
 	}
-	return reflect.DeepEqual(serviceFound.Spec.LoadBalancerSourceRanges, serv.Spec.LoadBalancerSourceRanges)
+	if !reflect.DeepEqual(serviceFound.Spec.LoadBalancerSourceRanges, serv.Spec.LoadBalancerSourceRanges) {
+		return false
+	}
+	return annotationEqual(serviceFound.Annotations, serv.Annotations, annExternalDNSHostname)
 }
 
 func isCertEqual(existingCert *gkenetv1.ManagedCertificate, newCert *gkenetv1.ManagedCertificate) bool {
@@ -33,7 +44,10 @@ func isCertEqual(existingCert *gkenetv1.ManagedCertificate, newCert *gkenetv1.Ma
 }
 
 func isIngressEqual(ingressFound *netv1.Ingress, ingress *netv1.Ingress) bool {
-	return reflect.DeepEqual(ingressFound.Spec, ingress.Spec)
+	if !reflect.DeepEqual(ingressFound.Spec, ingress.Spec) {
+		return false
+	}
+	return annotationEqual(ingressFound.Annotations, ingress.Annotations, annManagedCertificates)
 }
 
 // Check if the arrays of ports are the same
@@ -130,158 +144,223 @@ func updateBackendConfig(challenge *kctfv1.Challenge, client client.Client, sche
 	return true, err
 }
 
-func updateManagedCertificate(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
+func updateManagedCertificates(challenge *kctfv1.Challenge, c client.Client, scheme *runtime.Scheme,
 	log logr.Logger, ctx context.Context) (bool, error) {
 
-	existingCert := &gkenetv1.ManagedCertificate{}
-	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingCert)
+	desiredCerts := generateManagedCertificates(challenge)
 
-	if err != nil && !errors.IsNotFound(err) {
-		return false, err
-	}
-	certExists := err == nil
+	changed := false
+	desiredNames := make(map[string]bool)
 
-	port := findHTTPSPort(challenge)
-	if port == nil || port.Domains == nil {
-		if certExists {
-			err := client.Delete(ctx, existingCert)
-			return true, err
+	for _, newCert := range desiredCerts {
+		desiredNames[newCert.Name] = true
+
+		existingCert := &gkenetv1.ManagedCertificate{}
+		err := c.Get(ctx, types.NamespacedName{Name: newCert.Name, Namespace: newCert.Namespace}, existingCert)
+		if err != nil && !errors.IsNotFound(err) {
+			return false, err
 		}
-		return false, nil
-	}
-
-	newCert := generateManagedCertificate(challenge, port.Domains)
-
-	if certExists {
-		if isCertEqual(existingCert, newCert) {
-			return false, nil
-		}
-
-		existingCert.Spec.Domains = newCert.Spec.Domains
-
-		err := client.Update(ctx, existingCert)
-
-		return true, err
-	}
-
-	controllerutil.SetControllerReference(challenge, newCert, scheme)
-
-	err = client.Create(ctx, newCert)
-
-	return true, err
-}
-
-func updateIngress(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
-	log logr.Logger, ctx context.Context) (bool, error) {
-	existingIngress := &netv1.Ingress{}
-	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name, Namespace: challenge.Namespace}, existingIngress)
-
-	if err != nil && !errors.IsNotFound(err) {
-		return false, err
-	}
-	ingressExists := err == nil
-
-	port := findHTTPSPort(challenge)
-	// Only one https port is supported at the moment.
-	// To support more, we will need a field to specify the domain name per ingress.
-
-	if port == nil {
-		if ingressExists {
-			err := client.Delete(ctx, existingIngress)
-			return true, err
-		}
-		return false, nil
-	}
-
-	domainName := utils.GetDomainName(challenge, client, log, ctx)
-	newIngress := generateIngress(domainName, challenge, port)
-
-	if ingressExists {
-		if isIngressEqual(existingIngress, newIngress) {
-			return false, nil
-		}
-
-		existingIngress.Spec.DefaultBackend = newIngress.Spec.DefaultBackend
-		existingIngress.ObjectMeta.Annotations = newIngress.ObjectMeta.Annotations
-		err := client.Update(ctx, existingIngress)
-
-		return true, err
-	}
-
-	if newIngress.Spec.DefaultBackend == nil || challenge.Spec.Network.Public == false {
-		return false, nil
-	}
-
-	controllerutil.SetControllerReference(challenge, newIngress, scheme)
-
-	err = client.Create(ctx, newIngress)
-
-	return true, err
-}
-
-func updateLoadBalancerService(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.Scheme,
-	log logr.Logger, ctx context.Context) (bool, error) {
-	// Service is created in challenge_controller and here we just ensure that everything is alright
-	// Creates the service if it doesn't exist
-	// Check existence of the service:
-	existingService := &corev1.Service{}
-	err := client.Get(ctx, types.NamespacedName{Name: challenge.Name + "-lb-service",
-		Namespace: challenge.Namespace}, existingService)
-
-	if err != nil && !errors.IsNotFound(err) {
-		return false, err
-	}
-	serviceExists := err == nil
-
-	// Get the domainName
-	domainName := utils.GetDomainName(challenge, client, log, ctx)
-	newService := generateLoadBalancerService(domainName, challenge)
-
-	if serviceExists {
-		if len(newService.Spec.Ports) == 0 || challenge.Spec.Network.Public == false {
-			err := client.Delete(ctx, existingService)
-			return true, err
-		}
-
-		if isServiceEqual(existingService, newService) {
-			return false, nil
-		}
-
-		copyPorts(existingService, newService)
-		existingService.ObjectMeta.Annotations = newService.ObjectMeta.Annotations
-		copyLoadBalancerSourceRanges(existingService, newService)
-
-		err := client.Update(ctx, existingService)
 
 		if err == nil {
-			log.Info("Updated load balancer service", " Name: ", newService.Name, " with namespace ", newService.Namespace)
+			if isCertEqual(existingCert, newCert) {
+				continue
+			}
+			existingCert.Spec.Domains = newCert.Spec.Domains
+			if err := c.Update(ctx, existingCert); err != nil {
+				log.Error(err, "Failed to update managed certificate", "name", newCert.Name)
+				return changed, err
+			}
+			log.Info("Updated managed certificate", "name", newCert.Name)
+			changed = true
 		} else {
-			log.Error(err, "Failed to update load balancer service", " Name: ", newService.Name, " with namespace ", newService.Namespace)
+			controllerutil.SetControllerReference(challenge, newCert, scheme)
+			if err := c.Create(ctx, newCert); err != nil {
+				return changed, err
+			}
+			log.Info("Created managed certificate", "name", newCert.Name)
+			changed = true
+		}
+	}
+
+	// Clean up stale certs
+	existingCerts := &gkenetv1.ManagedCertificateList{}
+	if err := c.List(ctx, existingCerts,
+		client.InNamespace(challenge.Namespace),
+		client.MatchingLabels{"app": challenge.Name}); err != nil {
+		return changed, err
+	}
+
+	for i := range existingCerts.Items {
+		cert := &existingCerts.Items[i]
+		if desiredNames[cert.Name] {
+			continue
+		}
+		if !metav1.IsControlledBy(cert, challenge) {
+			continue
+		}
+		if err := c.Delete(ctx, cert); err != nil {
+			log.Error(err, "Failed to delete stale managed certificate", "name", cert.Name)
+			return changed, err
+		}
+		log.Info("Deleted stale managed certificate", "name", cert.Name)
+		changed = true
+	}
+
+	return changed, nil
+}
+
+func updateIngresses(challenge *kctfv1.Challenge, c client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+
+	domainName := utils.GetDomainName(challenge, c, log, ctx)
+
+	var desiredIngresses []*netv1.Ingress
+	if challenge.Spec.Network.Public {
+		desiredIngresses = generateIngresses(domainName, challenge)
+	}
+
+	changed := false
+	desiredNames := make(map[string]bool)
+
+	for _, newIngress := range desiredIngresses {
+		desiredNames[newIngress.Name] = true
+
+		existingIngress := &netv1.Ingress{}
+		err := c.Get(ctx, types.NamespacedName{Name: newIngress.Name, Namespace: newIngress.Namespace}, existingIngress)
+		if err != nil && !errors.IsNotFound(err) {
+			return false, err
 		}
 
-		return true, err
+		if err == nil {
+			if isIngressEqual(existingIngress, newIngress) {
+				continue
+			}
+			existingIngress.Spec = newIngress.Spec
+			existingIngress.ObjectMeta.Annotations = newIngress.ObjectMeta.Annotations
+			if err := c.Update(ctx, existingIngress); err != nil {
+				log.Error(err, "Failed to update ingress", " Name: ", newIngress.Name)
+				return changed, err
+			}
+			log.Info("Updated ingress", " Name: ", newIngress.Name)
+			changed = true
+		} else {
+			controllerutil.SetControllerReference(challenge, newIngress, scheme)
+			if err := c.Create(ctx, newIngress); err != nil {
+				return changed, err
+			}
+			log.Info("Created ingress", " Name: ", newIngress.Name)
+			changed = true
+		}
 	}
 
-	if len(newService.Spec.Ports) == 0 || challenge.Spec.Network.Public == false {
-		return false, nil
+	// Clean up stale ingresses
+	existingIngresses := &netv1.IngressList{}
+	if err := c.List(ctx, existingIngresses,
+		client.InNamespace(challenge.Namespace),
+		client.MatchingLabels{"app": challenge.Name}); err != nil {
+		return changed, err
 	}
 
-	controllerutil.SetControllerReference(challenge, newService, scheme)
+	for i := range existingIngresses.Items {
+		ing := &existingIngresses.Items[i]
+		if desiredNames[ing.Name] {
+			continue
+		}
+		if !metav1.IsControlledBy(ing, challenge) {
+			continue
+		}
+		if err := c.Delete(ctx, ing); err != nil {
+			log.Error(err, "Failed to delete stale ingress", " Name: ", ing.Name)
+			return changed, err
+		}
+		log.Info("Deleted stale ingress", " Name: ", ing.Name)
+		changed = true
+	}
 
-	err = client.Create(ctx, newService)
+	return changed, nil
+}
 
-	return true, err
+func updateLoadBalancerServices(challenge *kctfv1.Challenge, c client.Client, scheme *runtime.Scheme,
+	log logr.Logger, ctx context.Context) (bool, error) {
+
+	domainName := utils.GetDomainName(challenge, c, log, ctx)
+
+	var desiredServices []*corev1.Service
+	if challenge.Spec.Network.Public {
+		desiredServices = generateLoadBalancerServices(domainName, challenge)
+	}
+
+	changed := false
+	desiredNames := make(map[string]bool)
+
+	// Create or update desired services
+	for _, newService := range desiredServices {
+		desiredNames[newService.Name] = true
+
+		existingService := &corev1.Service{}
+		err := c.Get(ctx, types.NamespacedName{Name: newService.Name, Namespace: newService.Namespace}, existingService)
+		if err != nil && !errors.IsNotFound(err) {
+			return false, err
+		}
+
+		if err == nil {
+			if isServiceEqual(existingService, newService) {
+				continue
+			}
+			copyPorts(existingService, newService)
+			existingService.ObjectMeta.Annotations = newService.ObjectMeta.Annotations
+			copyLoadBalancerSourceRanges(existingService, newService)
+			if err := c.Update(ctx, existingService); err != nil {
+				log.Error(err, "Failed to update LB service", " Name: ", newService.Name)
+				return changed, err
+			}
+			log.Info("Updated LB service", " Name: ", newService.Name)
+			changed = true
+		} else {
+			controllerutil.SetControllerReference(challenge, newService, scheme)
+			if err := c.Create(ctx, newService); err != nil {
+				return changed, err
+			}
+			log.Info("Created LB service", " Name: ", newService.Name)
+			changed = true
+		}
+	}
+
+	// Clean up stale LB services
+	existingServices := &corev1.ServiceList{}
+	if err := c.List(ctx, existingServices,
+		client.InNamespace(challenge.Namespace),
+		client.MatchingLabels{"app": challenge.Name}); err != nil {
+		return changed, err
+	}
+
+	for i := range existingServices.Items {
+		svc := &existingServices.Items[i]
+		if svc.Spec.Type != corev1.ServiceTypeLoadBalancer {
+			continue
+		}
+		if desiredNames[svc.Name] {
+			continue
+		}
+		if !metav1.IsControlledBy(svc, challenge) {
+			continue
+		}
+		if err := c.Delete(ctx, svc); err != nil {
+			log.Error(err, "Failed to delete stale LB service", " Name: ", svc.Name)
+			return changed, err
+		}
+		log.Info("Deleted stale LB service", " Name: ", svc.Name)
+		changed = true
+	}
+
+	return changed, nil
 }
 
 func checkPortsValid(challenge *kctfv1.Challenge) error {
-	seenHTTPSPort := false
 	ports := make(map[int32]int32)
+	httpsDomains := make(map[string]bool)
+
 	for _, port := range challenge.Spec.Network.Ports {
-		if port.Protocol == "HTTPS" {
-			if seenHTTPSPort {
-				return fmt.Errorf("only one https port supported")
-			}
-		}
 		externalPort := port.Port
 		targetPort := port.TargetPort.IntVal
 		if externalPort == 0 {
@@ -292,6 +371,16 @@ func checkPortsValid(challenge *kctfv1.Challenge) error {
 			return fmt.Errorf("conflicting port mapping %v->%v and %v->%v", externalPort, existingPort, externalPort, targetPort)
 		}
 		ports[externalPort] = targetPort
+
+		if port.Protocol == "HTTPS" {
+			if httpsDomains[port.Domain] {
+				if port.Domain == "" {
+					return fmt.Errorf("only one HTTPS port allowed without an explicit domain")
+				}
+				return fmt.Errorf("duplicate domain %q for HTTPS ports", port.Domain)
+			}
+			httpsDomains[port.Domain] = true
+		}
 	}
 	return nil
 }
@@ -317,13 +406,13 @@ func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.S
 	}
 	changed = changed || internalServiceChanged
 
-	loadBalancerServiceChanged, err := updateLoadBalancerService(challenge, client, scheme, log, ctx)
+	loadBalancerServicesChanged, err := updateLoadBalancerServices(challenge, client, scheme, log, ctx)
 	if err != nil {
-		log.Error(err, "Error updating load balancer service", " Name: ",
+		log.Error(err, "Error updating load balancer services", " Name: ",
 			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
-	changed = changed || loadBalancerServiceChanged
+	changed = changed || loadBalancerServicesChanged
 
 	backendConfigChanged, err := updateBackendConfig(challenge, client, scheme, log, ctx)
 	if err != nil {
@@ -333,21 +422,21 @@ func Update(challenge *kctfv1.Challenge, client client.Client, scheme *runtime.S
 	}
 	changed = changed || backendConfigChanged
 
-	managedCertificateChanged, err := updateManagedCertificate(challenge, client, scheme, log, ctx)
+	managedCertsChanged, err := updateManagedCertificates(challenge, client, scheme, log, ctx)
 	if err != nil {
-		log.Error(err, "Error updating ManagedCertificate", " Name: ",
+		log.Error(err, "Error updating managed certificates", " Name: ",
 			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
-	changed = changed || managedCertificateChanged
+	changed = changed || managedCertsChanged
 
-	ingressChanged, err := updateIngress(challenge, client, scheme, log, ctx)
+	ingressesChanged, err := updateIngresses(challenge, client, scheme, log, ctx)
 	if err != nil {
-		log.Error(err, "Error updating ingress", " Name: ",
+		log.Error(err, "Error updating ingresses", " Name: ",
 			challenge.Name, " with namespace ", challenge.Namespace)
 		return false, err
 	}
-	changed = changed || ingressChanged
+	changed = changed || ingressesChanged
 
 	return changed, nil
 }
