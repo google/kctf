@@ -166,7 +166,7 @@ function push_image {
 
   case "${CLUSTER_TYPE}" in
     gce)
-      IMAGE_URL="${REGISTRY}/${PROJECT}/${CHALLENGE_NAME}-${IMAGE_NAME}:${IMAGE_ID}"
+      IMAGE_URL="${REGISTRY}/${PROJECT}/${CLUSTER_NAME}-${CHALLENGE_NAME}/${IMAGE_NAME}:${IMAGE_ID}"
       docker tag "${IMAGE_ID}" "${IMAGE_URL}" || return
       docker push "${IMAGE_URL}" || return
       ;;
