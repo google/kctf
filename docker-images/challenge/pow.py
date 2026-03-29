@@ -36,7 +36,15 @@ SOLVER_URL = 'https://goo.gle/kctf-pow'
 def python_sloth_root(x, diff, p):
     exponent = (p + 1) // 4
     for i in range(diff):
+        if i % 100 == 0 or i == diff - 1:
+            progress = (i + 1) / diff
+            bar_len = 40
+            filled_len = int(round(bar_len * progress))
+            bar = '=' * filled_len + '-' * (bar_len - filled_len)
+            sys.stderr.write(f'\rSolving: [{bar}] {progress:.1%}')
+            sys.stderr.flush()
         x = pow(x, exponent, p) ^ 1
+    sys.stderr.write('\n')
     return x
 
 def python_sloth_square(y, diff, p):
@@ -47,7 +55,15 @@ def python_sloth_square(y, diff, p):
 def gmpy_sloth_root(x, diff, p):
     exponent = (p + 1) // 4
     for i in range(diff):
+        if i % 100 == 0 or i == diff - 1:
+            progress = (i + 1) / diff
+            bar_len = 40
+            filled_len = int(round(bar_len * progress))
+            bar = '=' * filled_len + '-' * (bar_len - filled_len)
+            sys.stderr.write(f'\rSolving: [{bar}] {progress:.1%}')
+            sys.stderr.flush()
         x = gmpy2.powmod(x, exponent, p).bit_flip(0)
+    sys.stderr.write('\n')
     return int(x)
 
 def gmpy_sloth_square(y, diff, p):
